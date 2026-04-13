@@ -1,5 +1,499 @@
-import { Typography } from '@mui/material'
+import {
+  Add as AddIcon,
+  Delete as DeleteIcon,
+  Edit as EditIcon,
+} from '@mui/icons-material'
+import {
+  Alert,
+  Box,
+  Button,
+  Checkbox,
+  Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  FormControl,
+  FormControlLabel,
+  IconButton,
+  InputLabel,
+  List,
+  ListItemButton,
+  ListItemText,
+  MenuItem,
+  Select,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  TextField,
+  Tooltip,
+  Typography,
+} from '@mui/material'
+import { useCallback, useEffect, useState } from 'react'
+import { customFieldsApi } from '../../api/custom-fields.api'
+import { metaApi } from '../../api/meta.api'
+import type {
+  CreateCustomFieldDefinitionInput,
+  CustomFieldDefinition,
+  CustomFieldScope,
+  CustomFieldType,
+  MetaItemCategory,
+  MetaNpcType,
+  UpdateCustomFieldDefinitionInput,
+} from '../../../shared/domain-types'
+import { useProjectStore } from '../stores/project.store'
+
+const FIELD_TYPE_LABELS: Record<CustomFieldType, string> = {
+  text: 'Text',
+  integer: 'Integer',
+  decimal: 'Decimal',
+  boolean: 'Boolean',
+  enum: 'Enum',
+}
+
+// ─── Field definition dialog ──────────────────────────────────────────────────
+
+interface FieldDialogProps {
+  open: boolean
+  editing: CustomFieldDefinition | null
+  scopeType: CustomFieldScope
+  scopeId: string
+  onClose: () => void
+  onSaved: () => void
+}
+
+function FieldDialog({ open, editing, scopeType, scopeId, onClose, onSaved }: FieldDialogProps): React.JSX.Element {
+  const [fieldName, setFieldName] = useState('')
+  const [fieldType, setFieldType] = useState<CustomFieldType>('text')
+  const [defaultValue, setDefaultValue] = useState('')
+  const [isRequired, setIsRequired] = useState(false)
+  const [isSearchable, setIsSearchable] = useState(false)
+  const [enumOptions, setEnumOptions] = useState<string[]>([])
+  const [newOption, setNewOption] = useState('')
+  const [isBusy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  // Sync form to the definition being edited (or reset for add)
+  useEffect(() => {
+    if (!open) return
+    if (editing) {
+      setFieldName(editing.fieldName)
+      setFieldType(editing.fieldType)
+      setDefaultValue(editing.defaultValue ?? '')
+      setIsRequired(editing.isRequired)
+      setIsSearchable(editing.isSearchable)
+      setEnumOptions([...editing.enumOptions])
+    } else {
+      setFieldName('')
+      setFieldType('text')
+      setDefaultValue('')
+      setIsRequired(false)
+      setIsSearchable(false)
+      setEnumOptions([])
+    }
+    setNewOption('')
+    setError(null)
+  }, [open, editing])
+
+  const addEnumOption = (): void => {
+    const trimmed = newOption.trim()
+    if (!trimmed || enumOptions.includes(trimmed)) return
+    setEnumOptions([...enumOptions, trimmed])
+    setNewOption('')
+  }
+
+  const removeEnumOption = (option: string): void => {
+    setEnumOptions(enumOptions.filter((o) => o !== option))
+  }
+
+  const handleSave = async (): Promise<void> => {
+    if (!fieldName.trim()) return
+    setBusy(true)
+    setError(null)
+    try {
+      if (editing) {
+        const input: UpdateCustomFieldDefinitionInput = {
+          fieldName: fieldName.trim(),
+          defaultValue: defaultValue || null,
+          isRequired,
+          isSearchable,
+          ...(editing.fieldType === 'enum' ? { enumOptions } : {}),
+        }
+        await customFieldsApi.updateDefinition(editing.id, input)
+      } else {
+        const input: CreateCustomFieldDefinitionInput = {
+          scopeType,
+          scopeId,
+          fieldName: fieldName.trim(),
+          fieldType,
+          defaultValue: defaultValue || null,
+          isRequired,
+          isSearchable,
+          ...(fieldType === 'enum' ? { enumOptions } : {}),
+        }
+        await customFieldsApi.createDefinition(input)
+      }
+      onSaved()
+      onClose()
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Failed to save field.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const isEnum = fieldType === 'enum'
+  const canSave =
+    fieldName.trim().length > 0 &&
+    (!isEnum || enumOptions.length > 0) &&
+    !isBusy
+
+  return (
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+      <DialogTitle>{editing ? `Edit Field: ${editing.fieldName}` : 'Add Custom Field'}</DialogTitle>
+      <DialogContent>
+        <Stack spacing={2} sx={{ pt: 1 }}>
+          {error && <Alert severity="error">{error}</Alert>}
+
+          <TextField
+            label="Field Name"
+            value={fieldName}
+            onChange={(e) => setFieldName(e.target.value)}
+            required
+            autoFocus
+          />
+
+          <FormControl fullWidth>
+            <InputLabel id="field-type-label">Field Type</InputLabel>
+            <Select
+              labelId="field-type-label"
+              label="Field Type"
+              value={fieldType}
+              onChange={(e) => setFieldType(e.target.value as CustomFieldType)}
+              disabled={!!editing}
+            >
+              {(Object.entries(FIELD_TYPE_LABELS) as [CustomFieldType, string][]).map(
+                ([value, label]) => (
+                  <MenuItem key={value} value={value}>
+                    {label}
+                  </MenuItem>
+                ),
+              )}
+            </Select>
+            {editing && (
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
+                Field type cannot be changed after creation.
+              </Typography>
+            )}
+          </FormControl>
+
+          {isEnum ? (
+            <Box>
+              <Typography variant="subtitle2" gutterBottom>
+                Enum Options
+              </Typography>
+              <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
+                <TextField
+                  size="small"
+                  label="New option"
+                  value={newOption}
+                  onChange={(e) => setNewOption(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addEnumOption() } }}
+                  sx={{ flex: 1 }}
+                />
+                <Button variant="outlined" size="small" onClick={addEnumOption} disabled={!newOption.trim()}>
+                  Add
+                </Button>
+              </Stack>
+              <Stack direction="row" flexWrap="wrap" gap={1}>
+                {enumOptions.length === 0 && (
+                  <Typography variant="body2" color="text.secondary">
+                    No options defined. Add at least one.
+                  </Typography>
+                )}
+                {enumOptions.map((opt) => (
+                  <Chip
+                    key={opt}
+                    label={opt}
+                    onDelete={() => removeEnumOption(opt)}
+                    size="small"
+                  />
+                ))}
+              </Stack>
+            </Box>
+          ) : (
+            <TextField
+              label="Default Value"
+              value={defaultValue}
+              onChange={(e) => setDefaultValue(e.target.value)}
+              helperText="Optional. Pre-populated when a new record is created."
+            />
+          )}
+
+          <Stack direction="row" spacing={2}>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={isRequired}
+                  onChange={(e) => setIsRequired(e.target.checked)}
+                />
+              }
+              label="Required"
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={isSearchable}
+                  onChange={(e) => setIsSearchable(e.target.checked)}
+                />
+              }
+              label="Searchable / Filterable"
+            />
+          </Stack>
+        </Stack>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} disabled={isBusy}>Cancel</Button>
+        <Button onClick={() => void handleSave()} variant="contained" disabled={!canSave}>
+          {editing ? 'Save Changes' : 'Add Field'}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  )
+}
+
+// ─── Field definition list for a scope ───────────────────────────────────────
+
+interface FieldListProps {
+  scopeType: CustomFieldScope
+  scopeId: string
+}
+
+function FieldList({ scopeType, scopeId }: FieldListProps): React.JSX.Element {
+  const [definitions, setDefinitions] = useState<CustomFieldDefinition[]>([])
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [editing, setEditing] = useState<CustomFieldDefinition | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+
+  const loadDefinitions = useCallback(async () => {
+    const defs = await customFieldsApi.listDefinitions(scopeType, scopeId)
+    setDefinitions(defs)
+  }, [scopeType, scopeId])
+
+  useEffect(() => {
+    void loadDefinitions()
+  }, [loadDefinitions])
+
+  const handleDelete = async (def: CustomFieldDefinition): Promise<void> => {
+    setDeleteError(null)
+    const result = await customFieldsApi.deleteDefinition(def.id)
+    if (!result.deleted) {
+      setDeleteError(
+        `Cannot delete "${def.fieldName}": ${result.affectedCount} record(s) currently have values for this field. Clear those values first.`,
+      )
+      return
+    }
+    await loadDefinitions()
+  }
+
+  const openEdit = (def: CustomFieldDefinition): void => {
+    setEditing(def)
+    setDialogOpen(true)
+  }
+
+  const openAdd = (): void => {
+    setEditing(null)
+    setDialogOpen(true)
+  }
+
+  const handleDialogClose = (): void => {
+    setDialogOpen(false)
+    setEditing(null)
+    setDeleteError(null)
+  }
+
+  return (
+    <Box>
+      {deleteError && (
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setDeleteError(null)}>
+          {deleteError}
+        </Alert>
+      )}
+
+      {definitions.length === 0 ? (
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          No custom fields defined.
+        </Typography>
+      ) : (
+        <Table size="small" sx={{ mb: 2 }}>
+          <TableHead>
+            <TableRow>
+              <TableCell>Field Name</TableCell>
+              <TableCell>Type</TableCell>
+              <TableCell align="center">Required</TableCell>
+              <TableCell align="center">Searchable</TableCell>
+              <TableCell align="right">Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {definitions.map((def) => (
+              <TableRow key={def.id}>
+                <TableCell>{def.fieldName}</TableCell>
+                <TableCell>
+                  <Chip
+                    label={FIELD_TYPE_LABELS[def.fieldType]}
+                    size="small"
+                    variant="outlined"
+                  />
+                </TableCell>
+                <TableCell align="center">{def.isRequired ? '✓' : '—'}</TableCell>
+                <TableCell align="center">{def.isSearchable ? '✓' : '—'}</TableCell>
+                <TableCell align="right">
+                  <Tooltip title="Edit">
+                    <IconButton size="small" onClick={() => openEdit(def)}>
+                      <EditIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Delete">
+                    <IconButton size="small" color="error" onClick={() => void handleDelete(def)}>
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
+
+      <Button startIcon={<AddIcon />} variant="outlined" size="small" onClick={openAdd}>
+        Add Field
+      </Button>
+
+      <FieldDialog
+        open={dialogOpen}
+        editing={editing}
+        scopeType={scopeType}
+        scopeId={scopeId}
+        onClose={handleDialogClose}
+        onSaved={() => void loadDefinitions()}
+      />
+    </Box>
+  )
+}
+
+// ─── Settings page ────────────────────────────────────────────────────────────
 
 export default function SettingsPage(): React.JSX.Element {
-  return <Typography variant="h5">Settings</Typography>
+  const activeProject = useProjectStore((state) => state.activeProject)
+  const [itemCategories, setItemCategories] = useState<MetaItemCategory[]>([])
+  const [npcTypes, setNpcTypes] = useState<MetaNpcType[]>([])
+  const [selectedScope, setSelectedScope] = useState<{
+    type: CustomFieldScope
+    id: string
+    label: string
+  } | null>(null)
+
+  useEffect(() => {
+    if (!activeProject) return
+    void Promise.all([metaApi.listItemCategories(), metaApi.listNpcTypes()]).then(
+      ([cats, types]) => {
+        setItemCategories(cats)
+        setNpcTypes(types)
+        // Pre-select first item category if available
+        if (cats.length > 0) {
+          setSelectedScope({ type: 'item_category', id: cats[0].id, label: cats[0].displayName })
+        }
+      },
+    )
+  }, [activeProject])
+
+  if (!activeProject) {
+    return (
+      <Box sx={{ p: 4 }}>
+        <Typography color="text.secondary">Open a project to manage custom fields.</Typography>
+      </Box>
+    )
+  }
+
+  return (
+    <Box sx={{ p: 4, maxWidth: 1100, mx: 'auto' }}>
+      <Typography variant="h4" sx={{ mb: 0.5 }}>
+        Project Settings
+      </Typography>
+      <Typography color="text.secondary" sx={{ mb: 3 }}>
+        Define custom fields for item categories and NPC types.
+      </Typography>
+
+      <Box sx={{ display: 'flex', gap: 3, alignItems: 'flex-start' }}>
+        {/* Scope selector */}
+        <Box sx={{ width: 220, flexShrink: 0 }}>
+          <Typography variant="overline" color="text.secondary">
+            Item Categories
+          </Typography>
+          <List dense disablePadding>
+            {itemCategories.map((cat) => (
+              <ListItemButton
+                key={cat.id}
+                selected={selectedScope?.type === 'item_category' && selectedScope.id === cat.id}
+                onClick={() =>
+                  setSelectedScope({ type: 'item_category', id: cat.id, label: cat.displayName })
+                }
+                sx={{ borderRadius: 1 }}
+              >
+                <ListItemText primary={cat.displayName} />
+              </ListItemButton>
+            ))}
+          </List>
+
+          <Divider sx={{ my: 1.5 }} />
+
+          <Typography variant="overline" color="text.secondary">
+            NPC Types
+          </Typography>
+          <List dense disablePadding>
+            {npcTypes.map((t) => (
+              <ListItemButton
+                key={t.id}
+                selected={selectedScope?.type === 'npc_type' && selectedScope.id === t.id}
+                onClick={() =>
+                  setSelectedScope({ type: 'npc_type', id: t.id, label: t.displayName })
+                }
+                sx={{ borderRadius: 1 }}
+              >
+                <ListItemText primary={t.displayName} />
+              </ListItemButton>
+            ))}
+          </List>
+        </Box>
+
+        {/* Field list for selected scope */}
+        <Box sx={{ flex: 1 }}>
+          {selectedScope ? (
+            <>
+              <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
+                <Typography variant="h6">{selectedScope.label}</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {selectedScope.type === 'item_category' ? 'Item Category' : 'NPC Type'}
+                </Typography>
+              </Stack>
+              <FieldList
+                key={`${selectedScope.type}:${selectedScope.id}`}
+                scopeType={selectedScope.type}
+                scopeId={selectedScope.id}
+              />
+            </>
+          ) : (
+            <Typography color="text.secondary">
+              Select a category or type on the left to manage its custom fields.
+            </Typography>
+          )}
+        </Box>
+      </Box>
+    </Box>
+  )
 }
