@@ -1,12 +1,14 @@
 import { ipcMain } from 'electron'
 import { IPC_CHANNELS } from '../../shared/ipc-channels'
+import { abilityRepository } from '../repositories'
 
-// Full implementation in the Abilities epic
 export function registerAbilitiesHandlers(): void {
-  ipcMain.handle(IPC_CHANNELS.ABILITIES_LIST, () => [])
-  ipcMain.handle(IPC_CHANNELS.ABILITIES_GET, () => null)
+  ipcMain.handle(IPC_CHANNELS.ABILITIES_LIST, (_event, options?: { includeDeleted?: boolean }) =>
+    abilityRepository.list(options?.includeDeleted ?? false),
+  )
+  ipcMain.handle(IPC_CHANNELS.ABILITIES_GET, (_event, id: string) => abilityRepository.get(id))
   ipcMain.handle(IPC_CHANNELS.ABILITIES_CREATE, () => null)
   ipcMain.handle(IPC_CHANNELS.ABILITIES_UPDATE, () => null)
-  ipcMain.handle(IPC_CHANNELS.ABILITIES_DELETE, () => undefined)
-  ipcMain.handle(IPC_CHANNELS.ABILITIES_RESTORE, () => undefined)
+  ipcMain.handle(IPC_CHANNELS.ABILITIES_DELETE, (_event, id: string) => abilityRepository.softDelete(id))
+  ipcMain.handle(IPC_CHANNELS.ABILITIES_RESTORE, (_event, id: string) => abilityRepository.restore(id))
 }

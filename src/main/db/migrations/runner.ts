@@ -1,5 +1,6 @@
 import type { DbConnection } from '../connection'
 import * as migration001 from './001_init'
+import * as migration002 from './002_seed_meta_layer'
 
 interface Migration {
   version: number
@@ -13,6 +14,7 @@ interface Migration {
  */
 const MIGRATIONS: Migration[] = [
   { version: 1, filename: '001_init', up: migration001.up },
+  { version: 2, filename: '002_seed_meta_layer', up: migration002.up },
 ]
 
 /**

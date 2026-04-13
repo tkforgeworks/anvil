@@ -132,14 +132,14 @@ function getRecordCounts(db: DbConnection): RecordCounts {
 }
 
 function readProjectMeta(db: DbConnection): ProjectMetaRow {
-  const row = db.prepare('SELECT project_name, game_title, schema_version FROM project_meta WHERE id = 1').get()
+  const row = db.prepare('SELECT project_name, game_title, schema_version FROM project_info WHERE id = 1').get()
 
   if (row) {
     return row as ProjectMetaRow
   }
 
   db.prepare(
-    `INSERT INTO project_meta (id, project_name, game_title, schema_version)
+    `INSERT INTO project_info (id, project_name, game_title, schema_version)
      VALUES (1, '', '', ?)`,
   ).run(EXPECTED_SCHEMA_VERSION)
 
@@ -234,7 +234,7 @@ export async function createProject(
     const db = openDatabase(filePath)
     runMigrations(db)
     db.prepare(
-      `INSERT INTO project_meta (id, project_name, game_title, schema_version, updated_at)
+      `INSERT INTO project_info (id, project_name, game_title, schema_version, updated_at)
        VALUES (1, ?, ?, ?, datetime('now'))
        ON CONFLICT(id) DO UPDATE SET
          project_name = excluded.project_name,
