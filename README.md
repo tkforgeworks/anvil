@@ -4,7 +4,7 @@ Anvil is a desktop application for managing RPG game data. It gives game develop
 
 Anvil is game-agnostic — it ships with sensible RPG defaults but allows full schema customization per project.
 
-> **Status:** Application shell bootstrapped and running (ANV-4 complete). Domain editors, project lifecycle, formula engine, and export system are next.
+> **Status:** Project lifecycle is implemented and schema foundation work is underway. Users can create/open `.anvil` projects, see recent projects and dashboard counts, save/Save As with status feedback, and rely on file locking, schema migration, and recovery-mode guards. Domain repository CRUD and full domain editors are still in progress.
 
 ---
 
@@ -55,11 +55,14 @@ anvil/
 │   └── Anvil_Implementation_Design_v1_0.md      # Current architecture & implementation strategy
 ├── src/
 │   ├── main/                    # Electron main process
-│   │   ├── index.ts             # Entry point — IPC registration, DB bootstrap, window creation
+│   │   ├── index.ts             # Entry point — IPC registration, window creation, app shutdown hooks
 │   │   ├── db/
 │   │   │   ├── connection.ts    # SQLite singleton (openDatabase, getDb, closeDatabase)
 │   │   │   └── migrations/      # Sequential migration runner + migration files
-│   │   └── ipc/                 # Domain IPC handler stubs (one file per domain)
+│   │   ├── ipc/                 # Project/domain IPC handlers (some domain create/update paths still stubbed)
+│   │   ├── project/             # Project lifecycle service: create/open/save/Save As/locking/recovery
+│   │   ├── repositories/        # Shared domain repository foundation
+│   │   └── settings/            # Application settings persistence
 │   ├── preload/
 │   │   └── index.ts             # contextBridge — exposes window.anvil with channel allowlist
 │   ├── renderer/
@@ -68,7 +71,7 @@ anvil/
 │   │       ├── main.tsx         # React root — ThemeProvider + HashRouter
 │   │       ├── App.tsx          # Route tree (11 routes)
 │   │       ├── components/      # AppShell, Sidebar, TitleBar
-│   │       ├── pages/           # Placeholder page components (one per domain)
+│   │       ├── pages/           # Welcome, dashboard, and domain placeholder pages
 │   │       ├── stores/          # Zustand stores (ui + 10 domain stores)
 │   │       └── themes/          # MUI dark/light theme objects
 │   └── shared/
@@ -114,6 +117,15 @@ npm run make      # Build and package for current platform
 | Epic | Description |
 |---|---|
 | ANV-4 | Project bootstrap — Electron + electron-vite setup, IPC bridge, SQLite layer, React Router shell, MUI theme, Zustand stores |
+| ANV-5 | Project file and lifecycle management — create/open/recent projects, dashboard, save/Save As, auto-save/status feedback, file locking, non-destructive migration, recovery-mode guards |
+
+### Current work
+
+| Epic | Description | Status |
+|---|---|---|
+| ANV-6 | Data model and schema foundation | In progress |
+
+ANV-6 currently has migration 001 and migration 002 implemented for the initial schema and default meta-layer seed data. Remaining work is focused on the typed domain repository layer and wiring create/update/delete IPC paths for all six domains.
 
 ---
 
