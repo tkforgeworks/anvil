@@ -20,11 +20,13 @@ export default function TitleBar(): React.JSX.Element {
   const activeProject = useProjectStore((state) => state.activeProject)
   const hydrate = useProjectStore((state) => state.hydrate)
   const isDirty = useProjectStore((state) => state.isDirty)
+  const isRecoveryMode = useProjectStore((state) => state.isRecoveryMode)
   const saveStatus = useProjectStore((state) => state.saveStatus)
   const setSaveStatus = useProjectStore((state) => state.setSaveStatus)
   const setSaveError = useProjectStore((state) => state.setSaveError)
 
   const saveProject = async (): Promise<void> => {
+    if (isRecoveryMode) return
     setSaveStatus('saving')
     setSaveError(null)
     try {
@@ -36,6 +38,7 @@ export default function TitleBar(): React.JSX.Element {
   }
 
   const saveProjectAs = async (): Promise<void> => {
+    if (isRecoveryMode) return
     setSaveStatus('saving')
     setSaveError(null)
     try {
@@ -71,10 +74,20 @@ export default function TitleBar(): React.JSX.Element {
             variant="outlined"
             sx={{ fontSize: '0.7rem' }}
           />
-          <Button color="inherit" size="small" onClick={() => void saveProject()} disabled={!activeProject}>
+          <Button
+            color="inherit"
+            size="small"
+            onClick={() => void saveProject()}
+            disabled={!activeProject || isRecoveryMode}
+          >
             Save
           </Button>
-          <Button color="inherit" size="small" onClick={() => void saveProjectAs()} disabled={!activeProject}>
+          <Button
+            color="inherit"
+            size="small"
+            onClick={() => void saveProjectAs()}
+            disabled={!activeProject || isRecoveryMode}
+          >
             Save As
           </Button>
           <Button color="inherit" size="small" onClick={() => void closeProject()}>

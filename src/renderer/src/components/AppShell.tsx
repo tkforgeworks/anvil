@@ -9,12 +9,14 @@ import Sidebar from './Sidebar'
 export default function AppShell(): React.JSX.Element {
   const activeProject = useProjectStore((state) => state.activeProject)
   const hydrate = useProjectStore((state) => state.hydrate)
+  const isRecoveryMode = useProjectStore((state) => state.isRecoveryMode)
+  const recoveryMessage = useProjectStore((state) => state.recoveryMessage)
   const saveError = useProjectStore((state) => state.saveError)
   const setSaveStatus = useProjectStore((state) => state.setSaveStatus)
   const setSaveError = useProjectStore((state) => state.setSaveError)
 
   const saveProject = useCallback(async (): Promise<void> => {
-    if (!activeProject) return
+    if (!activeProject || isRecoveryMode) return
 
     setSaveStatus('saving')
     setSaveError(null)
@@ -24,7 +26,7 @@ export default function AppShell(): React.JSX.Element {
     } catch (cause) {
       setSaveError(cause instanceof Error ? cause.message : 'Unable to save project.')
     }
-  }, [activeProject, hydrate, setSaveError, setSaveStatus])
+  }, [activeProject, hydrate, isRecoveryMode, setSaveError, setSaveStatus])
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent): void => {
@@ -67,6 +69,12 @@ export default function AppShell(): React.JSX.Element {
             bgcolor: 'background.default',
           }}
         >
+          {isRecoveryMode && (
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              Recovery mode is active. This project is read-only and cannot be saved.
+              {recoveryMessage ? ` ${recoveryMessage}` : ''}
+            </Alert>
+          )}
           <Outlet />
         </Box>
       </Box>

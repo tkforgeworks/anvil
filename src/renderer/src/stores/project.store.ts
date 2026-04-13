@@ -13,6 +13,7 @@ interface ProjectState {
   recentProjects: RecentProject[]
   isDirty: boolean
   isRecoveryMode: boolean
+  recoveryMessage: string | null
   saveStatus: SaveStatus
   saveError: string | null
 
@@ -29,6 +30,7 @@ export const useProjectStore = create<ProjectState>()((set) => ({
   recentProjects: [],
   isDirty: false,
   isRecoveryMode: false,
+  recoveryMessage: null,
   saveStatus: 'saved',
   saveError: null,
 
@@ -38,6 +40,7 @@ export const useProjectStore = create<ProjectState>()((set) => ({
       recentProjects: snapshot.recentProjects,
       isDirty: snapshot.isDirty,
       isRecoveryMode: snapshot.isRecoveryMode,
+      recoveryMessage: snapshot.recoveryMessage,
       saveStatus: snapshot.saveStatus,
       saveError: snapshot.saveError,
     }),
@@ -46,6 +49,7 @@ export const useProjectStore = create<ProjectState>()((set) => ({
       activeProject: project,
       isDirty: false,
       isRecoveryMode: false,
+      recoveryMessage: null,
       saveStatus: 'saved',
       saveError: null,
     }),
@@ -54,6 +58,7 @@ export const useProjectStore = create<ProjectState>()((set) => ({
       activeProject: null,
       isDirty: false,
       isRecoveryMode: false,
+      recoveryMessage: null,
       saveStatus: 'saved',
       saveError: null,
     }),

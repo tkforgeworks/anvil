@@ -17,6 +17,8 @@ const MIGRATIONS: Migration[] = [
   { version: 2, filename: '002_seed_meta_layer', up: migration002.up },
 ]
 
+export const CURRENT_SCHEMA_VERSION = MIGRATIONS.length
+
 /**
  * Applies any pending migrations to the database.
  *
@@ -58,6 +60,10 @@ export function runMigrations(db: DbConnection): void {
       throw new MigrationError(migration.filename, cause)
     }
   }
+
+  db.prepare('UPDATE project_info SET schema_version = ?, updated_at = datetime(\'now\') WHERE id = 1').run(
+    CURRENT_SCHEMA_VERSION,
+  )
 }
 
 export class MigrationError extends Error {

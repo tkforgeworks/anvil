@@ -31,6 +31,7 @@ export interface ProjectStateSnapshot {
   recentProjects: RecentProject[]
   isDirty: boolean
   isRecoveryMode: boolean
+  recoveryMessage: string | null
   saveStatus: ProjectSaveStatus
   saveError: string | null
 }
