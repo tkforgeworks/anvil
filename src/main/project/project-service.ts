@@ -144,6 +144,32 @@ function releaseProjectLock(): void {
   }
 }
 
+/**
+ * Atomically swaps the project lock from the current path to a new path.
+ * Acquires the new lock before releasing the old one so there is never a
+ * window where neither file is locked.
+ */
+function swapProjectLock(newFilePath: string): void {
+  const newLockPath = getLockPath(newFilePath)
+  let newFd: number
+  try {
+    newFd = openSync(newLockPath, 'wx')
+    writeFileSync(newFd, JSON.stringify({ pid: process.pid, lockedAt: new Date().toISOString(), filePath: newFilePath }))
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'EEXIST') {
+      throw new ProjectLockError('This project is already open in another Anvil window.')
+    }
+    throw error
+  }
+  // New lock is held — now safely release the old one.
+  const old = activeLock
+  activeLock = { filePath: newFilePath, lockPath: newLockPath, fd: newFd }
+  if (old) {
+    try { closeSync(old.fd) } catch { /* best effort */ }
+    try { if (existsSync(old.lockPath)) unlinkSync(old.lockPath) } catch { /* best effort */ }
+  }
+}
+
 function createBackupPath(filePath: string): string {
   const parsed = parse(filePath)
   const timestamp = new Date().toISOString().replace(/[-:.TZ]/g, '')
@@ -159,16 +185,8 @@ function tableExists(db: DbConnection | Database.Database, tableName: string): b
 
 function countActiveRows(db: DbConnection, tableName: string): number {
   if (!tableExists(db, tableName)) return 0
-
-  const hasDeletedAt = db
-    .prepare(`PRAGMA table_info(${tableName})`)
-    .all()
-    .some((column) => (column as { name: string }).name === 'deleted_at')
-
-  const sql = hasDeletedAt
-    ? `SELECT COUNT(*) AS count FROM ${tableName} WHERE deleted_at IS NULL`
-    : `SELECT COUNT(*) AS count FROM ${tableName}`
-  return (db.prepare(sql).get() as { count: number }).count
+  // All domain tables have deleted_at from migration 001 — no runtime check needed.
+  return (db.prepare(`SELECT COUNT(*) AS count FROM ${tableName} WHERE deleted_at IS NULL`).get() as { count: number }).count
 }
 
 function getRecordCounts(db: DbConnection): RecordCounts {
@@ -227,13 +245,18 @@ function assertIntegrity(db: DbConnection): void {
 }
 
 async function migrateIfNeeded(filePath: string, owner: BrowserWindow | null): Promise<string | null> {
-  let db: DbConnection | null = null
+  // Use raw Database instances here — NOT openDatabase() — so the module-level
+  // singleton is never touched. The caller (openProject) opens the final path
+  // exactly once via openDatabase().
+  let tempDb: Database.Database | null = null
   try {
-    db = openDatabase(filePath)
-    assertIntegrity(db)
-    const schemaVersion = readProjectSchemaVersion(db)
-    closeDatabase(db)
-    db = null
+    tempDb = new Database(filePath)
+    tempDb.pragma('journal_mode = WAL')
+    tempDb.pragma('foreign_keys = ON')
+    assertIntegrity(tempDb)
+    const schemaVersion = readProjectSchemaVersion(tempDb)
+    tempDb.close()
+    tempDb = null
 
     if (schemaVersion >= CURRENT_SCHEMA_VERSION) return filePath
 
@@ -254,16 +277,18 @@ async function migrateIfNeeded(filePath: string, owner: BrowserWindow | null): P
 
     const backupPath = createBackupPath(filePath)
     copyFileSync(filePath, backupPath)
-    db = openDatabase(backupPath)
-    runMigrations(db)
-    assertIntegrity(db)
-    db.pragma('wal_checkpoint(TRUNCATE)')
-    closeDatabase(db)
-    db = null
+    tempDb = new Database(backupPath)
+    tempDb.pragma('journal_mode = WAL')
+    tempDb.pragma('foreign_keys = ON')
+    runMigrations(tempDb)
+    assertIntegrity(tempDb)
+    tempDb.pragma('wal_checkpoint(TRUNCATE)')
+    tempDb.close()
+    tempDb = null
     return backupPath
   } finally {
-    if (db?.open) {
-      closeDatabase(db)
+    if (tempDb?.open) {
+      tempDb.close()
     }
   }
 }
@@ -326,7 +351,7 @@ function setRecoveryState(filePath: string, error: unknown): ProjectStateSnapsho
     gameTitle: fallbackName,
     filePath,
     schemaVersion: 0,
-    lastModifiedAt: existsSync(filePath) ? getLastModifiedAt(filePath) : new Date().toISOString(),
+    lastModifiedAt: (() => { try { return getLastModifiedAt(filePath) } catch { return new Date().toISOString() } })(),
     recordCounts: EMPTY_RECORD_COUNTS,
   }
   isDirty = false
@@ -480,8 +505,7 @@ export async function openProject(
       return getProjectState()
     }
     if (activePath.toLowerCase() !== selectedPath.toLowerCase()) {
-      releaseProjectLock()
-      acquireProjectLock(activePath)
+      swapProjectLock(activePath)
     }
     const db = openDatabase(activePath)
     assertIntegrity(db)

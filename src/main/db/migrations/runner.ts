@@ -3,7 +3,6 @@ import * as migration001 from './001_init'
 import * as migration002 from './002_seed_meta_layer'
 
 interface Migration {
-  version: number
   filename: string
   up: (db: DbConnection) => void
 }
@@ -13,8 +12,8 @@ interface Migration {
  * Add new migrations here as the schema evolves.
  */
 const MIGRATIONS: Migration[] = [
-  { version: 1, filename: '001_init', up: migration001.up },
-  { version: 2, filename: '002_seed_meta_layer', up: migration002.up },
+  { filename: '001_init', up: migration001.up },
+  { filename: '002_seed_meta_layer', up: migration002.up },
 ]
 
 export const CURRENT_SCHEMA_VERSION = MIGRATIONS.length
@@ -46,6 +45,7 @@ export function runMigrations(db: DbConnection): void {
     'INSERT INTO schema_migrations (filename, applied_at) VALUES (?, ?)',
   )
 
+  let ranAny = false
   for (const migration of MIGRATIONS) {
     if (applied.has(migration.filename)) continue
 
@@ -56,14 +56,17 @@ export function runMigrations(db: DbConnection): void {
 
     try {
       apply()
+      ranAny = true
     } catch (cause) {
       throw new MigrationError(migration.filename, cause)
     }
   }
 
-  db.prepare('UPDATE project_info SET schema_version = ?, updated_at = datetime(\'now\') WHERE id = 1').run(
-    CURRENT_SCHEMA_VERSION,
-  )
+  if (ranAny) {
+    db.prepare('UPDATE project_info SET schema_version = ?, updated_at = datetime(\'now\') WHERE id = 1').run(
+      CURRENT_SCHEMA_VERSION,
+    )
+  }
 }
 
 export class MigrationError extends Error {

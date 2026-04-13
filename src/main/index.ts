@@ -21,13 +21,11 @@ function createWindow(): void {
   }
 }
 
-// Register all domain IPC handlers
-registerAllIpcHandlers()
-
-// IPC verification handler — confirms bridge is functional
-ipcMain.handle('ping', () => 'pong')
-
 app.whenReady().then(() => {
+  // Register IPC handlers inside whenReady so the app is fully initialised
+  registerAllIpcHandlers()
+  ipcMain.handle('ping', () => 'pong')
+
   createWindow()
 
   app.on('activate', () => {

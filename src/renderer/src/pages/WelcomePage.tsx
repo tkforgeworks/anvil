@@ -94,6 +94,14 @@ export default function WelcomePage(): React.JSX.Element {
     hydrate(snapshot)
   }
 
+  const closeCreateDialog = (): void => {
+    setCreateOpen(false)
+    setProjectName('')
+    setGameTitle('')
+    setTemplateId('blank')
+    setError(null)
+  }
+
   const canCreate = projectName.trim().length > 0 && gameTitle.trim().length > 0 && !isBusy
 
   return (
@@ -168,7 +176,7 @@ export default function WelcomePage(): React.JSX.Element {
         </Box>
       </Stack>
 
-      <Dialog open={isCreateOpen} onClose={() => setCreateOpen(false)} fullWidth maxWidth="sm">
+      <Dialog open={isCreateOpen} onClose={closeCreateDialog} fullWidth maxWidth="sm">
         <DialogTitle>Create New Project</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ pt: 1 }}>
@@ -203,7 +211,7 @@ export default function WelcomePage(): React.JSX.Element {
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setCreateOpen(false)} disabled={isBusy}>
+          <Button onClick={closeCreateDialog} disabled={isBusy}>
             Cancel
           </Button>
           <Button onClick={() => void createProject()} disabled={!canCreate} variant="contained">
