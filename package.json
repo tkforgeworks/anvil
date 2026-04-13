@@ -12,8 +12,7 @@
     "make": "electron-vite build && electron-forge make",
     "typecheck": "tsc --noEmit -p tsconfig.main.json && tsc --noEmit -p tsconfig.renderer.json",
     "rebuild": "electron-rebuild -f -w better-sqlite3",
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "test": "node scripts/test.js"
   },
   "dependencies": {
     "@emotion/react": "^11.13.3",

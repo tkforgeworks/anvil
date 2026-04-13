@@ -10,10 +10,10 @@ The repository layer has an integration test suite that runs directly under Node
 npm test
 ```
 
-To run in watch mode during development:
+You can filter to a single file by passing it after `--`:
 
 ```bash
-npm run test:watch
+npm test -- src/main/repositories/__tests__/class.repository.test.ts
 ```
 
 ### What is tested
@@ -61,19 +61,8 @@ The automated tests sidestep this entirely by using in-memory databases, which n
 
 ---
 
-## Note on native module ABI compatibility
+## Native module ABI
 
-`better-sqlite3` is a native Node.js addon. The project includes an `npm run rebuild` script that recompiles it against Electron's V8 ABI for use in the packaged application.
+`better-sqlite3` is a native Node.js addon. `npm run rebuild` compiles it against Electron's V8 ABI so the app runs under Electron. That binary is incompatible with the plain Node.js process that Vitest uses.
 
-If you have run `npm run rebuild` and the tests fail with an error like `"was compiled against a different Node.js version"`, the binary has been compiled for Electron rather than your system Node.js. Fix this by recompiling for Node.js first:
-
-```bash
-npm rebuild better-sqlite3
-npm test
-```
-
-After testing, restore the Electron-compatible binary before launching the app:
-
-```bash
-npm run rebuild
-```
+`npm test` handles this automatically via `scripts/test.js`: it recompiles `better-sqlite3` for Node.js before running the suite, then restores the Electron-compatible binary afterwards — whether tests pass or fail. No manual steps required.
