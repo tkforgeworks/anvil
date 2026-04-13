@@ -17,6 +17,7 @@ export const IPC_CHANNELS = {
   CLASSES_UPDATE: 'classes:update',
   CLASSES_DELETE: 'classes:delete',
   CLASSES_RESTORE: 'classes:restore',
+  CLASSES_DUPLICATE: 'classes:duplicate',
 
   // Abilities
   ABILITIES_LIST: 'abilities:list',

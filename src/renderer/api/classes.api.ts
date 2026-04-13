@@ -23,4 +23,7 @@ export const classesApi = {
 
   restore: (id: string) =>
     window.anvil.invoke<void>(IPC_CHANNELS.CLASSES_RESTORE, id),
+
+  duplicate: (id: string) =>
+    window.anvil.invoke<ClassRecord | null>(IPC_CHANNELS.CLASSES_DUPLICATE, id),
 }

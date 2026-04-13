@@ -60,6 +60,34 @@ export class ClassRepository extends DomainRepository {
     return row ? toClassRecord(row) : null
   }
 
+  duplicate(id: string): ClassRecord | null {
+    const source = this.get(id)
+    if (!source) return null
+    const newId = randomUUID()
+    const newDisplayName = `${source.displayName} (Copy)`
+    const newExportKey = newDisplayName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+    this.dbProvider()
+      .prepare(
+        `INSERT INTO classes (id, display_name, export_key, description, resource_multiplier)
+         VALUES (@id, @displayName, @exportKey, @description, @resourceMultiplier)`,
+      )
+      .run({
+        id: newId,
+        displayName: newDisplayName,
+        exportKey: newExportKey,
+        description: source.description,
+        resourceMultiplier: source.resourceMultiplier,
+      })
+    const growthEntries = this.getStatGrowth(id)
+    if (growthEntries.length > 0) this.setStatGrowth(newId, growthEntries)
+    const assignments = this.getAbilityAssignments(id)
+    if (assignments.length > 0) this.setAbilityAssignments(newId, assignments)
+    return this.get(newId)!
+  }
+
   create(input: CreateClassInput): ClassRecord {
     const id = randomUUID()
     this.dbProvider()

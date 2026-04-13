@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import AppShell from './components/AppShell'
 import DashboardPage from './pages/DashboardPage'
 import ClassesPage from './pages/ClassesPage'
+import ClassEditorPage from './pages/ClassEditorPage'
 import AbilitiesPage from './pages/AbilitiesPage'
 import ItemsPage from './pages/ItemsPage'
 import RecipesPage from './pages/RecipesPage'
@@ -56,6 +57,7 @@ export default function App(): React.JSX.Element {
       <Route path="/" element={<AppShell />}>
         <Route index element={<DashboardPage />} />
         <Route path="classes" element={<ClassesPage />} />
+        <Route path="classes/:id" element={<ClassEditorPage />} />
         <Route path="abilities" element={<AbilitiesPage />} />
         <Route path="items" element={<ItemsPage />} />
         <Route path="recipes" element={<RecipesPage />} />

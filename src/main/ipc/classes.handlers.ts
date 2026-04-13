@@ -32,4 +32,10 @@ export function registerClassesHandlers(): void {
     classRepository.restore(id)
     return markProjectDirty()
   })
+
+  ipcMain.handle(IPC_CHANNELS.CLASSES_DUPLICATE, (_event, id: string) => {
+    const record = classRepository.duplicate(id)
+    if (record) markProjectDirty()
+    return record
+  })
 }
