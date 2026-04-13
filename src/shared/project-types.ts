@@ -2,6 +2,8 @@ export const PROJECT_TEMPLATES = ['blank', 'fantasy-rpg', 'sci-fi-rpg'] as const
 
 export type ProjectTemplateId = (typeof PROJECT_TEMPLATES)[number]
 
+export type ProjectSaveStatus = 'saved' | 'saving' | 'unsaved' | 'error'
+
 export interface RecordCounts {
   classes: number
   abilities: number
@@ -29,6 +31,8 @@ export interface ProjectStateSnapshot {
   recentProjects: RecentProject[]
   isDirty: boolean
   isRecoveryMode: boolean
+  saveStatus: ProjectSaveStatus
+  saveError: string | null
 }
 
 export interface CreateProjectInput {

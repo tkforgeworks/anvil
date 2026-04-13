@@ -1,11 +1,5 @@
 import { create } from 'zustand'
-import type { AppTheme, EditingMode } from './ui.store'
-
-export interface AppSettings {
-  theme: AppTheme
-  editingMode: EditingMode
-  autoSaveIntervalMs: number
-}
+import type { AppSettings } from '../../../shared/settings-types'
 
 interface SettingsState {
   appSettings: AppSettings | null

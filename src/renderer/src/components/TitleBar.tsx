@@ -1,12 +1,19 @@
 import { AppBar, Toolbar, Typography, Chip, Stack, Button } from '@mui/material'
 import { projectApi } from '../../api/project.api'
-import { useProjectStore } from '../stores/project.store'
+import { useProjectStore, type SaveStatus } from '../stores/project.store'
 
-function saveStatusLabel(isDirty: boolean, saveStatus: string): string {
+function saveStatusLabel(isDirty: boolean, saveStatus: SaveStatus): string {
   if (saveStatus === 'saving') return 'Saving...'
+  if (saveStatus === 'unsaved') return 'Unsaved Changes'
   if (isDirty) return 'Unsaved Changes'
   if (saveStatus === 'error') return 'Save Error'
   return 'Saved'
+}
+
+function saveStatusColor(isDirty: boolean, saveStatus: SaveStatus): 'default' | 'error' | 'warning' {
+  if (saveStatus === 'error') return 'error'
+  if (isDirty || saveStatus === 'unsaved') return 'warning'
+  return 'default'
 }
 
 export default function TitleBar(): React.JSX.Element {
@@ -14,6 +21,30 @@ export default function TitleBar(): React.JSX.Element {
   const hydrate = useProjectStore((state) => state.hydrate)
   const isDirty = useProjectStore((state) => state.isDirty)
   const saveStatus = useProjectStore((state) => state.saveStatus)
+  const setSaveStatus = useProjectStore((state) => state.setSaveStatus)
+  const setSaveError = useProjectStore((state) => state.setSaveError)
+
+  const saveProject = async (): Promise<void> => {
+    setSaveStatus('saving')
+    setSaveError(null)
+    try {
+      const snapshot = await projectApi.save()
+      hydrate(snapshot)
+    } catch (cause) {
+      setSaveError(cause instanceof Error ? cause.message : 'Unable to save project.')
+    }
+  }
+
+  const saveProjectAs = async (): Promise<void> => {
+    setSaveStatus('saving')
+    setSaveError(null)
+    try {
+      const snapshot = await projectApi.saveAs()
+      hydrate(snapshot)
+    } catch (cause) {
+      setSaveError(cause instanceof Error ? cause.message : 'Unable to save project copy.')
+    }
+  }
 
   const closeProject = async (): Promise<void> => {
     const snapshot = await projectApi.close()
@@ -36,10 +67,16 @@ export default function TitleBar(): React.JSX.Element {
           <Chip
             label={saveStatusLabel(isDirty, saveStatus)}
             size="small"
-            color={isDirty ? 'warning' : saveStatus === 'error' ? 'error' : 'default'}
+            color={saveStatusColor(isDirty, saveStatus)}
             variant="outlined"
             sx={{ fontSize: '0.7rem' }}
           />
+          <Button color="inherit" size="small" onClick={() => void saveProject()} disabled={!activeProject}>
+            Save
+          </Button>
+          <Button color="inherit" size="small" onClick={() => void saveProjectAs()} disabled={!activeProject}>
+            Save As
+          </Button>
           <Button color="inherit" size="small" onClick={() => void closeProject()}>
             Close
           </Button>

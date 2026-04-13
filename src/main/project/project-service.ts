@@ -12,9 +12,11 @@ import {
 import { basename, dirname, extname, join } from 'path'
 import { closeDatabase, getDb, openDatabase, type DbConnection } from '../db/connection'
 import { runMigrations } from '../db/migrations/runner'
+import { getAppSettings } from '../settings/app-settings-service'
 import type {
   CreateProjectInput,
   ProjectMetadata,
+  ProjectSaveStatus,
   ProjectStateSnapshot,
   RecentProject,
   RecordCounts,
@@ -40,6 +42,9 @@ interface ProjectMetaRow {
 let activeProject: ProjectMetadata | null = null
 let isDirty = false
 let isRecoveryMode = false
+let saveStatus: ProjectSaveStatus = 'saved'
+let saveError: string | null = null
+let autoSaveTimer: NodeJS.Timeout | null = null
 
 function recentProjectsPath(): string {
   return join(app.getPath('userData'), RECENT_PROJECTS_FILENAME)
@@ -173,7 +178,42 @@ function refreshActiveProject(): void {
     activeProject = null
     isDirty = false
     isRecoveryMode = false
+    saveStatus = 'saved'
+    saveError = null
   }
+}
+
+function setCleanState(project: ProjectMetadata | null): void {
+  activeProject = project
+  isDirty = false
+  saveStatus = 'saved'
+  saveError = null
+}
+
+function setSaveFailure(error: unknown): void {
+  saveStatus = 'error'
+  saveError = error instanceof Error ? error.message : 'Unable to save project.'
+}
+
+function stopAutoSaveTimer(): void {
+  if (!autoSaveTimer) return
+
+  clearInterval(autoSaveTimer)
+  autoSaveTimer = null
+}
+
+function startAutoSaveTimer(): void {
+  stopAutoSaveTimer()
+  const intervalMs = getAppSettings().autoSaveIntervalMs
+  autoSaveTimer = setInterval(() => {
+    if (!activeProject || !isDirty || saveStatus === 'saving' || isRecoveryMode) return
+
+    try {
+      saveProject()
+    } catch {
+      // saveProject updates saveStatus/saveError before rethrowing.
+    }
+  }, intervalMs)
 }
 
 function closeExistingDatabase(): void {
@@ -255,10 +295,11 @@ export async function createProject(
          updated_at = excluded.updated_at`,
     ).run(projectName, gameTitle, EXPECTED_SCHEMA_VERSION)
 
-    activeProject = buildProjectMetadata(db, filePath)
-    isDirty = false
+    const project = buildProjectMetadata(db, filePath)
+    setCleanState(project)
     isRecoveryMode = false
-    updateRecentProjects(activeProject)
+    startAutoSaveTimer()
+    updateRecentProjects(project)
     return getProjectState()
   } catch (error) {
     closeExistingDatabase()
@@ -282,49 +323,89 @@ export async function openProject(
   const db = openDatabase(selectedPath)
   runMigrations(db)
 
-  activeProject = buildProjectMetadata(db, selectedPath)
-  isDirty = false
+  const project = buildProjectMetadata(db, selectedPath)
+  setCleanState(project)
   isRecoveryMode = false
-  updateRecentProjects(activeProject)
+  startAutoSaveTimer()
+  updateRecentProjects(project)
   return getProjectState()
 }
 
 export function saveProject(): ProjectStateSnapshot {
   if (!activeProject) return getProjectState()
 
-  const db = getDb()
-  db.pragma('wal_checkpoint(TRUNCATE)')
-  activeProject = buildProjectMetadata(db, activeProject.filePath)
-  isDirty = false
-  updateRecentProjects(activeProject)
-  return getProjectState()
+  saveStatus = 'saving'
+  saveError = null
+
+  try {
+    const db = getDb()
+    db.pragma('wal_checkpoint(TRUNCATE)')
+    setCleanState(buildProjectMetadata(db, activeProject.filePath))
+    updateRecentProjects(activeProject)
+    return getProjectState()
+  } catch (error) {
+    setSaveFailure(error)
+    throw error
+  }
 }
 
 export async function saveProjectAs(owner: BrowserWindow | null): Promise<ProjectStateSnapshot> {
   if (!activeProject) return getProjectState()
 
   saveProject()
-  const targetPath = await promptForSaveAsPath(owner, activeProject.filePath)
+  const sourcePath = activeProject.filePath
+  const targetPath = await promptForSaveAsPath(owner, sourcePath)
   if (!targetPath) return getProjectState()
-  if (targetPath.toLowerCase() === activeProject.filePath.toLowerCase()) return getProjectState()
+  if (targetPath.toLowerCase() === sourcePath.toLowerCase()) return getProjectState()
   if (existsSync(targetPath)) throw new Error('A project file already exists at that path.')
 
-  copyFileSync(activeProject.filePath, targetPath)
-  closeExistingDatabase()
-  const db = openDatabase(targetPath)
-  activeProject = buildProjectMetadata(db, targetPath)
-  isDirty = false
-  isRecoveryMode = false
-  updateRecentProjects(activeProject)
-  return getProjectState()
+  let switchedDatabase = false
+  try {
+    copyFileSync(sourcePath, targetPath)
+    closeExistingDatabase()
+    switchedDatabase = true
+    const db = openDatabase(targetPath)
+    setCleanState(buildProjectMetadata(db, targetPath))
+    isRecoveryMode = false
+    startAutoSaveTimer()
+    updateRecentProjects(activeProject)
+    return getProjectState()
+  } catch (error) {
+    if (switchedDatabase) {
+      try {
+        const db = openDatabase(sourcePath)
+        setCleanState(buildProjectMetadata(db, sourcePath))
+        startAutoSaveTimer()
+      } catch {
+        // Preserve the original save failure as the user-facing error.
+      }
+    }
+    setSaveFailure(error)
+    throw error
+  }
 }
 
 export function closeActiveProject(): ProjectStateSnapshot {
+  stopAutoSaveTimer()
   closeExistingDatabase()
-  activeProject = null
-  isDirty = false
+  setCleanState(null)
   isRecoveryMode = false
   return getProjectState()
+}
+
+export function markProjectDirty(): ProjectStateSnapshot {
+  if (!activeProject || isRecoveryMode) return getProjectState()
+
+  isDirty = true
+  saveStatus = 'unsaved'
+  saveError = null
+  return getProjectState()
+}
+
+export function restartAutoSaveTimer(): void {
+  if (activeProject) {
+    startAutoSaveTimer()
+  }
 }
 
 export function removeRecentProject(filePath: string): ProjectStateSnapshot {
@@ -344,5 +425,7 @@ export function getProjectState(): ProjectStateSnapshot {
     recentProjects: readRecentProjects(),
     isDirty,
     isRecoveryMode,
+    saveStatus,
+    saveError,
   }
 }

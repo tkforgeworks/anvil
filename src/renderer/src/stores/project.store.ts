@@ -1,7 +1,12 @@
 import { create } from 'zustand'
-import type { ProjectMetadata, ProjectStateSnapshot, RecentProject } from '../../../shared/project-types'
+import type {
+  ProjectMetadata,
+  ProjectSaveStatus,
+  ProjectStateSnapshot,
+  RecentProject,
+} from '../../../shared/project-types'
 
-export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
+export type SaveStatus = ProjectSaveStatus
 
 interface ProjectState {
   activeProject: ProjectMetadata | null
@@ -9,12 +14,14 @@ interface ProjectState {
   isDirty: boolean
   isRecoveryMode: boolean
   saveStatus: SaveStatus
+  saveError: string | null
 
   hydrate: (snapshot: ProjectStateSnapshot) => void
   setProject: (project: ProjectMetadata) => void
   clearProject: () => void
   setDirty: (dirty: boolean) => void
   setSaveStatus: (status: SaveStatus) => void
+  setSaveError: (error: string | null) => void
 }
 
 export const useProjectStore = create<ProjectState>()((set) => ({
@@ -22,7 +29,8 @@ export const useProjectStore = create<ProjectState>()((set) => ({
   recentProjects: [],
   isDirty: false,
   isRecoveryMode: false,
-  saveStatus: 'idle',
+  saveStatus: 'saved',
+  saveError: null,
 
   hydrate: (snapshot) =>
     set({
@@ -30,12 +38,30 @@ export const useProjectStore = create<ProjectState>()((set) => ({
       recentProjects: snapshot.recentProjects,
       isDirty: snapshot.isDirty,
       isRecoveryMode: snapshot.isRecoveryMode,
-      saveStatus: snapshot.isDirty ? 'idle' : 'saved',
+      saveStatus: snapshot.saveStatus,
+      saveError: snapshot.saveError,
     }),
   setProject: (project) =>
-    set({ activeProject: project, isDirty: false, isRecoveryMode: false, saveStatus: 'saved' }),
+    set({
+      activeProject: project,
+      isDirty: false,
+      isRecoveryMode: false,
+      saveStatus: 'saved',
+      saveError: null,
+    }),
   clearProject: () =>
-    set({ activeProject: null, isDirty: false, isRecoveryMode: false, saveStatus: 'idle' }),
-  setDirty: (dirty) => set({ isDirty: dirty }),
+    set({
+      activeProject: null,
+      isDirty: false,
+      isRecoveryMode: false,
+      saveStatus: 'saved',
+      saveError: null,
+    }),
+  setDirty: (dirty) => set({ isDirty: dirty, saveStatus: dirty ? 'unsaved' : 'saved' }),
   setSaveStatus: (status) => set({ saveStatus: status }),
+  setSaveError: (error) =>
+    set((state) => ({
+      saveError: error,
+      saveStatus: error ? 'error' : state.saveStatus,
+    })),
 }))
