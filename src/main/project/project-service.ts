@@ -164,6 +164,18 @@ function buildProjectMetadata(db: DbConnection, filePath: string): ProjectMetada
   }
 }
 
+function refreshActiveProject(): void {
+  if (!activeProject) return
+
+  try {
+    activeProject = buildProjectMetadata(getDb(), activeProject.filePath)
+  } catch {
+    activeProject = null
+    isDirty = false
+    isRecoveryMode = false
+  }
+}
+
 function closeExistingDatabase(): void {
   try {
     closeDatabase(getDb())
@@ -325,6 +337,8 @@ export function removeRecentProject(filePath: string): ProjectStateSnapshot {
 }
 
 export function getProjectState(): ProjectStateSnapshot {
+  refreshActiveProject()
+
   return {
     activeProject,
     recentProjects: readRecentProjects(),
