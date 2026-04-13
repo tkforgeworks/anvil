@@ -8,10 +8,12 @@ import { registerLootTablesHandlers } from './loot-tables.handlers'
 import { registerValidationHandlers } from './validation.handlers'
 import { registerExportHandlers } from './export.handlers'
 import { registerSettingsHandlers } from './settings.handlers'
+import { registerMetaHandlers } from './meta.handlers'
+import { registerCustomFieldsHandlers } from './custom-fields.handlers'
 
 /**
  * Registers all IPC handlers for all domains.
- * Called once from the main process entry before the window is created.
+ * Called once from the main process entry inside app.whenReady().
  */
 export function registerAllIpcHandlers(): void {
   registerProjectHandlers()
@@ -24,4 +26,6 @@ export function registerAllIpcHandlers(): void {
   registerValidationHandlers()
   registerExportHandlers()
   registerSettingsHandlers()
+  registerMetaHandlers()
+  registerCustomFieldsHandlers()
 }

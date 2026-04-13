@@ -72,6 +72,20 @@ export const IPC_CHANNELS = {
   SETTINGS_SET_APP: 'settings:set-app',
   SETTINGS_GET_PROJECT: 'settings:get-project',
   SETTINGS_SET_PROJECT: 'settings:set-project',
+
+  // Meta-layer reference data (read-only lookups for UI)
+  META_LIST_ITEM_CATEGORIES: 'meta:list-item-categories',
+  META_LIST_NPC_TYPES: 'meta:list-npc-types',
+
+  // Custom field definitions
+  CUSTOM_FIELDS_LIST_DEFINITIONS: 'custom-fields:list-definitions',
+  CUSTOM_FIELDS_CREATE_DEFINITION: 'custom-fields:create-definition',
+  CUSTOM_FIELDS_UPDATE_DEFINITION: 'custom-fields:update-definition',
+  CUSTOM_FIELDS_DELETE_DEFINITION: 'custom-fields:delete-definition',
+
+  // Custom field values (EAV read/write)
+  CUSTOM_FIELDS_GET_VALUES: 'custom-fields:get-values',
+  CUSTOM_FIELDS_SET_VALUES: 'custom-fields:set-values',
 } as const
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS]

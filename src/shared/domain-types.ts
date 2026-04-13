@@ -100,6 +100,70 @@ export interface CustomFieldValue {
   value: string | null
 }
 
+// ─── Custom Field Definitions ─────────────────────────────────────────────────
+
+export type CustomFieldScope = 'item_category' | 'npc_type'
+export type CustomFieldType = 'text' | 'integer' | 'decimal' | 'boolean' | 'enum'
+
+export interface CustomFieldDefinition {
+  id: string
+  scopeType: CustomFieldScope
+  scopeId: string
+  fieldName: string
+  fieldType: CustomFieldType
+  defaultValue: string | null
+  enumOptions: string[]
+  isRequired: boolean
+  isSearchable: boolean
+  sortOrder: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CreateCustomFieldDefinitionInput {
+  scopeType: CustomFieldScope
+  scopeId: string
+  fieldName: string
+  fieldType: CustomFieldType
+  defaultValue?: string | null
+  enumOptions?: string[]
+  isRequired?: boolean
+  isSearchable?: boolean
+  sortOrder?: number
+}
+
+export interface UpdateCustomFieldDefinitionInput {
+  fieldName?: string
+  defaultValue?: string | null
+  enumOptions?: string[]  // field_type is immutable after creation
+  isRequired?: boolean
+  isSearchable?: boolean
+  sortOrder?: number
+}
+
+export interface DeleteDefinitionResult {
+  deleted: boolean
+  affectedCount: number  // 0 when deleted; N when blocked (N records have values)
+}
+
+// ─── Meta-layer reference types ───────────────────────────────────────────────
+
+export interface MetaItemCategory {
+  id: string
+  displayName: string
+  exportKey: string
+  description: string
+  sortOrder: number
+}
+
+export interface MetaNpcType {
+  id: string
+  displayName: string
+  exportKey: string
+  description: string
+  sortOrder: number
+}
+
 // ─── Crafting Recipes ─────────────────────────────────────────────────────────
 
 export interface RecipeRecord extends BaseRecord {
