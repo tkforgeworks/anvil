@@ -27,7 +27,7 @@ function copyLegacyProjectMeta(db: DbConnection): void {
       game_title,
       schema_version,
       max_level,
-      'warning',
+      'Warning',
       created_at,
       updated_at
     FROM project_meta
@@ -47,8 +47,8 @@ export function up(db: DbConnection): void {
       game_title     TEXT    NOT NULL DEFAULT '',
       schema_version INTEGER NOT NULL DEFAULT 1,
       max_level      INTEGER NOT NULL DEFAULT 50,
-      soft_delete_reference_severity TEXT NOT NULL DEFAULT 'warning'
-        CHECK (soft_delete_reference_severity IN ('warning', 'error')),
+      soft_delete_reference_severity TEXT NOT NULL DEFAULT 'Warning'
+        CHECK (soft_delete_reference_severity IN ('Warning', 'Error')),
       created_at     TEXT    NOT NULL DEFAULT (datetime('now')),
       updated_at     TEXT    NOT NULL DEFAULT (datetime('now'))
     );
