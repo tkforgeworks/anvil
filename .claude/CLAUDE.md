@@ -4,7 +4,7 @@
 
 Anvil is a desktop RPG data management tool built with Electron + React + TypeScript + SQLite. It provides structured editors for six first-class game data domains (Character Classes, Abilities, Items, Crafting Recipes, NPCs, Loot Tables) and a Nunjucks-based export engine.
 
-**Current status:** Pre-implementation — planning and architecture phase. No source code exists yet.
+**Current status:** ANV-4 (Project Bootstrap & Application Shell) implemented. Application shell compiles and runs with full IPC bridge, SQLite layer, React Router, MUI theme, and Zustand stores in place.
 
 ---
 
@@ -13,7 +13,7 @@ Anvil is a desktop RPG data management tool built with Electron + React + TypeSc
 | Document | Purpose |
 | :---- | :---- |
 | `archive/Anvil_PRD_v1_4.md` | **Source of truth** for all requirements and feature scope. Always consult this for what the product must do. |
-| `Anvil_Implementation_Design_v1_0.md` | High-level architecture and implementation strategy. Derived from the PRD. Starting point for epics and implementation work. |
+| `design_notes/Anvil_Implementation_Design_v1_0.md` | High-level architecture and implementation strategy. Derived from the PRD. Starting point for epics and implementation work. |
 | `archive/Anvil_Architecture_and_Schema_Design.md` | Prior design document — **superseded and not aligned with PRD v1.4**. Do not use as a reference for implementation decisions. |
 
 ---
@@ -45,6 +45,13 @@ Six first-class data domains, each with full CRUD, soft-delete, custom fields (w
 4. **Crafting Recipes** — ingredient + output item resolution, station and specialization references
 5. **NPCs** — typed (per NPC type custom fields), class-based stat inheritance (additive, multi-class), loot table and ability references
 6. **Loot Tables** — standalone drop tables with integer weight entries referencing items
+
+---
+
+## Known Technical Debt
+
+**npm audit — devDependency toolchain vulnerabilities (accepted)**
+`npm audit --omit=dev` reports zero production vulnerabilities. The ~27 remaining findings are all in devDependencies: `@electron-forge/*` → `@electron/rebuild` → `@electron/node-gyp` → `tar`/`cacache`, and `@electron-forge/cli` → `@inquirer/prompts` → `tmp`. These have "No fix available" because they are bound to electron-forge 7.x depending on a pre-stable `@electron/rebuild`. They will resolve when electron-forge 8.x exits alpha. None of these packages ship in the packaged application. Do not spend time re-investigating or attempting to force-fix these.
 
 ---
 

@@ -1,0 +1,20 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "src/main/**/*",
+    "src/preload/**/*",
+    "src/shared/**/*",
+    "forge.config.ts",
+    "electron.vite.config.ts"
+  ],
+  "compilerOptions": {
+    "composite": true,
+    "outDir": ".vite/build",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "types": ["node"],
+    "paths": {
+      "@shared/*": ["src/shared/*"]
+    }
+  }
+}

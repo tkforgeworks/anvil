@@ -1,2 +1,13 @@
 archive/
 .claude/settings.local.json
+
+# Dependencies
+node_modules/
+
+# Build output
+.vite/
+out/
+dist/
+
+# Native module build artifacts
+build/Release/
