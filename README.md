@@ -4,7 +4,7 @@ Anvil is a desktop application for managing RPG game data. It gives game develop
 
 Anvil is game-agnostic — it ships with sensible RPG defaults but allows full schema customization per project.
 
-> **Status:** Pre-implementation — planning and architecture phase. No source code yet.
+> **Status:** Application shell bootstrapped and running (ANV-4 complete). Domain editors, project lifecycle, formula engine, and export system are next.
 
 ---
 
@@ -30,17 +30,17 @@ No sprite/asset management, dialogue branching logic, combat simulation, multipl
 
 | Layer | Technology |
 |---|---|
-| Desktop runtime | Electron |
-| UI framework | React + TypeScript |
-| UI component library | Material UI (MUI) |
-| State management | Zustand |
+| Desktop runtime | Electron 41 |
+| UI framework | React 18 + TypeScript 5.5 |
+| UI component library | Material UI (MUI) 6 |
+| State management | Zustand 5 |
 | Main process | Node.js + TypeScript |
-| Database | SQLite via `better-sqlite3` |
+| Database | SQLite via `better-sqlite3` 12 |
 | IPC | Electron `contextBridge` (preload) |
 | Template engine | Nunjucks |
 | Charting | Recharts |
-| Bundler | Vite (`electron-vite`) |
-| Packager | Electron Forge |
+| Bundler | Vite (`electron-vite` 5) |
+| Packager | Electron Forge 7 |
 
 ---
 
@@ -48,30 +48,72 @@ No sprite/asset management, dialogue branching logic, combat simulation, multipl
 
 ```
 anvil/
-├── archive/                              # Planning documents
-│   ├── Anvil_PRD_v1_4.md                # Product Requirements Document (source of truth)
+├── archive/                                      # Planning documents
+│   ├── Anvil_PRD_v1_4.md                        # Product Requirements Document (source of truth)
 │   └── Anvil_Architecture_and_Schema_Design.md  # Prior design doc (superseded)
-├── Anvil_Implementation_Design_v1_0.md  # Current architecture & implementation strategy
+├── design_notes/
+│   └── Anvil_Implementation_Design_v1_0.md      # Current architecture & implementation strategy
+├── src/
+│   ├── main/                    # Electron main process
+│   │   ├── index.ts             # Entry point — IPC registration, DB bootstrap, window creation
+│   │   ├── db/
+│   │   │   ├── connection.ts    # SQLite singleton (openDatabase, getDb, closeDatabase)
+│   │   │   └── migrations/      # Sequential migration runner + migration files
+│   │   └── ipc/                 # Domain IPC handler stubs (one file per domain)
+│   ├── preload/
+│   │   └── index.ts             # contextBridge — exposes window.anvil with channel allowlist
+│   ├── renderer/
+│   │   ├── api/                 # Typed IPC client stubs (one file per domain)
+│   │   └── src/
+│   │       ├── main.tsx         # React root — ThemeProvider + HashRouter
+│   │       ├── App.tsx          # Route tree (11 routes)
+│   │       ├── components/      # AppShell, Sidebar, TitleBar
+│   │       ├── pages/           # Placeholder page components (one per domain)
+│   │       ├── stores/          # Zustand stores (ui + 10 domain stores)
+│   │       └── themes/          # MUI dark/light theme objects
+│   └── shared/
+│       ├── ipc-channels.ts      # All IPC channel name constants
+│       ├── ipc-types.ts         # AnvilBridge interface (shared main/renderer contract)
+│       └── domain-types.ts      # Base domain record types
+├── electron.vite.config.ts      # electron-vite build config (main/preload/renderer targets)
+├── forge.config.ts              # Electron Forge packaging config
+├── tsconfig.json                # Root tsconfig (references main + renderer)
+├── tsconfig.main.json           # Main/preload TypeScript config (Node target)
+├── tsconfig.renderer.json       # Renderer TypeScript config (DOM target)
 ├── .claude/
-│   └── CLAUDE.md                        # Project instructions for Claude Code
+│   └── CLAUDE.md                # Project instructions for Claude Code
 └── README.md
 ```
-
-Source code structure (`src/`) will be established during the bootstrapping epic.
 
 ---
 
 ## Getting Started
 
-> The project is not yet bootstrapped. Commands below are the intended development workflow.
-
 **Prerequisites:** Node.js 20+, npm 10+
 
 ```bash
 npm install
-npm run dev    # Development mode with HMR
-npm run make   # Build and package for current platform
+npm run rebuild   # Recompile better-sqlite3 native addon against the installed Electron version
+npm run dev       # Development mode with HMR
+npm run make      # Build and package for current platform
 ```
+
+> **Note on `npm run rebuild`:** `better-sqlite3` is a native Node.js addon and must be compiled against the exact Electron version in use. Run this once after `npm install` and again after any Electron version upgrade.
+
+---
+
+## Development Status
+
+| Phase | Scope | Status |
+|---|---|---|
+| **Phase 1** | Character Classes, Abilities, Items, Crafting Recipes; project lifecycle; formula engine; validation; custom fields | In progress |
+| **Phase 2** | NPC editor, Loot Table editor, export system, archive views, bulk ops, undo/redo | Not started |
+
+### Completed epics
+
+| Epic | Description |
+|---|---|
+| ANV-4 | Project bootstrap — Electron + electron-vite setup, IPC bridge, SQLite layer, React Router shell, MUI theme, Zustand stores |
 
 ---
 
@@ -81,6 +123,8 @@ npm run make   # Build and package for current platform
 
 All IPC between the Electron main process and the React renderer passes through a typed `contextBridge`. The renderer holds no database connection and calls no Node.js APIs directly. All data reads and writes are IPC calls to the main process, which owns SQLite access, formula evaluation, export rendering, and file I/O.
 
+The preload script (`src/preload/index.ts`) exposes `window.anvil` with two methods: `invoke(channel, ...args)` (validates against an explicit channel allowlist before forwarding) and `on(channel, callback)` (push events from main, returns an unsubscribe function).
+
 ### Project File
 
 `.anvil` files are SQLite databases. The schema is organized into four logical layers:
@@ -89,6 +133,8 @@ All IPC between the Electron main process and the React renderer passes through 
 2. **Meta-layer definitions** — stat definitions, rarity tiers, item categories, NPC types, crafting stations (the project's configurable vocabulary)
 3. **Custom field schemas** — EAV field definitions per item category and NPC type
 4. **Domain records** — the six first-class data domains and their sub-tables
+
+Schema changes are applied via the sequential migration runner in `src/main/db/migrations/`. Each migration runs in a transaction and is tracked in a `schema_migrations` table.
 
 ### Identity Model
 
