@@ -1,4 +1,6 @@
 import { Routes, Route } from 'react-router-dom'
+import { Box, CircularProgress } from '@mui/material'
+import { useEffect, useState } from 'react'
 import AppShell from './components/AppShell'
 import DashboardPage from './pages/DashboardPage'
 import ClassesPage from './pages/ClassesPage'
@@ -11,8 +13,44 @@ import ValidationPage from './pages/ValidationPage'
 import RecycleBinPage from './pages/RecycleBinPage'
 import ExportPage from './pages/ExportPage'
 import SettingsPage from './pages/SettingsPage'
+import WelcomePage from './pages/WelcomePage'
+import { projectApi } from '../api/project.api'
+import { useProjectStore } from './stores/project.store'
 
 export default function App(): React.JSX.Element {
+  const activeProject = useProjectStore((state) => state.activeProject)
+  const hydrate = useProjectStore((state) => state.hydrate)
+  const [isLoading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let isMounted = true
+
+    projectApi
+      .getState()
+      .then((snapshot) => {
+        if (isMounted) hydrate(snapshot)
+      })
+      .finally(() => {
+        if (isMounted) setLoading(false)
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [hydrate])
+
+  if (isLoading) {
+    return (
+      <Box sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}>
+        <CircularProgress aria-label="Loading project state" />
+      </Box>
+    )
+  }
+
+  if (!activeProject) {
+    return <WelcomePage />
+  }
+
   return (
     <Routes>
       <Route path="/" element={<AppShell />}>

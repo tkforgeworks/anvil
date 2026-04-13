@@ -1,17 +1,19 @@
 import { IPC_CHANNELS } from '../../shared/ipc-channels'
+import type { CreateProjectInput, ProjectStateSnapshot } from '../../shared/project-types'
 
-// Full types defined in the Project Lifecycle epic
 export const projectApi = {
-  create: (name: string, gameTitle: string, filePath: string) =>
-    window.anvil.invoke<unknown>(IPC_CHANNELS.PROJECT_CREATE, { name, gameTitle, filePath }),
-  open: (filePath: string) =>
-    window.anvil.invoke<unknown>(IPC_CHANNELS.PROJECT_OPEN, filePath),
+  create: (input: CreateProjectInput) =>
+    window.anvil.invoke<ProjectStateSnapshot>(IPC_CHANNELS.PROJECT_CREATE, input),
+  open: (filePath?: string) =>
+    window.anvil.invoke<ProjectStateSnapshot>(IPC_CHANNELS.PROJECT_OPEN, filePath),
   save: () =>
-    window.anvil.invoke<void>(IPC_CHANNELS.PROJECT_SAVE),
-  saveAs: (filePath: string) =>
-    window.anvil.invoke<void>(IPC_CHANNELS.PROJECT_SAVE_AS, filePath),
+    window.anvil.invoke<ProjectStateSnapshot>(IPC_CHANNELS.PROJECT_SAVE),
+  saveAs: () =>
+    window.anvil.invoke<ProjectStateSnapshot>(IPC_CHANNELS.PROJECT_SAVE_AS),
   close: () =>
-    window.anvil.invoke<void>(IPC_CHANNELS.PROJECT_CLOSE),
+    window.anvil.invoke<ProjectStateSnapshot>(IPC_CHANNELS.PROJECT_CLOSE),
   getState: () =>
-    window.anvil.invoke<unknown>(IPC_CHANNELS.PROJECT_GET_STATE),
+    window.anvil.invoke<ProjectStateSnapshot>(IPC_CHANNELS.PROJECT_GET_STATE),
+  removeRecent: (filePath: string) =>
+    window.anvil.invoke<ProjectStateSnapshot>(IPC_CHANNELS.PROJECT_REMOVE_RECENT, filePath),
 }

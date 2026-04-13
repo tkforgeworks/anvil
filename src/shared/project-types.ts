@@ -1,0 +1,39 @@
+export const PROJECT_TEMPLATES = ['blank', 'fantasy-rpg', 'sci-fi-rpg'] as const
+
+export type ProjectTemplateId = (typeof PROJECT_TEMPLATES)[number]
+
+export interface RecordCounts {
+  classes: number
+  abilities: number
+  items: number
+  recipes: number
+  npcs: number
+  lootTables: number
+}
+
+export interface ProjectMetadata {
+  projectName: string
+  gameTitle: string
+  filePath: string
+  schemaVersion: number
+  lastModifiedAt: string
+  recordCounts: RecordCounts
+}
+
+export interface RecentProject extends ProjectMetadata {
+  exists: boolean
+}
+
+export interface ProjectStateSnapshot {
+  activeProject: ProjectMetadata | null
+  recentProjects: RecentProject[]
+  isDirty: boolean
+  isRecoveryMode: boolean
+}
+
+export interface CreateProjectInput {
+  projectName: string
+  gameTitle: string
+  templateId: ProjectTemplateId
+  filePath?: string
+}

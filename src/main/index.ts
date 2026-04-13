@@ -1,8 +1,7 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { registerAllIpcHandlers } from './ipc'
-import { openDatabase, closeDatabase, getDb } from './db/connection'
-import { runMigrations } from './db/migrations/runner'
+import { closeActiveProject } from './project/project-service'
 
 function createWindow(): void {
   const win = new BrowserWindow({
@@ -29,11 +28,6 @@ registerAllIpcHandlers()
 ipcMain.handle('ping', () => 'pong')
 
 app.whenReady().then(() => {
-  // Bootstrap an in-memory DB so the connection is available during development.
-  // The Project lifecycle epic (project:open / project:create) will replace this
-  // with the actual project file path.
-  const db = openDatabase(':memory:')
-  runMigrations(db)
   createWindow()
 
   app.on('activate', () => {
@@ -50,9 +44,5 @@ app.on('window-all-closed', () => {
 })
 
 app.on('before-quit', () => {
-  try {
-    closeDatabase(getDb())
-  } catch {
-    // DB may not be open if the app quit before fully initialising
-  }
+  closeActiveProject()
 })

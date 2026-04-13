@@ -8,6 +8,7 @@ export const IPC_CHANNELS = {
   PROJECT_SAVE_AS: 'project:save-as',
   PROJECT_CLOSE: 'project:close',
   PROJECT_GET_STATE: 'project:get-state',
+  PROJECT_REMOVE_RECENT: 'project:remove-recent',
 
   // Character Classes
   CLASSES_LIST: 'classes:list',
