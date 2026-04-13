@@ -2,6 +2,7 @@ import { IPC_CHANNELS } from '../../shared/ipc-channels'
 import type {
   ClassRecord,
   CreateClassInput,
+  StatGrowthEntry,
   UpdateClassInput,
 } from '../../shared/domain-types'
 
@@ -26,4 +27,10 @@ export const classesApi = {
 
   duplicate: (id: string) =>
     window.anvil.invoke<ClassRecord | null>(IPC_CHANNELS.CLASSES_DUPLICATE, id),
+
+  getStatGrowth: (classId: string) =>
+    window.anvil.invoke<StatGrowthEntry[]>(IPC_CHANNELS.CLASSES_GET_STAT_GROWTH, classId),
+
+  setStatGrowth: (classId: string, entries: StatGrowthEntry[]) =>
+    window.anvil.invoke<void>(IPC_CHANNELS.CLASSES_SET_STAT_GROWTH, classId, entries),
 }

@@ -1,6 +1,6 @@
 import { ipcMain } from 'electron'
 import { IPC_CHANNELS } from '../../shared/ipc-channels'
-import type { CreateClassInput, UpdateClassInput } from '../../shared/domain-types'
+import type { CreateClassInput, StatGrowthEntry, UpdateClassInput } from '../../shared/domain-types'
 import { markProjectDirty } from '../project/project-service'
 import { classRepository } from '../repositories'
 
@@ -38,4 +38,16 @@ export function registerClassesHandlers(): void {
     if (record) markProjectDirty()
     return record
   })
+
+  ipcMain.handle(IPC_CHANNELS.CLASSES_GET_STAT_GROWTH, (_event, classId: string) =>
+    classRepository.getStatGrowth(classId),
+  )
+
+  ipcMain.handle(
+    IPC_CHANNELS.CLASSES_SET_STAT_GROWTH,
+    (_event, classId: string, entries: StatGrowthEntry[]) => {
+      classRepository.setStatGrowth(classId, entries)
+      markProjectDirty()
+    },
+  )
 }

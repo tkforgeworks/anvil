@@ -17,6 +17,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { classesApi } from '../../api/classes.api'
 import type { ClassRecord } from '../../../shared/domain-types'
+import StatGrowthEditor from '../components/StatGrowthEditor'
 
 // ─── Tab panels ───────────────────────────────────────────────────────────────
 
@@ -252,7 +253,7 @@ export default function ClassEditorPage(): React.JSX.Element {
 
       {/* Stat Growth tab */}
       <TabPanel index={1} value={activeTab}>
-        <PlaceholderPanel ticket="ANV-34" label="Stat growth curve editor — coming in ANV-34" />
+        <StatGrowthEditor classId={record.id} />
       </TabPanel>
 
       {/* Derived Stats tab */}

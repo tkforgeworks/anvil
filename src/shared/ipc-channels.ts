@@ -18,6 +18,8 @@ export const IPC_CHANNELS = {
   CLASSES_DELETE: 'classes:delete',
   CLASSES_RESTORE: 'classes:restore',
   CLASSES_DUPLICATE: 'classes:duplicate',
+  CLASSES_GET_STAT_GROWTH: 'classes:get-stat-growth',
+  CLASSES_SET_STAT_GROWTH: 'classes:set-stat-growth',
 
   // Abilities
   ABILITIES_LIST: 'abilities:list',
@@ -77,6 +79,8 @@ export const IPC_CHANNELS = {
   // Meta-layer reference data (read-only lookups for UI)
   META_LIST_ITEM_CATEGORIES: 'meta:list-item-categories',
   META_LIST_NPC_TYPES: 'meta:list-npc-types',
+  META_LIST_STATS: 'meta:list-stats',
+  META_GET_PROJECT_SETTINGS: 'meta:get-project-settings',
 
   // Custom field definitions
   CUSTOM_FIELDS_LIST_DEFINITIONS: 'custom-fields:list-definitions',

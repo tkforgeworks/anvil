@@ -164,6 +164,17 @@ export interface MetaNpcType {
   sortOrder: number
 }
 
+export interface MetaStat {
+  id: string
+  displayName: string
+  exportKey: string
+  sortOrder: number
+}
+
+export interface ProjectSettings {
+  maxLevel: number
+}
+
 // ─── Crafting Recipes ─────────────────────────────────────────────────────────
 
 export interface RecipeRecord extends BaseRecord {
