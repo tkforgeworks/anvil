@@ -217,7 +217,7 @@ export function up(db: DbConnection): void {
       PRIMARY KEY (class_id, stat_id, level)
     );
 
-    CREATE TABLE IF NOT EXISTS class_abilities (
+    CREATE TABLE IF NOT EXISTS class_ability_assignments (
       class_id TEXT NOT NULL REFERENCES classes(id) ON DELETE CASCADE,
       ability_id TEXT NOT NULL REFERENCES abilities(id),
       sort_order INTEGER NOT NULL DEFAULT 0,
@@ -237,9 +237,9 @@ export function up(db: DbConnection): void {
       loot_table_id TEXT NOT NULL REFERENCES loot_tables(id) ON DELETE CASCADE,
       item_id TEXT NOT NULL REFERENCES items(id),
       weight INTEGER NOT NULL CHECK (weight > 0),
-      min_quantity INTEGER NOT NULL DEFAULT 1 CHECK (min_quantity > 0),
-      max_quantity INTEGER NOT NULL DEFAULT 1 CHECK (max_quantity >= min_quantity),
-      conditions_json TEXT NOT NULL DEFAULT '{}',
+      quantity_min INTEGER NOT NULL DEFAULT 1 CHECK (quantity_min > 0),
+      quantity_max INTEGER NOT NULL DEFAULT 1 CHECK (quantity_max >= quantity_min),
+      conditional_flags TEXT NOT NULL DEFAULT '{}',
       sort_order INTEGER NOT NULL DEFAULT 0
     );
 
@@ -251,7 +251,7 @@ export function up(db: DbConnection): void {
       PRIMARY KEY (npc_id, class_id)
     );
 
-    CREATE TABLE IF NOT EXISTS npc_abilities (
+    CREATE TABLE IF NOT EXISTS npc_ability_assignments (
       npc_id TEXT NOT NULL REFERENCES npcs(id) ON DELETE CASCADE,
       ability_id TEXT NOT NULL REFERENCES abilities(id),
       sort_order INTEGER NOT NULL DEFAULT 0,
@@ -275,12 +275,12 @@ export function up(db: DbConnection): void {
     );
 
     CREATE TABLE IF NOT EXISTS custom_field_values (
-      record_domain TEXT NOT NULL CHECK (record_domain IN ('items', 'npcs')),
+      domain TEXT NOT NULL CHECK (domain IN ('items', 'npcs')),
       record_id TEXT NOT NULL,
       field_definition_id TEXT NOT NULL REFERENCES custom_field_definitions(id) ON DELETE CASCADE,
       value TEXT,
       updated_at TEXT NOT NULL DEFAULT (datetime('now')),
-      PRIMARY KEY (record_domain, record_id, field_definition_id)
+      PRIMARY KEY (domain, record_id, field_definition_id)
     );
 
     CREATE INDEX IF NOT EXISTS idx_classes_active ON classes(deleted_at);
@@ -290,7 +290,7 @@ export function up(db: DbConnection): void {
     CREATE INDEX IF NOT EXISTS idx_npcs_active ON npcs(deleted_at);
     CREATE INDEX IF NOT EXISTS idx_loot_tables_active ON loot_tables(deleted_at);
     CREATE INDEX IF NOT EXISTS idx_custom_field_values_record
-      ON custom_field_values(record_domain, record_id);
+      ON custom_field_values(domain, record_id);
   `)
 
   copyLegacyProjectMeta(db)
