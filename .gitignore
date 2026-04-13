@@ -1,4 +1,5 @@
 archive/
+testing/
 .claude/settings.local.json
 
 # Dependencies
