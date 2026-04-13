@@ -1,17 +1,26 @@
 import { IPC_CHANNELS } from '../../shared/ipc-channels'
+import type {
+  CreateItemInput,
+  ItemRecord,
+  UpdateItemInput,
+} from '../../shared/domain-types'
 
-// Full types defined in the Items epic
 export const itemsApi = {
   list: (includeDeleted = false) =>
-    window.anvil.invoke<unknown[]>(IPC_CHANNELS.ITEMS_LIST, { includeDeleted }),
+    window.anvil.invoke<ItemRecord[]>(IPC_CHANNELS.ITEMS_LIST, { includeDeleted }),
+
   get: (id: string) =>
-    window.anvil.invoke<unknown>(IPC_CHANNELS.ITEMS_GET, id),
-  create: (data: unknown) =>
-    window.anvil.invoke<unknown>(IPC_CHANNELS.ITEMS_CREATE, data),
-  update: (id: string, data: unknown) =>
-    window.anvil.invoke<unknown>(IPC_CHANNELS.ITEMS_UPDATE, id, data),
+    window.anvil.invoke<ItemRecord | null>(IPC_CHANNELS.ITEMS_GET, id),
+
+  create: (data: CreateItemInput) =>
+    window.anvil.invoke<ItemRecord>(IPC_CHANNELS.ITEMS_CREATE, data),
+
+  update: (id: string, data: UpdateItemInput) =>
+    window.anvil.invoke<ItemRecord | null>(IPC_CHANNELS.ITEMS_UPDATE, id, data),
+
   delete: (id: string) =>
     window.anvil.invoke<void>(IPC_CHANNELS.ITEMS_DELETE, id),
+
   restore: (id: string) =>
     window.anvil.invoke<void>(IPC_CHANNELS.ITEMS_RESTORE, id),
 }

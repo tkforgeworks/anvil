@@ -42,8 +42,8 @@ function toDomainRecord(row: DomainRecordDbRow): DomainRecordRow {
 
 export class DomainRepository {
   constructor(
-    private readonly tableName: DomainTableName,
-    private readonly dbProvider: () => DbConnection = getDb,
+    protected readonly tableName: DomainTableName,
+    protected readonly dbProvider: () => DbConnection = getDb,
   ) {}
 
   list(includeDeleted = false): DomainRecordRow[] {
@@ -119,6 +119,12 @@ export class DomainRepository {
              updated_at = datetime('now')
          WHERE id = ?`,
       )
+      .run(id)
+  }
+
+  hardDelete(id: string): void {
+    this.dbProvider()
+      .prepare(`DELETE FROM ${this.tableName} WHERE id = ?`)
       .run(id)
   }
 }

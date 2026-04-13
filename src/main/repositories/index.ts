@@ -1,10 +1,15 @@
-import { DomainRepository } from './domain-repository'
+import { ClassRepository } from './class.repository'
+import { AbilityRepository } from './ability.repository'
+import { ItemRepository } from './item.repository'
+import { RecipeRepository } from './recipe.repository'
+import { NpcRepository } from './npc.repository'
+import { LootTableRepository } from './loot-table.repository'
 
-export const classRepository = new DomainRepository('classes')
-export const abilityRepository = new DomainRepository('abilities')
-export const itemRepository = new DomainRepository('items')
-export const recipeRepository = new DomainRepository('recipes')
-export const npcRepository = new DomainRepository('npcs')
-export const lootTableRepository = new DomainRepository('loot_tables')
+export const classRepository = new ClassRepository()
+export const abilityRepository = new AbilityRepository()
+export const itemRepository = new ItemRepository()
+export const recipeRepository = new RecipeRepository()
+export const npcRepository = new NpcRepository()
+export const lootTableRepository = new LootTableRepository()
 
 export type { DomainRecordRow } from './domain-repository'
