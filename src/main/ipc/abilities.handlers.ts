@@ -25,12 +25,12 @@ export function registerAbilitiesHandlers(): void {
 
   ipcMain.handle(IPC_CHANNELS.ABILITIES_DELETE, (_event, id: string) => {
     abilityRepository.softDelete(id)
-    return markProjectDirty()
+    markProjectDirty()
   })
 
   ipcMain.handle(IPC_CHANNELS.ABILITIES_RESTORE, (_event, id: string) => {
     abilityRepository.restore(id)
-    return markProjectDirty()
+    markProjectDirty()
   })
 
   ipcMain.handle(IPC_CHANNELS.ABILITIES_DUPLICATE, (_event, id: string) => {
