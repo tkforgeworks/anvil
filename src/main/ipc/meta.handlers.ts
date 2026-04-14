@@ -95,7 +95,7 @@ export function registerMetaHandlers(): void {
 
   ipcMain.handle(IPC_CHANNELS.META_GET_PROJECT_SETTINGS, (): ProjectSettings => {
     const row = getDb()
-      .prepare(`SELECT max_level FROM project_settings LIMIT 1`)
+      .prepare(`SELECT max_level FROM project_info LIMIT 1`)
       .get() as ProjectSettingsRow
     return { maxLevel: row.max_level }
   })
