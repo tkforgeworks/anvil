@@ -23,4 +23,7 @@ export const itemsApi = {
 
   restore: (id: string) =>
     window.anvil.invoke<void>(IPC_CHANNELS.ITEMS_RESTORE, id),
+
+  duplicate: (id: string) =>
+    window.anvil.invoke<ItemRecord | null>(IPC_CHANNELS.ITEMS_DUPLICATE, id),
 }

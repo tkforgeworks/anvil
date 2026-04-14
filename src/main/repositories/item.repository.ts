@@ -45,6 +45,13 @@ const SELECT_COLS = `
   created_at, updated_at, deleted_at
 `
 
+function slugify(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+}
+
 export class ItemRepository extends DomainRepository {
   constructor(dbProvider: () => DbConnection = getDb) {
     super('items', dbProvider)
@@ -85,6 +92,47 @@ export class ItemRepository extends DomainRepository {
         rarityId: input.rarityId,
       })
     return this.get(id)!
+  }
+
+  duplicate(id: string): ItemRecord | null {
+    const source = this.get(id)
+    if (!source) return null
+
+    const newId = randomUUID()
+    const newDisplayName = `${source.displayName} (Copy)`
+    const newExportKey = `${slugify(newDisplayName)}-${randomUUID().slice(0, 8)}`
+    const db = this.dbProvider()
+
+    db.transaction(() => {
+      db.prepare(
+        `INSERT INTO items
+           (id, display_name, export_key, description, item_category_id, rarity_id)
+         VALUES
+           (@id, @displayName, @exportKey, @description, @itemCategoryId, @rarityId)`,
+      ).run({
+        id: newId,
+        displayName: newDisplayName,
+        exportKey: newExportKey,
+        description: source.description,
+        itemCategoryId: source.itemCategoryId,
+        rarityId: source.rarityId,
+      })
+
+      const values = this.getCustomFieldValues(source.id)
+      const ins = db.prepare(
+        `INSERT INTO custom_field_values (domain, record_id, field_definition_id, value)
+         VALUES ('items', @recordId, @fieldDefinitionId, @value)`,
+      )
+      for (const value of values) {
+        ins.run({
+          recordId: newId,
+          fieldDefinitionId: value.fieldDefinitionId,
+          value: value.value,
+        })
+      }
+    })()
+
+    return this.get(newId)!
   }
 
   update(id: string, input: UpdateItemInput): ItemRecord | null {

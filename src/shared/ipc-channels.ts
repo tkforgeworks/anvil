@@ -46,6 +46,7 @@ export const IPC_CHANNELS = {
   ITEMS_UPDATE: 'items:update',
   ITEMS_DELETE: 'items:delete',
   ITEMS_RESTORE: 'items:restore',
+  ITEMS_DUPLICATE: 'items:duplicate',
 
   // Crafting Recipes
   RECIPES_LIST: 'recipes:list',
@@ -88,6 +89,7 @@ export const IPC_CHANNELS = {
 
   // Meta-layer reference data (read-only lookups for UI)
   META_LIST_ITEM_CATEGORIES: 'meta:list-item-categories',
+  META_LIST_RARITIES: 'meta:list-rarities',
   META_LIST_NPC_TYPES: 'meta:list-npc-types',
   META_LIST_STATS: 'meta:list-stats',
   META_GET_PROJECT_SETTINGS: 'meta:get-project-settings',

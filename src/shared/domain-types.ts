@@ -164,6 +164,14 @@ export interface MetaItemCategory {
   sortOrder: number
 }
 
+export interface MetaRarity {
+  id: string
+  displayName: string
+  exportKey: string
+  colorHex: string
+  sortOrder: number
+}
+
 export interface MetaNpcType {
   id: string
   displayName: string

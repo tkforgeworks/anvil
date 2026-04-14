@@ -93,6 +93,55 @@ describe('ItemRepository', () => {
     expect(repo.update('does-not-exist', { displayName: 'X', exportKey: 'x', itemCategoryId: CATEGORY_ID, rarityId: RARITY_ID })).toBeNull()
   })
 
+  // ── duplicate ────────────────────────────────────────────────────────────
+
+  it('duplicate: creates an active copy with a new id and regenerated export key', () => {
+    const record = repo.create({
+      displayName: 'Iron Sword',
+      exportKey: 'iron_sword',
+      itemCategoryId: CATEGORY_ID,
+      rarityId: RARITY_ID,
+      description: 'A basic sword',
+    })
+
+    const copy = repo.duplicate(record.id)
+
+    expect(copy).not.toBeNull()
+    expect(copy!.id).not.toBe(record.id)
+    expect(copy!.displayName).toBe('Iron Sword (Copy)')
+    expect(copy!.exportKey).toMatch(/^iron-sword-copy-[a-f0-9]{8}$/)
+    expect(copy!.description).toBe('A basic sword')
+    expect(copy!.itemCategoryId).toBe(record.itemCategoryId)
+    expect(copy!.rarityId).toBe(record.rarityId)
+    expect(copy!.deletedAt).toBeNull()
+    expect(repo.list()).toHaveLength(2)
+  })
+
+  it('duplicate: copies custom field values to the new item', () => {
+    const record = repo.create({
+      displayName: 'Iron Sword',
+      exportKey: 'iron_sword',
+      itemCategoryId: CATEGORY_ID,
+      rarityId: RARITY_ID,
+    })
+    db.prepare(
+      `INSERT INTO custom_field_definitions (id, scope_type, scope_id, field_name, field_type, sort_order)
+       VALUES ('cfd-damage', 'item_category', '${CATEGORY_ID}', 'damage', 'integer', 1)`,
+    ).run()
+    repo.setCustomFieldValues(record.id, [{ fieldDefinitionId: 'cfd-damage', value: '50' }])
+
+    const copy = repo.duplicate(record.id)
+
+    expect(copy).not.toBeNull()
+    expect(repo.getCustomFieldValues(copy!.id)).toEqual([
+      { fieldDefinitionId: 'cfd-damage', value: '50' },
+    ])
+  })
+
+  it('duplicate: returns null for a non-existent id', () => {
+    expect(repo.duplicate('does-not-exist')).toBeNull()
+  })
+
   // ── softDelete + restore ─────────────────────────────────────────────────
 
   it('softDelete: sets deletedAt and excludes record from default list', () => {

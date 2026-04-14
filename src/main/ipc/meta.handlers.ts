@@ -1,7 +1,14 @@
 import { ipcMain } from 'electron'
 import { IPC_CHANNELS } from '../../shared/ipc-channels'
 import { getDb } from '../db/connection'
-import type { DerivedStatDefinition, MetaItemCategory, MetaNpcType, MetaStat, ProjectSettings } from '../../shared/domain-types'
+import type {
+  DerivedStatDefinition,
+  MetaItemCategory,
+  MetaNpcType,
+  MetaRarity,
+  MetaStat,
+  ProjectSettings,
+} from '../../shared/domain-types'
 
 interface ItemCategoryRow {
   id: string
@@ -16,6 +23,14 @@ interface NpcTypeRow {
   display_name: string
   export_key: string
   description: string
+  sort_order: number
+}
+
+interface RarityRow {
+  id: string
+  display_name: string
+  export_key: string
+  color_hex: string
   sort_order: number
 }
 
@@ -50,6 +65,16 @@ function toMetaNpcType(row: NpcTypeRow): MetaNpcType {
   }
 }
 
+function toMetaRarity(row: RarityRow): MetaRarity {
+  return {
+    id: row.id,
+    displayName: row.display_name,
+    exportKey: row.export_key,
+    colorHex: row.color_hex,
+    sortOrder: row.sort_order,
+  }
+}
+
 function toMetaStat(row: StatRow): MetaStat {
   return {
     id: row.id,
@@ -69,6 +94,17 @@ export function registerMetaHandlers(): void {
       )
       .all() as ItemCategoryRow[]
     return rows.map(toMetaItemCategory)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.META_LIST_RARITIES, () => {
+    const rows = getDb()
+      .prepare(
+        `SELECT id, display_name, export_key, color_hex, sort_order
+         FROM rarities
+         ORDER BY sort_order, display_name COLLATE NOCASE`,
+      )
+      .all() as RarityRow[]
+    return rows.map(toMetaRarity)
   })
 
   ipcMain.handle(IPC_CHANNELS.META_LIST_NPC_TYPES, () => {

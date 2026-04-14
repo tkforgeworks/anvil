@@ -32,4 +32,10 @@ export function registerItemsHandlers(): void {
     itemRepository.restore(id)
     return markProjectDirty()
   })
+
+  ipcMain.handle(IPC_CHANNELS.ITEMS_DUPLICATE, (_event, id: string) => {
+    const record = itemRepository.duplicate(id)
+    if (record) markProjectDirty()
+    return record
+  })
 }
