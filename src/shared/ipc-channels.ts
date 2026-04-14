@@ -36,6 +36,8 @@ export const IPC_CHANNELS = {
   ABILITIES_UPDATE: 'abilities:update',
   ABILITIES_DELETE: 'abilities:delete',
   ABILITIES_RESTORE: 'abilities:restore',
+  ABILITIES_DUPLICATE: 'abilities:duplicate',
+  ABILITIES_GET_USED_BY: 'abilities:get-used-by',
 
   // Items
   ITEMS_LIST: 'items:list',

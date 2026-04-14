@@ -47,6 +47,7 @@ export interface ClassAbilityAssignment {
 
 export interface AbilityRecord extends BaseRecord {
   abilityType: string
+  resourceType: string
   resourceCost: number
   cooldown: number
   statModifiers: Record<string, number>
@@ -57,6 +58,7 @@ export interface CreateAbilityInput {
   exportKey: string
   description?: string
   abilityType?: string
+  resourceType?: string
   resourceCost?: number
   cooldown?: number
   statModifiers?: Record<string, number>
@@ -67,9 +69,15 @@ export interface UpdateAbilityInput {
   exportKey?: string
   description?: string
   abilityType?: string
+  resourceType?: string
   resourceCost?: number
   cooldown?: number
   statModifiers?: Record<string, number>
+}
+
+export interface AbilityUsedBy {
+  classes: Array<{ id: string; displayName: string }>
+  npcs: Array<{ id: string; displayName: string }>
 }
 
 // ─── Items ────────────────────────────────────────────────────────────────────

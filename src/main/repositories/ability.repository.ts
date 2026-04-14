@@ -13,6 +13,7 @@ interface AbilityDbRow {
   export_key: string
   description: string
   ability_type: string
+  resource_type: string
   resource_cost: number
   cooldown: number
   stat_modifiers_json: string
@@ -28,6 +29,7 @@ function toAbilityRecord(row: AbilityDbRow): AbilityRecord {
     exportKey: row.export_key,
     description: row.description,
     abilityType: row.ability_type,
+    resourceType: row.resource_type,
     resourceCost: row.resource_cost,
     cooldown: row.cooldown,
     statModifiers: JSON.parse(row.stat_modifiers_json) as Record<string, number>,
@@ -39,7 +41,7 @@ function toAbilityRecord(row: AbilityDbRow): AbilityRecord {
 
 const SELECT_COLS = `
   id, display_name, export_key, description,
-  ability_type, resource_cost, cooldown, stat_modifiers_json,
+  ability_type, resource_type, resource_cost, cooldown, stat_modifiers_json,
   created_at, updated_at, deleted_at
 `
 
@@ -71,10 +73,10 @@ export class AbilityRepository extends DomainRepository {
       .prepare(
         `INSERT INTO abilities
            (id, display_name, export_key, description,
-            ability_type, resource_cost, cooldown, stat_modifiers_json)
+            ability_type, resource_type, resource_cost, cooldown, stat_modifiers_json)
          VALUES
            (@id, @displayName, @exportKey, @description,
-            @abilityType, @resourceCost, @cooldown, @statModifiersJson)`,
+            @abilityType, @resourceType, @resourceCost, @cooldown, @statModifiersJson)`,
       )
       .run({
         id,
@@ -82,11 +84,47 @@ export class AbilityRepository extends DomainRepository {
         exportKey: input.exportKey,
         description: input.description ?? '',
         abilityType: input.abilityType ?? '',
+        resourceType: input.resourceType ?? '',
         resourceCost: input.resourceCost ?? 0,
         cooldown: input.cooldown ?? 0,
         statModifiersJson: JSON.stringify(input.statModifiers ?? {}),
       })
     return this.get(id)!
+  }
+
+  duplicate(id: string): AbilityRecord | null {
+    const source = this.get(id)
+    if (!source) return null
+    const newId = randomUUID()
+    const newDisplayName = `${source.displayName} (Copy)`
+    const newExportKey =
+      newDisplayName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '') +
+      '-' +
+      randomUUID().slice(0, 8)
+    this.dbProvider()
+      .prepare(
+        `INSERT INTO abilities
+           (id, display_name, export_key, description,
+            ability_type, resource_type, resource_cost, cooldown, stat_modifiers_json)
+         VALUES
+           (@id, @displayName, @exportKey, @description,
+            @abilityType, @resourceType, @resourceCost, @cooldown, @statModifiersJson)`,
+      )
+      .run({
+        id: newId,
+        displayName: newDisplayName,
+        exportKey: newExportKey,
+        description: source.description,
+        abilityType: source.abilityType,
+        resourceType: source.resourceType,
+        resourceCost: source.resourceCost,
+        cooldown: source.cooldown,
+        statModifiersJson: JSON.stringify(source.statModifiers),
+      })
+    return this.get(newId)!
   }
 
   update(id: string, input: UpdateAbilityInput): AbilityRecord | null {
@@ -95,14 +133,15 @@ export class AbilityRepository extends DomainRepository {
     this.dbProvider()
       .prepare(
         `UPDATE abilities
-         SET display_name       = @displayName,
-             export_key         = @exportKey,
-             description        = @description,
-             ability_type       = @abilityType,
-             resource_cost      = @resourceCost,
-             cooldown           = @cooldown,
+         SET display_name        = @displayName,
+             export_key          = @exportKey,
+             description         = @description,
+             ability_type        = @abilityType,
+             resource_type       = @resourceType,
+             resource_cost       = @resourceCost,
+             cooldown            = @cooldown,
              stat_modifiers_json = @statModifiersJson,
-             updated_at         = datetime('now')
+             updated_at          = datetime('now')
          WHERE id = @id`,
       )
       .run({
@@ -111,10 +150,34 @@ export class AbilityRepository extends DomainRepository {
         exportKey: input.exportKey ?? current.exportKey,
         description: input.description ?? current.description,
         abilityType: input.abilityType ?? current.abilityType,
+        resourceType: input.resourceType ?? current.resourceType,
         resourceCost: input.resourceCost ?? current.resourceCost,
         cooldown: input.cooldown ?? current.cooldown,
         statModifiersJson: JSON.stringify(input.statModifiers ?? current.statModifiers),
       })
     return this.get(id)
+  }
+
+  getUsedBy(abilityId: string): import('../../shared/domain-types').AbilityUsedBy {
+    const db = this.dbProvider()
+    const classes = db
+      .prepare(
+        `SELECT c.id, c.display_name AS displayName
+         FROM class_ability_assignments caa
+         JOIN classes c ON c.id = caa.class_id
+         WHERE caa.ability_id = ? AND c.deleted_at IS NULL
+         ORDER BY c.display_name COLLATE NOCASE`,
+      )
+      .all(abilityId) as Array<{ id: string; displayName: string }>
+    const npcs = db
+      .prepare(
+        `SELECT n.id, n.display_name AS displayName
+         FROM npc_ability_assignments naa
+         JOIN npcs n ON n.id = naa.npc_id
+         WHERE naa.ability_id = ? AND n.deleted_at IS NULL
+         ORDER BY n.display_name COLLATE NOCASE`,
+      )
+      .all(abilityId) as Array<{ id: string; displayName: string }>
+    return { classes, npcs }
   }
 }

@@ -1,6 +1,7 @@
 import { IPC_CHANNELS } from '../../shared/ipc-channels'
 import type {
   AbilityRecord,
+  AbilityUsedBy,
   CreateAbilityInput,
   UpdateAbilityInput,
 } from '../../shared/domain-types'
@@ -23,4 +24,10 @@ export const abilitiesApi = {
 
   restore: (id: string) =>
     window.anvil.invoke<void>(IPC_CHANNELS.ABILITIES_RESTORE, id),
+
+  duplicate: (id: string) =>
+    window.anvil.invoke<AbilityRecord | null>(IPC_CHANNELS.ABILITIES_DUPLICATE, id),
+
+  getUsedBy: (id: string) =>
+    window.anvil.invoke<AbilityUsedBy>(IPC_CHANNELS.ABILITIES_GET_USED_BY, id),
 }

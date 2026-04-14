@@ -32,4 +32,14 @@ export function registerAbilitiesHandlers(): void {
     abilityRepository.restore(id)
     return markProjectDirty()
   })
+
+  ipcMain.handle(IPC_CHANNELS.ABILITIES_DUPLICATE, (_event, id: string) => {
+    const record = abilityRepository.duplicate(id)
+    if (record) markProjectDirty()
+    return record
+  })
+
+  ipcMain.handle(IPC_CHANNELS.ABILITIES_GET_USED_BY, (_event, id: string) =>
+    abilityRepository.getUsedBy(id),
+  )
 }
