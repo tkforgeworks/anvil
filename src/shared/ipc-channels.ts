@@ -24,6 +24,8 @@ export const IPC_CHANNELS = {
   CLASSES_SET_DERIVED_STAT_OVERRIDES: 'classes:set-derived-stat-overrides',
   CLASSES_GET_METADATA_FIELDS: 'classes:get-metadata-fields',
   CLASSES_SET_METADATA_FIELDS: 'classes:set-metadata-fields',
+  CLASSES_GET_ABILITY_ASSIGNMENTS: 'classes:get-ability-assignments',
+  CLASSES_SET_ABILITY_ASSIGNMENTS: 'classes:set-ability-assignments',
   FORMULA_EVALUATE: 'formulas:evaluate',
 
   // Abilities

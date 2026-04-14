@@ -4,7 +4,7 @@
 
 Anvil is a desktop RPG data management tool built with Electron + React + TypeScript + SQLite. It provides structured editors for six first-class game data domains (Character Classes, Abilities, Items, Crafting Recipes, NPCs, Loot Tables) and a Nunjucks-based export engine.
 
-**Current status:** ANV-4 (Project Bootstrap & Application Shell), ANV-30 (domain repositories + IPC handlers), ANV-57 (repository integration test suite, 80 tests), ANV-6 (data model & schema foundation, with bug-fix child tickets ANV-58/59/60), ANV-7 (custom fields system), ANV-33 (class list view + CRUD), ANV-34 (stat growth editor with Recharts chart), and ANV-35 (derived stat definitions, custom recursive-descent formula engine, per-class formula overrides, class metadata fields) implemented. Application shell compiles and runs with full IPC bridge, SQLite layer, React Router, MUI theme, and Zustand stores in place.
+**Current status:** ANV-4 (Project Bootstrap & Application Shell), ANV-30 (domain repositories + IPC handlers), ANV-57 (repository integration test suite, 80 tests), ANV-6 (data model & schema foundation, with bug-fix child tickets ANV-58/59/60), ANV-7 (custom fields system), ANV-33 (class list view + CRUD), ANV-34 (stat growth editor with Recharts chart), ANV-35 (derived stat definitions, custom recursive-descent formula engine, per-class formula overrides, class metadata fields), and ANV-37 (ability assignment panel in the class editor — add/remove/reorder with soft-delete warning and click-through to ability editor) implemented. Application shell compiles and runs with full IPC bridge, SQLite layer, React Router, MUI theme, and Zustand stores in place.
 
 ---
 

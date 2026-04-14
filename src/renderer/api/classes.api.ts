@@ -1,5 +1,6 @@
 import { IPC_CHANNELS } from '../../shared/ipc-channels'
 import type {
+  ClassAbilityAssignment,
   ClassDerivedStatOverride,
   ClassMetadataField,
   ClassRecord,
@@ -50,4 +51,13 @@ export const classesApi = {
 
   setMetadataFields: (classId: string, fields: ClassMetadataField[]) =>
     window.anvil.invoke<void>(IPC_CHANNELS.CLASSES_SET_METADATA_FIELDS, classId, fields),
+
+  getAbilityAssignments: (classId: string) =>
+    window.anvil.invoke<ClassAbilityAssignment[]>(
+      IPC_CHANNELS.CLASSES_GET_ABILITY_ASSIGNMENTS,
+      classId,
+    ),
+
+  setAbilityAssignments: (classId: string, assignments: ClassAbilityAssignment[]) =>
+    window.anvil.invoke<void>(IPC_CHANNELS.CLASSES_SET_ABILITY_ASSIGNMENTS, classId, assignments),
 }

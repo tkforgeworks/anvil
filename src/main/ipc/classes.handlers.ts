@@ -1,6 +1,7 @@
 import { ipcMain } from 'electron'
 import { IPC_CHANNELS } from '../../shared/ipc-channels'
 import type {
+  ClassAbilityAssignment,
   ClassDerivedStatOverride,
   ClassMetadataField,
   CreateClassInput,
@@ -77,6 +78,18 @@ export function registerClassesHandlers(): void {
     IPC_CHANNELS.CLASSES_SET_METADATA_FIELDS,
     (_event, classId: string, fields: ClassMetadataField[]) => {
       classRepository.setMetadataFields(classId, fields)
+      markProjectDirty()
+    },
+  )
+
+  ipcMain.handle(IPC_CHANNELS.CLASSES_GET_ABILITY_ASSIGNMENTS, (_event, classId: string) =>
+    classRepository.getAbilityAssignments(classId),
+  )
+
+  ipcMain.handle(
+    IPC_CHANNELS.CLASSES_SET_ABILITY_ASSIGNMENTS,
+    (_event, classId: string, assignments: ClassAbilityAssignment[]) => {
+      classRepository.setAbilityAssignments(classId, assignments)
       markProjectDirty()
     },
   )

@@ -5,7 +5,6 @@ import {
   Button,
   Divider,
   IconButton,
-  Paper,
   Stack,
   Tab,
   Tabs,
@@ -17,6 +16,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { classesApi } from '../../api/classes.api'
 import type { ClassRecord } from '../../../shared/domain-types'
+import AbilityAssignmentPanel from '../components/AbilityAssignmentPanel'
 import DerivedStatsEditor from '../components/DerivedStatsEditor'
 import StatGrowthEditor from '../components/StatGrowthEditor'
 
@@ -33,19 +33,6 @@ function TabPanel({ index, value, children }: TabPanelProps): React.JSX.Element 
     <Box role="tabpanel" hidden={value !== index} sx={{ pt: 3 }}>
       {value === index && children}
     </Box>
-  )
-}
-
-function PlaceholderPanel({ ticket, label }: { ticket: string; label: string }): React.JSX.Element {
-  return (
-    <Paper variant="outlined" sx={{ p: 4, textAlign: 'center' }}>
-      <Typography variant="body1" color="text.secondary" gutterBottom>
-        {label}
-      </Typography>
-      <Typography variant="caption" color="text.disabled">
-        Implemented in {ticket}
-      </Typography>
-    </Paper>
   )
 }
 
@@ -267,7 +254,7 @@ export default function ClassEditorPage(): React.JSX.Element {
 
       {/* Abilities tab */}
       <TabPanel index={3} value={activeTab}>
-        <PlaceholderPanel ticket="ANV-37" label="Ability assignments — coming in ANV-37" />
+        <AbilityAssignmentPanel classId={record.id} />
       </TabPanel>
     </Box>
   )
