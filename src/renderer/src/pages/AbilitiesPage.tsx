@@ -1,5 +1,388 @@
-import { Typography } from '@mui/material'
+import {
+  Add as AddIcon,
+  ContentCopy as DuplicateIcon,
+  Delete as DeleteIcon,
+  Edit as EditIcon,
+} from '@mui/icons-material'
+import {
+  Alert,
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  FormControl,
+  IconButton,
+  InputAdornment,
+  InputLabel,
+  MenuItem,
+  Select,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  TextField,
+  Tooltip,
+  Typography,
+} from '@mui/material'
+import { useCallback, useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { abilitiesApi } from '../../api/abilities.api'
+import type { AbilityRecord } from '../../../shared/domain-types'
+
+function slugify(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+}
+
+// ─── Create dialog ────────────────────────────────────────────────────────────
+
+interface CreateDialogProps {
+  open: boolean
+  onClose: () => void
+  onCreated: (record: AbilityRecord) => void
+}
+
+function CreateDialog({ open, onClose, onCreated }: CreateDialogProps): React.JSX.Element {
+  const [displayName, setDisplayName] = useState('')
+  const [exportKey, setExportKey] = useState('')
+  const [exportKeyTouched, setExportKeyTouched] = useState(false)
+  const [isBusy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!open) return
+    setDisplayName('')
+    setExportKey('')
+    setExportKeyTouched(false)
+    setError(null)
+  }, [open])
+
+  const handleDisplayNameChange = (value: string): void => {
+    setDisplayName(value)
+    if (!exportKeyTouched) setExportKey(slugify(value))
+  }
+
+  const handleExportKeyChange = (value: string): void => {
+    setExportKey(value)
+    setExportKeyTouched(true)
+  }
+
+  const handleCreate = async (): Promise<void> => {
+    if (!displayName.trim()) return
+    setBusy(true)
+    setError(null)
+    try {
+      const record = await abilitiesApi.create({
+        displayName: displayName.trim(),
+        exportKey: exportKey.trim() || slugify(displayName.trim()),
+      })
+      onCreated(record)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Failed to create ability.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+      <DialogTitle>New Ability</DialogTitle>
+      <DialogContent>
+        <Stack spacing={2} sx={{ pt: 1 }}>
+          {error && <Alert severity="error">{error}</Alert>}
+          <TextField
+            label="Display Name"
+            value={displayName}
+            onChange={(e) => handleDisplayNameChange(e.target.value)}
+            required
+            autoFocus
+            fullWidth
+          />
+          <TextField
+            label="Export Key"
+            value={exportKey}
+            onChange={(e) => handleExportKeyChange(e.target.value)}
+            fullWidth
+            helperText="Used in exported files. Auto-generated from the display name."
+            InputProps={{
+              startAdornment: exportKey ? undefined : (
+                <InputAdornment position="start">
+                  <Typography variant="caption" color="text.disabled">
+                    auto
+                  </Typography>
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Stack>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} disabled={isBusy}>
+          Cancel
+        </Button>
+        <Button
+          variant="contained"
+          onClick={() => void handleCreate()}
+          disabled={!displayName.trim() || isBusy}
+        >
+          Create Ability
+        </Button>
+      </DialogActions>
+    </Dialog>
+  )
+}
+
+// ─── Delete confirm dialog ────────────────────────────────────────────────────
+
+interface DeleteDialogProps {
+  record: AbilityRecord | null
+  onClose: () => void
+  onDeleted: (id: string) => void
+}
+
+function DeleteDialog({ record, onClose, onDeleted }: DeleteDialogProps): React.JSX.Element {
+  const [isBusy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!record) setError(null)
+  }, [record])
+
+  const handleDelete = async (): Promise<void> => {
+    if (!record) return
+    setBusy(true)
+    setError(null)
+    try {
+      await abilitiesApi.delete(record.id)
+      onDeleted(record.id)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Failed to delete ability.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Dialog open={Boolean(record)} onClose={onClose}>
+      <DialogTitle>Delete Ability?</DialogTitle>
+      <DialogContent>
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
+        <DialogContentText>
+          <strong>{record?.displayName}</strong> will be moved to the archive. You can restore it
+          from the Recycle Bin.
+        </DialogContentText>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} disabled={isBusy}>
+          Cancel
+        </Button>
+        <Button color="error" variant="contained" onClick={() => void handleDelete()} disabled={isBusy}>
+          Delete
+        </Button>
+      </DialogActions>
+    </Dialog>
+  )
+}
+
+// ─── Abilities page ───────────────────────────────────────────────────────────
+
+type SortKey = 'name' | 'updated'
 
 export default function AbilitiesPage(): React.JSX.Element {
-  return <Typography variant="h5">Abilities</Typography>
+  const navigate = useNavigate()
+  const [abilities, setAbilities] = useState<AbilityRecord[]>([])
+  const [search, setSearch] = useState('')
+  const [sortKey, setSortKey] = useState<SortKey>('name')
+  const [createOpen, setCreateOpen] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<AbilityRecord | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  const load = useCallback(async () => {
+    try {
+      const records = await abilitiesApi.list()
+      setAbilities(records)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Failed to load abilities.')
+    }
+  }, [])
+
+  useEffect(() => {
+    void load()
+  }, [load])
+
+  const handleCreated = (record: AbilityRecord): void => {
+    setCreateOpen(false)
+    void navigate(`/abilities/${record.id}`)
+  }
+
+  const handleDeleted = (id: string): void => {
+    setDeleteTarget(null)
+    setAbilities((prev) => prev.filter((a) => a.id !== id))
+  }
+
+  const handleDuplicate = async (record: AbilityRecord): Promise<void> => {
+    setError(null)
+    try {
+      const copy = await abilitiesApi.duplicate(record.id)
+      if (copy) setAbilities((prev) => [...prev, copy])
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Failed to duplicate ability.')
+    }
+  }
+
+  const filtered = abilities
+    .filter((a) => a.displayName.toLowerCase().includes(search.toLowerCase()))
+    .sort((a, b) => {
+      if (sortKey === 'updated') return b.updatedAt.localeCompare(a.updatedAt)
+      return a.displayName.localeCompare(b.displayName, undefined, { sensitivity: 'base' })
+    })
+
+  return (
+    <Box>
+      {/* Header */}
+      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 3 }}>
+        <Typography variant="h5">Abilities</Typography>
+        <Button startIcon={<AddIcon />} variant="contained" onClick={() => setCreateOpen(true)}>
+          New Ability
+        </Button>
+      </Stack>
+
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      )}
+
+      {/* Toolbar */}
+      <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
+        <TextField
+          size="small"
+          placeholder="Search abilities…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          sx={{ flex: 1, maxWidth: 360 }}
+        />
+        <FormControl size="small" sx={{ minWidth: 180 }}>
+          <InputLabel id="sort-label">Sort by</InputLabel>
+          <Select
+            labelId="sort-label"
+            label="Sort by"
+            value={sortKey}
+            onChange={(e) => setSortKey(e.target.value as SortKey)}
+          >
+            <MenuItem value="name">Name</MenuItem>
+            <MenuItem value="updated">Last Modified</MenuItem>
+          </Select>
+        </FormControl>
+      </Stack>
+
+      {/* List */}
+      {filtered.length === 0 ? (
+        <Typography variant="body2" color="text.secondary">
+          {abilities.length === 0
+            ? 'No abilities yet. Click "New Ability" to create one.'
+            : 'No abilities match your search.'}
+        </Typography>
+      ) : (
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell>Name</TableCell>
+              <TableCell>Export Key</TableCell>
+              <TableCell>Type</TableCell>
+              <TableCell>Description</TableCell>
+              <TableCell align="right">Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {filtered.map((ability) => (
+              <TableRow
+                key={ability.id}
+                hover
+                sx={{ cursor: 'pointer' }}
+                onClick={() => void navigate(`/abilities/${ability.id}`)}
+              >
+                <TableCell>
+                  <Typography variant="body2" fontWeight={500}>
+                    {ability.displayName}
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography variant="body2" color="text.secondary" fontFamily="monospace">
+                    {ability.exportKey}
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography variant="body2" color="text.secondary">
+                    {ability.abilityType || '—'}
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{
+                      maxWidth: 260,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {ability.description || '—'}
+                  </Typography>
+                </TableCell>
+                <TableCell align="right" onClick={(e) => e.stopPropagation()}>
+                  <Tooltip title="Edit">
+                    <IconButton
+                      size="small"
+                      onClick={() => void navigate(`/abilities/${ability.id}`)}
+                    >
+                      <EditIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Duplicate">
+                    <IconButton size="small" onClick={() => void handleDuplicate(ability)}>
+                      <DuplicateIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Delete">
+                    <IconButton
+                      size="small"
+                      color="error"
+                      onClick={() => setDeleteTarget(ability)}
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
+
+      <CreateDialog
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        onCreated={handleCreated}
+      />
+
+      <DeleteDialog
+        record={deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onDeleted={handleDeleted}
+      />
+    </Box>
+  )
 }

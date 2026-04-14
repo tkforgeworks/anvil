@@ -6,6 +6,7 @@ import DashboardPage from './pages/DashboardPage'
 import ClassesPage from './pages/ClassesPage'
 import ClassEditorPage from './pages/ClassEditorPage'
 import AbilitiesPage from './pages/AbilitiesPage'
+import AbilityEditorPage from './pages/AbilityEditorPage'
 import ItemsPage from './pages/ItemsPage'
 import RecipesPage from './pages/RecipesPage'
 import NpcsPage from './pages/NpcsPage'
@@ -59,6 +60,7 @@ export default function App(): React.JSX.Element {
         <Route path="classes" element={<ClassesPage />} />
         <Route path="classes/:id" element={<ClassEditorPage />} />
         <Route path="abilities" element={<AbilitiesPage />} />
+        <Route path="abilities/:id" element={<AbilityEditorPage />} />
         <Route path="items" element={<ItemsPage />} />
         <Route path="recipes" element={<RecipesPage />} />
         <Route path="npcs" element={<NpcsPage />} />
