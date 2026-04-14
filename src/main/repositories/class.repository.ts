@@ -87,6 +87,10 @@ export class ClassRepository extends DomainRepository {
     if (growthEntries.length > 0) this.setStatGrowth(newId, growthEntries)
     const assignments = this.getAbilityAssignments(id)
     if (assignments.length > 0) this.setAbilityAssignments(newId, assignments)
+    const overrides = this.getDerivedStatOverrides(id)
+    if (overrides.length > 0) this.setDerivedStatOverrides(newId, overrides)
+    const metaFields = this.getMetadataFields(id)
+    if (metaFields.length > 0) this.setMetadataFields(newId, metaFields)
     return this.get(newId)!
   }
 

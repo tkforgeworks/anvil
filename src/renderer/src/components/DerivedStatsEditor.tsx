@@ -398,7 +398,6 @@ export default function DerivedStatsEditor({
 
   const [overrideEnabled, setOverrideEnabled] = useState<Record<string, boolean>>({})
   const [overrideFormulas, setOverrideFormulas] = useState<Record<string, string>>({})
-  const [formulaSyntaxErrors, setFormulaSyntaxErrors] = useState<Record<string, string | null>>({})
 
   const [metadataFields, setMetadataFields] = useState<Array<{ fieldKey: string; value: string }>>([])
 
@@ -447,7 +446,6 @@ export default function DerivedStatsEditor({
       }
       setOverrideEnabled(enabledMap)
       setOverrideFormulas(formulaMap)
-      setFormulaSyntaxErrors({})
       setMetadataFields(savedMeta.map((f) => ({ fieldKey: f.fieldKey, value: String(f.value) })))
       setDirty(false)
     } catch (cause) {
@@ -460,6 +458,12 @@ export default function DerivedStatsEditor({
   useEffect(() => {
     void load()
   }, [load])
+
+  useEffect(() => {
+    return () => {
+      if (evalDebounceRef.current) clearTimeout(evalDebounceRef.current)
+    }
+  }, [])
 
   // ─── Live evaluation ───────────────────────────────────────────────────────
 
@@ -567,7 +571,9 @@ export default function DerivedStatsEditor({
     setSavedAt(null)
   }
 
-  const hasSyntaxErrors = Object.values(formulaSyntaxErrors).some(Boolean)
+  const hasSyntaxErrors = derivedStats
+    .filter((d) => overrideEnabled[d.id])
+    .some((d) => evalState.results[d.id]?.isSyntaxError)
   const hasInvalidMetadataKeys = metadataFields.some(
     (f) => f.fieldKey && !/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(f.fieldKey),
   )
@@ -678,7 +684,8 @@ export default function DerivedStatsEditor({
               const activeFormula = isOverridden ? (overrideFormulas[def.id] ?? def.formula) : def.formula
               const evalResult = evalState.results[def.id]
               const isCyclic = evalState.cyclicIds.has(def.id)
-              const syntaxError = isOverridden ? formulaSyntaxErrors[def.id] : null
+              const syntaxError =
+                isOverridden && evalResult?.isSyntaxError ? (evalResult.error ?? 'Syntax error') : null
 
               return (
                 <TableRow key={def.id}>

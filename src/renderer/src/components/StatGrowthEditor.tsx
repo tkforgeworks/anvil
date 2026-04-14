@@ -258,6 +258,12 @@ export default function StatGrowthEditor({ classId }: StatGrowthEditorProps): Re
     void load()
   }, [load])
 
+  useEffect(() => {
+    return () => {
+      if (chartDebounceRef.current) clearTimeout(chartDebounceRef.current)
+    }
+  }, [])
+
   const handleCellChange = useCallback(
     (statId: string, level: number, value: string) => {
       setGridValues((prev) => {

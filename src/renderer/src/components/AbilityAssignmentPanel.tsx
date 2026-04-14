@@ -44,6 +44,7 @@ export default function AbilityAssignmentPanel({ classId }: Props): React.JSX.El
   const [rows, setRows] = useState<AssignedRow[]>([])
   const [allAbilities, setAllAbilities] = useState<AbilityRecord[]>([])
   const [isLoading, setLoading] = useState(true)
+  const [isSaving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [pickerValue, setPickerValue] = useState<AbilityRecord | null>(null)
 
@@ -81,6 +82,7 @@ export default function AbilityAssignmentPanel({ classId }: Props): React.JSX.El
   }, [load])
 
   const save = async (updated: AssignedRow[]): Promise<void> => {
+    setSaving(true)
     try {
       const assignments: ClassAbilityAssignment[] = updated.map((r, i) => ({
         abilityId: r.abilityId,
@@ -91,6 +93,8 @@ export default function AbilityAssignmentPanel({ classId }: Props): React.JSX.El
       setRows(updated.map((r, i) => ({ ...r, sortOrder: i })))
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Failed to save ability assignments.')
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -172,7 +176,7 @@ export default function AbilityAssignmentPanel({ classId }: Props): React.JSX.El
                         <IconButton
                           size="small"
                           onClick={() => void handleMoveUp(index)}
-                          disabled={index === 0}
+                          disabled={index === 0 || isSaving}
                         >
                           <ArrowUpIcon fontSize="small" />
                         </IconButton>
@@ -183,20 +187,23 @@ export default function AbilityAssignmentPanel({ classId }: Props): React.JSX.El
                         <IconButton
                           size="small"
                           onClick={() => void handleMoveDown(index)}
-                          disabled={index === rows.length - 1}
+                          disabled={index === rows.length - 1 || isSaving}
                         >
                           <ArrowDownIcon fontSize="small" />
                         </IconButton>
                       </span>
                     </Tooltip>
                     <Tooltip title="Remove assignment">
-                      <IconButton
-                        size="small"
-                        onClick={() => void handleRemove(row.abilityId)}
-                        color="error"
-                      >
-                        <RemoveIcon fontSize="small" />
-                      </IconButton>
+                      <span>
+                        <IconButton
+                          size="small"
+                          onClick={() => void handleRemove(row.abilityId)}
+                          color="error"
+                          disabled={isSaving}
+                        >
+                          <RemoveIcon fontSize="small" />
+                        </IconButton>
+                      </span>
                     </Tooltip>
                   </Stack>
                 }
@@ -257,7 +264,7 @@ export default function AbilityAssignmentPanel({ classId }: Props): React.JSX.El
         <Button
           variant="outlined"
           onClick={() => void handleAdd()}
-          disabled={!pickerValue}
+          disabled={!pickerValue || isSaving}
           size="small"
         >
           Add
