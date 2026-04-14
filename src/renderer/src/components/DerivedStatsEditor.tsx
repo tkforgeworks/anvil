@@ -1,5 +1,6 @@
 import {
   Add as AddIcon,
+  Close as CloseIcon,
   Delete as DeleteIcon,
 } from '@mui/icons-material'
 import {
@@ -50,7 +51,6 @@ function detectCycles(
   const exportKeyToId = new Map(derivedStats.map((d) => [d.exportKey, d.id]))
   const derivedKeys = new Set(derivedStats.map((d) => d.exportKey))
 
-  // Build dependency graph: id → set of derived-stat ids it depends on
   const deps = new Map<string, Set<string>>()
   for (const d of derivedStats) {
     const formula = activeFormulas[d.id] ?? d.formula
@@ -65,7 +65,6 @@ function detectCycles(
     deps.set(d.id, dependsOn)
   }
 
-  // DFS cycle detection
   const visited = new Set<string>()
   const visiting = new Set<string>()
   const cyclic = new Set<string>()
@@ -103,12 +102,57 @@ function applyOutputConfig(
   }
 }
 
-function formatResult(
-  value: number,
-  outputType: 'integer' | 'float',
-): string {
+function formatResult(value: number, outputType: 'integer' | 'float'): string {
   if (outputType === 'integer') return String(Math.round(value))
   return value.toFixed(3).replace(/\.?0+$/, '')
+}
+
+function defaultBreakpointLevels(maxLevel: number): number[] {
+  if (maxLevel <= 5) return Array.from({ length: maxLevel }, (_, i) => i + 1)
+  // Six evenly-spread points: 0%, 20%, 40%, 60%, 80%, 100% of maxLevel
+  const points = [0, 0.2, 0.4, 0.6, 0.8, 1.0]
+  return points
+    .map((p) => Math.max(1, Math.round(p * maxLevel)))
+    .filter((v, i, arr) => arr.indexOf(v) === i)
+    .sort((a, b) => a - b)
+}
+
+// Multi-pass dependency-order evaluation at a single level.
+// cyclicIds is read-only — already computed before this is called.
+async function evaluateAllAtLevel(
+  defs: DerivedStatDefinition[],
+  activeFormulas: Record<string, string>,
+  cyclicIds: Set<string>,
+  baseBindings: Record<string, number>,
+): Promise<Record<string, FormulaEvalResult>> {
+  const results: Record<string, FormulaEvalResult> = {}
+  const evaluated: Record<string, number> = { ...baseBindings }
+  const remaining = defs.filter((d) => !cyclicIds.has(d.id))
+  const derivedKeys = new Set(defs.map((x) => x.exportKey))
+
+  let passes = 0
+  while (remaining.length > 0 && passes < defs.length + 1) {
+    passes++
+    const toEval = remaining.filter((d) => {
+      const vars = extractVarNames(activeFormulas[d.id])
+      return vars.every((v) => !derivedKeys.has(v) || v in evaluated)
+    })
+    if (toEval.length === 0) break
+    const evalResults = await Promise.all(
+      toEval.map(async (def) => ({
+        def,
+        result: await formulasApi.evaluate(activeFormulas[def.id], evaluated),
+      })),
+    )
+    for (const { def, result } of evalResults) {
+      results[def.id] = result
+      if (result.value !== null) {
+        evaluated[def.exportKey] = applyOutputConfig(result.value, def.outputType, def.roundingMode)
+      }
+      remaining.splice(remaining.indexOf(def), 1)
+    }
+  }
+  return results
 }
 
 // ─── Metadata fields panel ────────────────────────────────────────────────────
@@ -193,6 +237,144 @@ function MetadataFieldsPanel({ fields, onChange }: MetadataFieldsPanelProps): Re
   )
 }
 
+// ─── Breakpoint table ─────────────────────────────────────────────────────────
+
+interface BreakpointTableProps {
+  derivedStats: DerivedStatDefinition[]
+  breakpointLevels: number[]
+  breakpointResults: Record<number, Record<string, FormulaEvalResult>>
+  cyclicIds: Set<string>
+  maxLevel: number
+  onLevelsChange: (levels: number[]) => void
+}
+
+function BreakpointTable({
+  derivedStats,
+  breakpointLevels,
+  breakpointResults,
+  cyclicIds,
+  maxLevel,
+  onLevelsChange,
+}: BreakpointTableProps): React.JSX.Element {
+  const [levelInput, setLevelInput] = useState('')
+
+  const addLevel = (): void => {
+    const v = parseInt(levelInput, 10)
+    if (isNaN(v) || v < 1 || v > maxLevel || breakpointLevels.includes(v)) return
+    onLevelsChange([...breakpointLevels, v].sort((a, b) => a - b))
+    setLevelInput('')
+  }
+
+  const removeLevel = (level: number): void => {
+    onLevelsChange(breakpointLevels.filter((l) => l !== level))
+  }
+
+  return (
+    <Box>
+      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
+        <Typography variant="subtitle1" fontWeight={500}>
+          Breakpoint Table
+        </Typography>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <TextField
+            size="small"
+            type="number"
+            label="Add level"
+            value={levelInput}
+            onChange={(e) => setLevelInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') { e.preventDefault(); addLevel() }
+            }}
+            inputProps={{ min: 1, max: maxLevel, style: { width: 56, textAlign: 'center' } }}
+            sx={{ width: 110 }}
+          />
+          <Button size="small" variant="outlined" onClick={addLevel} disabled={!levelInput.trim()}>
+            Add
+          </Button>
+        </Stack>
+      </Stack>
+
+      {breakpointLevels.length === 0 ? (
+        <Typography variant="body2" color="text.secondary">
+          No breakpoint levels configured.
+        </Typography>
+      ) : (
+        <Paper variant="outlined" sx={{ overflow: 'auto' }}>
+          <Table size="small" stickyHeader>
+            <TableHead>
+              <TableRow>
+                <TableCell
+                  sx={{ minWidth: 140, position: 'sticky', left: 0, zIndex: 3, bgcolor: 'background.paper' }}
+                >
+                  Stat
+                </TableCell>
+                {breakpointLevels.map((level) => (
+                  <TableCell key={level} align="right" sx={{ minWidth: 90, whiteSpace: 'nowrap' }}>
+                    <Stack direction="row" alignItems="center" justifyContent="flex-end" spacing={0.25}>
+                      <Typography variant="caption" fontWeight={500}>
+                        Lvl {level}
+                      </Typography>
+                      <Tooltip title="Remove level">
+                        <IconButton size="small" onClick={() => removeLevel(level)} sx={{ p: 0.25, ml: 0.5 }}>
+                          <CloseIcon sx={{ fontSize: 12 }} />
+                        </IconButton>
+                      </Tooltip>
+                    </Stack>
+                  </TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {derivedStats.map((def) => {
+                const isCyclic = cyclicIds.has(def.id)
+                return (
+                  <TableRow key={def.id}>
+                    <TableCell
+                      sx={{ position: 'sticky', left: 0, bgcolor: 'background.paper', zIndex: 1 }}
+                    >
+                      <Typography variant="body2" fontWeight={500}>
+                        {def.displayName}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" fontFamily="monospace">
+                        {def.exportKey}
+                      </Typography>
+                    </TableCell>
+                    {breakpointLevels.map((level) => {
+                      const result = breakpointResults[level]?.[def.id]
+                      return (
+                        <TableCell key={level} align="right">
+                          {isCyclic ? (
+                            <Chip label="cycle" size="small" color="error" variant="outlined" />
+                          ) : result?.error ? (
+                            <Tooltip title={result.error}>
+                              <Chip label="err" size="small" color="warning" variant="outlined" />
+                            </Tooltip>
+                          ) : result?.value !== null && result?.value !== undefined ? (
+                            <Typography variant="body2" fontFamily="monospace">
+                              {formatResult(
+                                applyOutputConfig(result.value, def.outputType, def.roundingMode),
+                                def.outputType,
+                              )}
+                            </Typography>
+                          ) : (
+                            <Typography variant="caption" color="text.disabled">
+                              —
+                            </Typography>
+                          )}
+                        </TableCell>
+                      )
+                    })}
+                  </TableRow>
+                )
+              })}
+            </TableBody>
+          </Table>
+        </Paper>
+      )}
+    </Box>
+  )
+}
+
 // ─── Main component ────────────────────────────────────────────────────────────
 
 interface DerivedStatsEditorProps {
@@ -214,16 +396,18 @@ export default function DerivedStatsEditor({
   const [maxLevel, setMaxLevel] = useState(50)
   const [statGrowthEntries, setStatGrowthEntries] = useState<StatGrowthEntry[]>([])
 
-  // Overrides: which derived stats have a class-level formula override
   const [overrideEnabled, setOverrideEnabled] = useState<Record<string, boolean>>({})
   const [overrideFormulas, setOverrideFormulas] = useState<Record<string, string>>({})
   const [formulaSyntaxErrors, setFormulaSyntaxErrors] = useState<Record<string, string | null>>({})
 
-  // Metadata fields as editable string pairs (before parsing)
   const [metadataFields, setMetadataFields] = useState<Array<{ fieldKey: string; value: string }>>([])
 
   const [previewLevel, setPreviewLevel] = useState(1)
+  const [breakpointLevels, setBreakpointLevels] = useState<number[]>([])
   const [evalState, setEvalState] = useState<EvalState>({ results: {}, cyclicIds: new Set() })
+  const [breakpointResults, setBreakpointResults] = useState<
+    Record<number, Record<string, FormulaEvalResult>>
+  >({})
 
   const [isLoading, setLoading] = useState(true)
   const [isSaving, setSaving] = useState(false)
@@ -252,6 +436,7 @@ export default function DerivedStatsEditor({
       setStats(st)
       setMaxLevel(settings.maxLevel)
       setStatGrowthEntries(entries)
+      setBreakpointLevels(defaultBreakpointLevels(settings.maxLevel))
 
       const enabledMap: Record<string, boolean> = {}
       const formulaMap: Record<string, string> = {}
@@ -284,18 +469,12 @@ export default function DerivedStatsEditor({
       enabled: Record<string, boolean>,
       formulas: Record<string, string>,
       meta: Array<{ fieldKey: string; value: string }>,
-      level: number,
+      previewLvl: number,
+      bpLevels: number[],
       statList: MetaStat[],
       growth: StatGrowthEntry[],
     ) => {
-      // Build primary stat bindings at the selected level
-      const statBindings: Record<string, number> = {}
-      for (const stat of statList) {
-        const entry = growth.find((e) => e.statId === stat.id && e.level === level)
-        statBindings[stat.exportKey] = entry?.value ?? 0
-      }
-
-      // Build metadata bindings
+      // Build metadata bindings — same across all levels
       const metaBindings: Record<string, number> = { resource_multiplier: resourceMultiplier }
       for (const f of meta) {
         const v = parseFloat(f.value)
@@ -308,82 +487,67 @@ export default function DerivedStatsEditor({
         activeFormulas[def.id] = enabled[def.id] ? (formulas[def.id] ?? def.formula) : def.formula
       }
 
-      // Detect cycles
+      // Cycle detection is formula-only — run once for all levels
       const cyclicIds = detectCycles(defs, activeFormulas)
 
-      // Evaluate in dependency order (multi-pass until stable)
-      const results: Record<string, FormulaEvalResult> = {}
-      const evaluated: Record<string, number> = { ...statBindings, ...metaBindings }
-
-      const remaining = defs.filter((d) => !cyclicIds.has(d.id))
-      let passes = 0
-      while (remaining.length > 0 && passes < defs.length + 1) {
-        passes++
-        const toEval = remaining.filter((d) => {
-          // Check if all variable deps are already in evaluated
-          const formula = activeFormulas[d.id]
-          const vars = extractVarNames(formula)
-          const derivedKeys = new Set(defs.map((x) => x.exportKey))
-          return vars.every((v) => !derivedKeys.has(v) || evaluated[v] !== undefined)
-        })
-        if (toEval.length === 0) break
-        const evalResults = await Promise.all(
-          toEval.map(async (def) => {
-            const formula = activeFormulas[def.id]
-            const result = await formulasApi.evaluate(formula, evaluated)
-            return { def, result }
-          }),
-        )
-        for (const { def, result } of evalResults) {
-          results[def.id] = result
-          if (result.value !== null) {
-            evaluated[def.exportKey] = applyOutputConfig(
-              result.value,
-              def.outputType,
-              def.roundingMode,
-            )
-          }
-          remaining.splice(remaining.indexOf(def), 1)
+      // Build primary stat bindings for a given level
+      const buildStatBindings = (level: number): Record<string, number> => {
+        const b: Record<string, number> = {}
+        for (const stat of statList) {
+          const entry = growth.find((e) => e.statId === stat.id && e.level === level)
+          b[stat.exportKey] = entry?.value ?? 0
         }
+        return b
       }
 
-      // Mark remaining as cyclic if still unresolved
-      for (const def of remaining) cyclicIds.add(def.id)
+      // Evaluate at the preview level and all breakpoint levels in parallel
+      const allLevels = [...new Set([previewLvl, ...bpLevels])]
+      const levelResultPairs = await Promise.all(
+        allLevels.map(async (level) => {
+          const baseBindings = { ...buildStatBindings(level), ...metaBindings }
+          const results = await evaluateAllAtLevel(defs, activeFormulas, cyclicIds, baseBindings)
+          return { level, results }
+        }),
+      )
 
-      setEvalState({ results, cyclicIds })
+      const resultsByLevel: Record<number, Record<string, FormulaEvalResult>> = {}
+      for (const { level, results } of levelResultPairs) {
+        resultsByLevel[level] = results
+      }
+
+      setEvalState({ results: resultsByLevel[previewLvl] ?? {}, cyclicIds })
+      setBreakpointResults(resultsByLevel)
     },
     [resourceMultiplier],
   )
 
-  // Debounced evaluation trigger
   const scheduleEval = useCallback(
     (
       defs: DerivedStatDefinition[],
       enabled: Record<string, boolean>,
       formulas: Record<string, string>,
       meta: Array<{ fieldKey: string; value: string }>,
-      level: number,
+      previewLvl: number,
+      bpLevels: number[],
     ) => {
       if (evalDebounceRef.current) clearTimeout(evalDebounceRef.current)
       evalDebounceRef.current = setTimeout(() => {
-        void runEvaluation(defs, enabled, formulas, meta, level, stats, statGrowthEntries)
+        void runEvaluation(defs, enabled, formulas, meta, previewLvl, bpLevels, stats, statGrowthEntries)
       }, 300)
     },
     [runEvaluation, stats, statGrowthEntries],
   )
 
-  // Re-evaluate when inputs change
   useEffect(() => {
     if (derivedStats.length === 0) return
-    scheduleEval(derivedStats, overrideEnabled, overrideFormulas, metadataFields, previewLevel)
-  }, [derivedStats, overrideEnabled, overrideFormulas, metadataFields, previewLevel, scheduleEval])
+    scheduleEval(derivedStats, overrideEnabled, overrideFormulas, metadataFields, previewLevel, breakpointLevels)
+  }, [derivedStats, overrideEnabled, overrideFormulas, metadataFields, previewLevel, breakpointLevels, scheduleEval])
 
   // ─── Handlers ─────────────────────────────────────────────────────────────
 
   const toggleOverride = (defId: string, def: DerivedStatDefinition): void => {
     const nowEnabled = !overrideEnabled[defId]
     setOverrideEnabled((prev) => ({ ...prev, [defId]: nowEnabled }))
-    // If enabling, pre-fill with project default
     if (nowEnabled && !overrideFormulas[defId]) {
       setOverrideFormulas((prev) => ({ ...prev, [defId]: def.formula }))
     }
@@ -493,7 +657,7 @@ export default function DerivedStatsEditor({
         </Alert>
       )}
 
-      {/* Derived stats table */}
+      {/* Derived stats formula table */}
       <Paper variant="outlined" sx={{ mb: 3, overflow: 'hidden' }}>
         <Table size="small">
           <TableHead>
@@ -597,19 +761,26 @@ export default function DerivedStatsEditor({
 
       <Divider sx={{ mb: 3 }} />
 
+      {/* Breakpoint table */}
+      <Box sx={{ mb: 3 }}>
+        <BreakpointTable
+          derivedStats={derivedStats}
+          breakpointLevels={breakpointLevels}
+          breakpointResults={breakpointResults}
+          cyclicIds={evalState.cyclicIds}
+          maxLevel={maxLevel}
+          onLevelsChange={setBreakpointLevels}
+        />
+      </Box>
+
+      <Divider sx={{ mb: 3 }} />
+
       {/* Metadata fields */}
       <MetadataFieldsPanel fields={metadataFields} onChange={handleMetadataChange} />
 
-      {metadataFields.length > 0 && (
-        <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-          <code>resource_multiplier</code> ({resourceMultiplier}) is always available as a formula variable.
-        </Typography>
-      )}
-      {metadataFields.length === 0 && (
-        <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-          <code>resource_multiplier</code> ({resourceMultiplier}) is always available as a formula variable.
-        </Typography>
-      )}
+      <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+        <code>resource_multiplier</code> ({resourceMultiplier}) is always available as a formula variable.
+      </Typography>
     </Box>
   )
 }
