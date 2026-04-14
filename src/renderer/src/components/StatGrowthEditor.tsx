@@ -12,7 +12,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   CartesianGrid,
   Legend,
@@ -525,6 +525,9 @@ export default function StatGrowthEditor({ classId }: StatGrowthEditorProps): Re
 }
 
 // ─── Memoized row to prevent full-grid re-renders on single-cell edits ─────────
+// Custom comparator: only the values for this specific level matter.
+// gridValues is a new object reference on every cell edit, so the default
+// shallow comparison would always re-render all rows.
 
 interface GridRowProps {
   level: number
@@ -533,7 +536,7 @@ interface GridRowProps {
   onCellChange: (statId: string, level: number, value: string) => void
 }
 
-const GridRow = ({
+const GridRow = memo(({
   level,
   stats,
   gridValues,
@@ -596,4 +599,14 @@ const GridRow = ({
       ))}
     </tr>
   )
-}
+}, (prev, next) => {
+  if (prev.level !== next.level || prev.stats !== next.stats || prev.onCellChange !== next.onCellChange) {
+    return false
+  }
+  for (const stat of prev.stats) {
+    if (prev.gridValues[stat.id]?.[prev.level] !== next.gridValues[stat.id]?.[next.level]) {
+      return false
+    }
+  }
+  return true
+})

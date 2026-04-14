@@ -67,10 +67,14 @@ export class ClassRepository extends DomainRepository {
     if (!source) return null
     const newId = randomUUID()
     const newDisplayName = `${source.displayName} (Copy)`
-    const newExportKey = newDisplayName
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '')
+    // Append a short UUID fragment so repeated duplications never collide on the UNIQUE export_key constraint
+    const newExportKey =
+      newDisplayName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '') +
+      '-' +
+      randomUUID().slice(0, 8)
     this.dbProvider()
       .prepare(
         `INSERT INTO classes (id, display_name, export_key, description, resource_multiplier)

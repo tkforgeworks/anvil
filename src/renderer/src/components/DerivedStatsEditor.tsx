@@ -39,6 +39,22 @@ import type {
 
 const BUILTIN_FN_NAMES = new Set(['min', 'max', 'floor', 'ceil'])
 
+/**
+ * Renderer-side variable extractor used for cycle detection and dependency
+ * ordering. This is a regex approximation rather than the AST-based
+ * extractVariableNames in engine.ts.
+ *
+ * Known limitation: it cannot distinguish function-call identifiers from
+ * variable names beyond the hard-coded BUILTIN_FN_NAMES set. If the builtin
+ * set is ever extended (e.g. "abs", "round"), that name must be added here too,
+ * or cycle detection may treat it as a variable dependency.
+ *
+ * This is acceptable because: (a) the formula grammar is tightly constrained,
+ * (b) false-positive cycle edges are conservative (they block evaluation rather
+ * than silently computing wrong results), and (c) adding an IPC round-trip to
+ * use the AST extractor inside the synchronous detectCycles / evaluateAllAtLevel
+ * dependency-sort logic would require a more invasive async refactor.
+ */
 function extractVarNames(formula: string): string[] {
   const tokens = formula.match(/\b[a-zA-Z_][a-zA-Z0-9_]*\b/g) ?? []
   return tokens.filter((t) => !BUILTIN_FN_NAMES.has(t))
@@ -119,6 +135,8 @@ function defaultBreakpointLevels(maxLevel: number): number[] {
 
 // Multi-pass dependency-order evaluation at a single level.
 // cyclicIds is read-only — already computed before this is called.
+// Each pass issues a single batch IPC call for all stats whose dependencies
+// are resolved, rather than one call per stat.
 async function evaluateAllAtLevel(
   defs: DerivedStatDefinition[],
   activeFormulas: Record<string, string>,
@@ -138,13 +156,12 @@ async function evaluateAllAtLevel(
       return vars.every((v) => !derivedKeys.has(v) || v in evaluated)
     })
     if (toEval.length === 0) break
-    const evalResults = await Promise.all(
-      toEval.map(async (def) => ({
-        def,
-        result: await formulasApi.evaluate(activeFormulas[def.id], evaluated),
-      })),
+    const batchResults = await formulasApi.evaluateBatch(
+      toEval.map((def) => ({ formula: activeFormulas[def.id], bindings: { ...evaluated } })),
     )
-    for (const { def, result } of evalResults) {
+    for (let i = 0; i < toEval.length; i++) {
+      const def = toEval[i]
+      const result = batchResults[i]
       results[def.id] = result
       if (result.value !== null) {
         evaluated[def.exportKey] = applyOutputConfig(result.value, def.outputType, def.roundingMode)

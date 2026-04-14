@@ -27,6 +27,7 @@ export const IPC_CHANNELS = {
   CLASSES_GET_ABILITY_ASSIGNMENTS: 'classes:get-ability-assignments',
   CLASSES_SET_ABILITY_ASSIGNMENTS: 'classes:set-ability-assignments',
   FORMULA_EVALUATE: 'formulas:evaluate',
+  FORMULA_EVALUATE_BATCH: 'formulas:evaluate-batch',
 
   // Abilities
   ABILITIES_LIST: 'abilities:list',
