@@ -92,6 +92,7 @@ export default function AbilityEditorPage(): React.JSX.Element {
       }
       setStatModifiers(modStrings)
       setStats(statList)
+      setUsedBy(null)
       setDirty(false)
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Failed to load ability.')
@@ -111,7 +112,9 @@ export default function AbilityEditorPage(): React.JSX.Element {
     abilitiesApi
       .getUsedBy(id)
       .then((result) => setUsedBy(result))
-      .catch(() => setUsedBy({ classes: [], npcs: [] }))
+      .catch((cause) =>
+        setError(cause instanceof Error ? cause.message : 'Failed to load Used By data.'),
+      )
       .finally(() => setUsedByLoading(false))
   }, [activeTab, id, usedBy])
 
