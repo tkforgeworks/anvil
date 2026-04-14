@@ -2,8 +2,10 @@ import { randomUUID } from 'crypto'
 import { getDb, type DbConnection } from '../db/connection'
 import { DomainRepository } from './domain-repository'
 import type {
-  ClassRecord,
   ClassAbilityAssignment,
+  ClassDerivedStatOverride,
+  ClassMetadataField,
+  ClassRecord,
   CreateClassInput,
   StatGrowthEntry,
   UpdateClassInput,
@@ -165,6 +167,63 @@ export class ClassRepository extends DomainRepository {
       )
       .all(classId) as ClassAbilityAssignment[]
     return rows
+  }
+
+  getDerivedStatOverrides(classId: string): ClassDerivedStatOverride[] {
+    const rows = this.dbProvider()
+      .prepare(
+        `SELECT derived_stat_id AS derivedStatId, formula
+         FROM class_derived_stat_overrides
+         WHERE class_id = ?`,
+      )
+      .all(classId) as ClassDerivedStatOverride[]
+    return rows
+  }
+
+  setDerivedStatOverrides(classId: string, overrides: ClassDerivedStatOverride[]): void {
+    const db = this.dbProvider()
+    const del = db.prepare(`DELETE FROM class_derived_stat_overrides WHERE class_id = ?`)
+    const ins = db.prepare(
+      `INSERT INTO class_derived_stat_overrides (class_id, derived_stat_id, formula)
+       VALUES (@classId, @derivedStatId, @formula)
+       ON CONFLICT (class_id, derived_stat_id)
+       DO UPDATE SET formula = excluded.formula, updated_at = datetime('now')`,
+    )
+    db.transaction(() => {
+      del.run(classId)
+      for (const o of overrides) {
+        ins.run({ classId, derivedStatId: o.derivedStatId, formula: o.formula })
+      }
+    })()
+  }
+
+  getMetadataFields(classId: string): ClassMetadataField[] {
+    const rows = this.dbProvider()
+      .prepare(
+        `SELECT field_key AS fieldKey, value
+         FROM class_metadata_fields
+         WHERE class_id = ?
+         ORDER BY field_key`,
+      )
+      .all(classId) as ClassMetadataField[]
+    return rows
+  }
+
+  setMetadataFields(classId: string, fields: ClassMetadataField[]): void {
+    const db = this.dbProvider()
+    const del = db.prepare(`DELETE FROM class_metadata_fields WHERE class_id = ?`)
+    const ins = db.prepare(
+      `INSERT INTO class_metadata_fields (class_id, field_key, value)
+       VALUES (@classId, @fieldKey, @value)
+       ON CONFLICT (class_id, field_key)
+       DO UPDATE SET value = excluded.value, updated_at = datetime('now')`,
+    )
+    db.transaction(() => {
+      del.run(classId)
+      for (const f of fields) {
+        ins.run({ classId, fieldKey: f.fieldKey, value: f.value })
+      }
+    })()
   }
 
   setAbilityAssignments(classId: string, assignments: ClassAbilityAssignment[]): void {

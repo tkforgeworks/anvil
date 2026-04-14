@@ -1,5 +1,5 @@
 import { IPC_CHANNELS } from '../../shared/ipc-channels'
-import type { MetaItemCategory, MetaNpcType, MetaStat, ProjectSettings } from '../../shared/domain-types'
+import type { DerivedStatDefinition, MetaItemCategory, MetaNpcType, MetaStat, ProjectSettings } from '../../shared/domain-types'
 
 export const metaApi = {
   listItemCategories: () =>
@@ -13,4 +13,7 @@ export const metaApi = {
 
   getProjectSettings: () =>
     window.anvil.invoke<ProjectSettings>(IPC_CHANNELS.META_GET_PROJECT_SETTINGS),
+
+  listDerivedStats: () =>
+    window.anvil.invoke<DerivedStatDefinition[]>(IPC_CHANNELS.META_LIST_DERIVED_STATS),
 }

@@ -20,6 +20,11 @@ export const IPC_CHANNELS = {
   CLASSES_DUPLICATE: 'classes:duplicate',
   CLASSES_GET_STAT_GROWTH: 'classes:get-stat-growth',
   CLASSES_SET_STAT_GROWTH: 'classes:set-stat-growth',
+  CLASSES_GET_DERIVED_STAT_OVERRIDES: 'classes:get-derived-stat-overrides',
+  CLASSES_SET_DERIVED_STAT_OVERRIDES: 'classes:set-derived-stat-overrides',
+  CLASSES_GET_METADATA_FIELDS: 'classes:get-metadata-fields',
+  CLASSES_SET_METADATA_FIELDS: 'classes:set-metadata-fields',
+  FORMULA_EVALUATE: 'formulas:evaluate',
 
   // Abilities
   ABILITIES_LIST: 'abilities:list',
@@ -81,6 +86,7 @@ export const IPC_CHANNELS = {
   META_LIST_NPC_TYPES: 'meta:list-npc-types',
   META_LIST_STATS: 'meta:list-stats',
   META_GET_PROJECT_SETTINGS: 'meta:get-project-settings',
+  META_LIST_DERIVED_STATS: 'meta:list-derived-stats',
 
   // Custom field definitions
   CUSTOM_FIELDS_LIST_DEFINITIONS: 'custom-fields:list-definitions',

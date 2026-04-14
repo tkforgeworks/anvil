@@ -390,6 +390,10 @@ function FieldList({ scopeType, scopeId }: FieldListProps): React.JSX.Element {
 
 export default function SettingsPage(): React.JSX.Element {
   const activeProject = useProjectStore((state) => state.activeProject)
+  // Use the file path as the dependency — the poll in AppShell replaces the activeProject
+  // object reference every 2 s even when nothing changes, which would re-trigger the load
+  // effect and reset selectedScope / close any open dialog on every tick.
+  const projectFilePath = useProjectStore((state) => state.activeProject?.filePath ?? null)
   const [itemCategories, setItemCategories] = useState<MetaItemCategory[]>([])
   const [npcTypes, setNpcTypes] = useState<MetaNpcType[]>([])
   const [selectedScope, setSelectedScope] = useState<{
@@ -399,7 +403,7 @@ export default function SettingsPage(): React.JSX.Element {
   } | null>(null)
 
   useEffect(() => {
-    if (!activeProject) return
+    if (!projectFilePath) return
     void Promise.all([metaApi.listItemCategories(), metaApi.listNpcTypes()]).then(
       ([cats, types]) => {
         setItemCategories(cats)
@@ -410,7 +414,7 @@ export default function SettingsPage(): React.JSX.Element {
         }
       },
     )
-  }, [activeProject])
+  }, [projectFilePath])
 
   if (!activeProject) {
     return (

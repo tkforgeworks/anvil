@@ -1,6 +1,7 @@
 import type { DbConnection } from '../connection'
 import * as migration001 from './001_init'
 import * as migration002 from './002_seed_meta_layer'
+import * as migration003 from './003_class_overrides_and_metadata'
 
 interface Migration {
   filename: string
@@ -14,6 +15,7 @@ interface Migration {
 const MIGRATIONS: Migration[] = [
   { filename: '001_init', up: migration001.up },
   { filename: '002_seed_meta_layer', up: migration002.up },
+  { filename: '003_class_overrides_and_metadata', up: migration003.up },
 ]
 
 export const CURRENT_SCHEMA_VERSION = MIGRATIONS.length

@@ -1,6 +1,12 @@
 import { ipcMain } from 'electron'
 import { IPC_CHANNELS } from '../../shared/ipc-channels'
-import type { CreateClassInput, StatGrowthEntry, UpdateClassInput } from '../../shared/domain-types'
+import type {
+  ClassDerivedStatOverride,
+  ClassMetadataField,
+  CreateClassInput,
+  StatGrowthEntry,
+  UpdateClassInput,
+} from '../../shared/domain-types'
 import { markProjectDirty } from '../project/project-service'
 import { classRepository } from '../repositories'
 
@@ -47,6 +53,30 @@ export function registerClassesHandlers(): void {
     IPC_CHANNELS.CLASSES_SET_STAT_GROWTH,
     (_event, classId: string, entries: StatGrowthEntry[]) => {
       classRepository.setStatGrowth(classId, entries)
+      markProjectDirty()
+    },
+  )
+
+  ipcMain.handle(IPC_CHANNELS.CLASSES_GET_DERIVED_STAT_OVERRIDES, (_event, classId: string) =>
+    classRepository.getDerivedStatOverrides(classId),
+  )
+
+  ipcMain.handle(
+    IPC_CHANNELS.CLASSES_SET_DERIVED_STAT_OVERRIDES,
+    (_event, classId: string, overrides: ClassDerivedStatOverride[]) => {
+      classRepository.setDerivedStatOverrides(classId, overrides)
+      markProjectDirty()
+    },
+  )
+
+  ipcMain.handle(IPC_CHANNELS.CLASSES_GET_METADATA_FIELDS, (_event, classId: string) =>
+    classRepository.getMetadataFields(classId),
+  )
+
+  ipcMain.handle(
+    IPC_CHANNELS.CLASSES_SET_METADATA_FIELDS,
+    (_event, classId: string, fields: ClassMetadataField[]) => {
+      classRepository.setMetadataFields(classId, fields)
       markProjectDirty()
     },
   )

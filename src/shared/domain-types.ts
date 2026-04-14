@@ -175,6 +175,32 @@ export interface ProjectSettings {
   maxLevel: number
 }
 
+export interface DerivedStatDefinition {
+  id: string
+  displayName: string
+  exportKey: string
+  formula: string
+  outputType: 'integer' | 'float'
+  roundingMode: 'floor' | 'round' | 'none'
+  sortOrder: number
+}
+
+export interface ClassDerivedStatOverride {
+  derivedStatId: string
+  formula: string
+}
+
+export interface ClassMetadataField {
+  fieldKey: string
+  value: number
+}
+
+export interface FormulaEvalResult {
+  value: number | null
+  error: string | null
+  isSyntaxError: boolean
+}
+
 // ─── Crafting Recipes ─────────────────────────────────────────────────────────
 
 export interface RecipeRecord extends BaseRecord {

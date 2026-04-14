@@ -17,6 +17,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { classesApi } from '../../api/classes.api'
 import type { ClassRecord } from '../../../shared/domain-types'
+import DerivedStatsEditor from '../components/DerivedStatsEditor'
 import StatGrowthEditor from '../components/StatGrowthEditor'
 
 // ─── Tab panels ───────────────────────────────────────────────────────────────
@@ -258,7 +259,10 @@ export default function ClassEditorPage(): React.JSX.Element {
 
       {/* Derived Stats tab */}
       <TabPanel index={2} value={activeTab}>
-        <PlaceholderPanel ticket="ANV-35" label="Derived stat definitions and formula engine — coming in ANV-35" />
+        <DerivedStatsEditor
+          classId={record.id}
+          resourceMultiplier={parseFloat(resourceMultiplier) || 1}
+        />
       </TabPanel>
 
       {/* Abilities tab */}

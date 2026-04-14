@@ -10,6 +10,7 @@ import { registerExportHandlers } from './export.handlers'
 import { registerSettingsHandlers } from './settings.handlers'
 import { registerMetaHandlers } from './meta.handlers'
 import { registerCustomFieldsHandlers } from './custom-fields.handlers'
+import { registerFormulaHandlers } from './formula.handlers'
 
 /**
  * Registers all IPC handlers for all domains.
@@ -28,4 +29,5 @@ export function registerAllIpcHandlers(): void {
   registerSettingsHandlers()
   registerMetaHandlers()
   registerCustomFieldsHandlers()
+  registerFormulaHandlers()
 }

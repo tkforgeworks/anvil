@@ -1,5 +1,7 @@
 import { IPC_CHANNELS } from '../../shared/ipc-channels'
 import type {
+  ClassDerivedStatOverride,
+  ClassMetadataField,
   ClassRecord,
   CreateClassInput,
   StatGrowthEntry,
@@ -33,4 +35,19 @@ export const classesApi = {
 
   setStatGrowth: (classId: string, entries: StatGrowthEntry[]) =>
     window.anvil.invoke<void>(IPC_CHANNELS.CLASSES_SET_STAT_GROWTH, classId, entries),
+
+  getDerivedStatOverrides: (classId: string) =>
+    window.anvil.invoke<ClassDerivedStatOverride[]>(
+      IPC_CHANNELS.CLASSES_GET_DERIVED_STAT_OVERRIDES,
+      classId,
+    ),
+
+  setDerivedStatOverrides: (classId: string, overrides: ClassDerivedStatOverride[]) =>
+    window.anvil.invoke<void>(IPC_CHANNELS.CLASSES_SET_DERIVED_STAT_OVERRIDES, classId, overrides),
+
+  getMetadataFields: (classId: string) =>
+    window.anvil.invoke<ClassMetadataField[]>(IPC_CHANNELS.CLASSES_GET_METADATA_FIELDS, classId),
+
+  setMetadataFields: (classId: string, fields: ClassMetadataField[]) =>
+    window.anvil.invoke<void>(IPC_CHANNELS.CLASSES_SET_METADATA_FIELDS, classId, fields),
 }

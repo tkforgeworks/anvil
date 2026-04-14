@@ -1,7 +1,7 @@
 import { ipcMain } from 'electron'
 import { IPC_CHANNELS } from '../../shared/ipc-channels'
 import { getDb } from '../db/connection'
-import type { MetaItemCategory, MetaNpcType, MetaStat, ProjectSettings } from '../../shared/domain-types'
+import type { DerivedStatDefinition, MetaItemCategory, MetaNpcType, MetaStat, ProjectSettings } from '../../shared/domain-types'
 
 interface ItemCategoryRow {
   id: string
@@ -91,6 +91,29 @@ export function registerMetaHandlers(): void {
       )
       .all() as StatRow[]
     return rows.map(toMetaStat)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.META_LIST_DERIVED_STATS, (): DerivedStatDefinition[] => {
+    interface DerivedStatRow {
+      id: string; display_name: string; export_key: string
+      formula: string; output_type: string; rounding_mode: string; sort_order: number
+    }
+    const rows = getDb()
+      .prepare(
+        `SELECT id, display_name, export_key, formula, output_type, rounding_mode, sort_order
+         FROM derived_stat_definitions
+         ORDER BY sort_order`,
+      )
+      .all() as DerivedStatRow[]
+    return rows.map((r) => ({
+      id: r.id,
+      displayName: r.display_name,
+      exportKey: r.export_key,
+      formula: r.formula,
+      outputType: r.output_type as 'integer' | 'float',
+      roundingMode: r.rounding_mode as 'floor' | 'round' | 'none',
+      sortOrder: r.sort_order,
+    }))
   })
 
   ipcMain.handle(IPC_CHANNELS.META_GET_PROJECT_SETTINGS, (): ProjectSettings => {
