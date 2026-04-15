@@ -25,12 +25,12 @@ export function registerItemsHandlers(): void {
 
   ipcMain.handle(IPC_CHANNELS.ITEMS_DELETE, (_event, id: string) => {
     itemRepository.softDelete(id)
-    return markProjectDirty()
+    markProjectDirty()
   })
 
   ipcMain.handle(IPC_CHANNELS.ITEMS_RESTORE, (_event, id: string) => {
     itemRepository.restore(id)
-    return markProjectDirty()
+    markProjectDirty()
   })
 
   ipcMain.handle(IPC_CHANNELS.ITEMS_DUPLICATE, (_event, id: string) => {

@@ -32,12 +32,12 @@ export function registerClassesHandlers(): void {
 
   ipcMain.handle(IPC_CHANNELS.CLASSES_DELETE, (_event, id: string) => {
     classRepository.softDelete(id)
-    return markProjectDirty()
+    markProjectDirty()
   })
 
   ipcMain.handle(IPC_CHANNELS.CLASSES_RESTORE, (_event, id: string) => {
     classRepository.restore(id)
-    return markProjectDirty()
+    markProjectDirty()
   })
 
   ipcMain.handle(IPC_CHANNELS.CLASSES_DUPLICATE, (_event, id: string) => {

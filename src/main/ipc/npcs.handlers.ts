@@ -25,11 +25,11 @@ export function registerNpcsHandlers(): void {
 
   ipcMain.handle(IPC_CHANNELS.NPCS_DELETE, (_event, id: string) => {
     npcRepository.softDelete(id)
-    return markProjectDirty()
+    markProjectDirty()
   })
 
   ipcMain.handle(IPC_CHANNELS.NPCS_RESTORE, (_event, id: string) => {
     npcRepository.restore(id)
-    return markProjectDirty()
+    markProjectDirty()
   })
 }

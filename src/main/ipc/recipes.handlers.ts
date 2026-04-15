@@ -25,11 +25,11 @@ export function registerRecipesHandlers(): void {
 
   ipcMain.handle(IPC_CHANNELS.RECIPES_DELETE, (_event, id: string) => {
     recipeRepository.softDelete(id)
-    return markProjectDirty()
+    markProjectDirty()
   })
 
   ipcMain.handle(IPC_CHANNELS.RECIPES_RESTORE, (_event, id: string) => {
     recipeRepository.restore(id)
-    return markProjectDirty()
+    markProjectDirty()
   })
 }
