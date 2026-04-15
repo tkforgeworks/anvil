@@ -5,6 +5,7 @@ import { ItemRepository } from '../item.repository'
 
 // These IDs are seeded by migration002
 const CATEGORY_ID = 'item-category-weapon'
+const ARMOR_CATEGORY_ID = 'item-category-armor'
 const RARITY_ID = 'rarity-common'
 
 function makeDb(): Database.Database {
@@ -138,6 +139,34 @@ describe('ItemRepository', () => {
     ])
   })
 
+  it('duplicate: ignores stale custom field values outside the current category', () => {
+    const record = repo.create({
+      displayName: 'Iron Sword',
+      exportKey: 'iron_sword',
+      itemCategoryId: CATEGORY_ID,
+      rarityId: RARITY_ID,
+    })
+    db.prepare(
+      `INSERT INTO custom_field_definitions (id, scope_type, scope_id, field_name, field_type, sort_order)
+       VALUES ('cfd-damage', 'item_category', '${CATEGORY_ID}', 'damage', 'integer', 1)`,
+    ).run()
+    db.prepare(
+      `INSERT INTO custom_field_definitions (id, scope_type, scope_id, field_name, field_type, sort_order)
+       VALUES ('cfd-defense', 'item_category', '${ARMOR_CATEGORY_ID}', 'defense', 'integer', 1)`,
+    ).run()
+    repo.setCustomFieldValues(record.id, [
+      { fieldDefinitionId: 'cfd-damage', value: '50' },
+      { fieldDefinitionId: 'cfd-defense', value: '20' },
+    ])
+
+    const copy = repo.duplicate(record.id)
+
+    expect(copy).not.toBeNull()
+    expect(repo.getCustomFieldValues(copy!.id)).toEqual([
+      { fieldDefinitionId: 'cfd-damage', value: '50' },
+    ])
+  })
+
   it('duplicate: returns null for a non-existent id', () => {
     expect(repo.duplicate('does-not-exist')).toBeNull()
   })
@@ -193,5 +222,32 @@ describe('ItemRepository', () => {
     const result = repo.getCustomFieldValues(record.id)
     expect(result).toHaveLength(1)
     expect(result[0].value).toBe('75')
+  })
+
+  it('update: changing item category removes custom field values outside the new category', () => {
+    const record = repo.create({
+      displayName: 'Iron Sword',
+      exportKey: 'iron_sword',
+      itemCategoryId: CATEGORY_ID,
+      rarityId: RARITY_ID,
+    })
+    db.prepare(
+      `INSERT INTO custom_field_definitions (id, scope_type, scope_id, field_name, field_type, sort_order)
+       VALUES ('cfd-damage', 'item_category', '${CATEGORY_ID}', 'damage', 'integer', 1)`,
+    ).run()
+    db.prepare(
+      `INSERT INTO custom_field_definitions (id, scope_type, scope_id, field_name, field_type, sort_order)
+       VALUES ('cfd-defense', 'item_category', '${ARMOR_CATEGORY_ID}', 'defense', 'integer', 1)`,
+    ).run()
+    repo.setCustomFieldValues(record.id, [
+      { fieldDefinitionId: 'cfd-damage', value: '50' },
+      { fieldDefinitionId: 'cfd-defense', value: '20' },
+    ])
+
+    repo.update(record.id, { itemCategoryId: ARMOR_CATEGORY_ID })
+
+    expect(repo.getCustomFieldValues(record.id)).toEqual([
+      { fieldDefinitionId: 'cfd-defense', value: '20' },
+    ])
   })
 })

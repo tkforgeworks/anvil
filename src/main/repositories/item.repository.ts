@@ -118,7 +118,7 @@ export class ItemRepository extends DomainRepository {
         rarityId: source.rarityId,
       })
 
-      const values = this.getCustomFieldValues(source.id)
+      const values = this.getCustomFieldValuesForCategory(source.id, source.itemCategoryId)
       const ins = db.prepare(
         `INSERT INTO custom_field_values (domain, record_id, field_definition_id, value)
          VALUES ('items', @recordId, @fieldDefinitionId, @value)`,
@@ -138,8 +138,11 @@ export class ItemRepository extends DomainRepository {
   update(id: string, input: UpdateItemInput): ItemRecord | null {
     const current = this.get(id)
     if (!current) return null
-    this.dbProvider()
-      .prepare(
+    const nextItemCategoryId = input.itemCategoryId ?? current.itemCategoryId
+    const db = this.dbProvider()
+
+    db.transaction(() => {
+      db.prepare(
         `UPDATE items
          SET display_name      = @displayName,
              export_key        = @exportKey,
@@ -149,15 +152,58 @@ export class ItemRepository extends DomainRepository {
              updated_at        = datetime('now')
          WHERE id = @id`,
       )
-      .run({
-        id,
-        displayName: input.displayName ?? current.displayName,
-        exportKey: input.exportKey ?? current.exportKey,
-        description: input.description ?? current.description,
-        itemCategoryId: input.itemCategoryId ?? current.itemCategoryId,
-        rarityId: input.rarityId ?? current.rarityId,
-      })
+        .run({
+          id,
+          displayName: input.displayName ?? current.displayName,
+          exportKey: input.exportKey ?? current.exportKey,
+          description: input.description ?? current.description,
+          itemCategoryId: nextItemCategoryId,
+          rarityId: input.rarityId ?? current.rarityId,
+        })
+
+      if (nextItemCategoryId !== current.itemCategoryId) {
+        this.deleteCustomFieldValuesOutsideCategory(id, nextItemCategoryId)
+      }
+    })()
+
     return this.get(id)
+  }
+
+  private getCustomFieldValuesForCategory(itemId: string, itemCategoryId: string): CustomFieldValue[] {
+    const rows = this.dbProvider()
+      .prepare(
+        `SELECT cfv.field_definition_id, cfv.value
+         FROM custom_field_values cfv
+         JOIN custom_field_definitions cfd ON cfd.id = cfv.field_definition_id
+         WHERE cfv.domain = 'items'
+           AND cfv.record_id = ?
+           AND cfd.scope_type = 'item_category'
+           AND cfd.scope_id = ?`,
+      )
+      .all(itemId, itemCategoryId) as CustomFieldValueDbRow[]
+    return rows.map((r) => ({
+      fieldDefinitionId: r.field_definition_id,
+      value: r.value,
+    }))
+  }
+
+  private deleteCustomFieldValuesOutsideCategory(itemId: string, itemCategoryId: string): void {
+    this.dbProvider()
+      .prepare(
+        `DELETE FROM custom_field_values
+         WHERE domain = 'items'
+           AND record_id = @id
+           AND field_definition_id NOT IN (
+             SELECT id
+             FROM custom_field_definitions
+             WHERE scope_type = 'item_category'
+               AND scope_id = @itemCategoryId
+           )`,
+      )
+      .run({
+        id: itemId,
+        itemCategoryId,
+      })
   }
 
   override hardDelete(id: string): void {
