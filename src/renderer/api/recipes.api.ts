@@ -1,6 +1,7 @@
 import { IPC_CHANNELS } from '../../shared/ipc-channels'
 import type {
   CreateRecipeInput,
+  RecipeIngredient,
   RecipeRecord,
   UpdateRecipeInput,
 } from '../../shared/domain-types'
@@ -23,4 +24,13 @@ export const recipesApi = {
 
   restore: (id: string) =>
     window.anvil.invoke<void>(IPC_CHANNELS.RECIPES_RESTORE, id),
+
+  duplicate: (id: string) =>
+    window.anvil.invoke<RecipeRecord | null>(IPC_CHANNELS.RECIPES_DUPLICATE, id),
+
+  getIngredients: (id: string) =>
+    window.anvil.invoke<RecipeIngredient[]>(IPC_CHANNELS.RECIPES_GET_INGREDIENTS, id),
+
+  setIngredients: (id: string, ingredients: RecipeIngredient[]) =>
+    window.anvil.invoke<void>(IPC_CHANNELS.RECIPES_SET_INGREDIENTS, id, ingredients),
 }

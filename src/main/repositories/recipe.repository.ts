@@ -50,6 +50,13 @@ const SELECT_COLS = `
   created_at, updated_at, deleted_at
 `
 
+function slugify(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+}
+
 export class RecipeRepository extends DomainRepository {
   constructor(dbProvider: () => DbConnection = getDb) {
     super('recipes', dbProvider)
@@ -94,6 +101,52 @@ export class RecipeRepository extends DomainRepository {
         craftingSpecializationId: input.craftingSpecializationId ?? null,
       })
     return this.get(id)!
+  }
+
+  duplicate(id: string): RecipeRecord | null {
+    const source = this.get(id)
+    if (!source) return null
+
+    const newId = randomUUID()
+    const newDisplayName = `${source.displayName} (Copy)`
+    const newExportKey = `${slugify(newDisplayName)}-${randomUUID().slice(0, 8)}`
+    const ingredients = this.getIngredients(id)
+    const db = this.dbProvider()
+
+    db.transaction(() => {
+      db.prepare(
+        `INSERT INTO recipes
+           (id, display_name, export_key, description,
+            output_item_id, output_quantity, crafting_station_id, crafting_specialization_id)
+         VALUES
+           (@id, @displayName, @exportKey, @description,
+            @outputItemId, @outputQuantity, @craftingStationId, @craftingSpecializationId)`,
+      ).run({
+        id: newId,
+        displayName: newDisplayName,
+        exportKey: newExportKey,
+        description: source.description,
+        outputItemId: source.outputItemId,
+        outputQuantity: source.outputQuantity,
+        craftingStationId: source.craftingStationId,
+        craftingSpecializationId: source.craftingSpecializationId,
+      })
+
+      const ins = db.prepare(
+        `INSERT INTO recipe_ingredients (recipe_id, item_id, quantity, sort_order)
+         VALUES (@recipeId, @itemId, @quantity, @sortOrder)`,
+      )
+      for (const ingredient of ingredients) {
+        ins.run({
+          recipeId: newId,
+          itemId: ingredient.itemId,
+          quantity: ingredient.quantity,
+          sortOrder: ingredient.sortOrder,
+        })
+      }
+    })()
+
+    return this.get(newId)!
   }
 
   update(id: string, input: UpdateRecipeInput): RecipeRecord | null {

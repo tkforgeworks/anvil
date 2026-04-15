@@ -55,6 +55,9 @@ export const IPC_CHANNELS = {
   RECIPES_UPDATE: 'recipes:update',
   RECIPES_DELETE: 'recipes:delete',
   RECIPES_RESTORE: 'recipes:restore',
+  RECIPES_DUPLICATE: 'recipes:duplicate',
+  RECIPES_GET_INGREDIENTS: 'recipes:get-ingredients',
+  RECIPES_SET_INGREDIENTS: 'recipes:set-ingredients',
 
   // NPCs
   NPCS_LIST: 'npcs:list',
@@ -91,6 +94,8 @@ export const IPC_CHANNELS = {
   META_LIST_ITEM_CATEGORIES: 'meta:list-item-categories',
   META_LIST_RARITIES: 'meta:list-rarities',
   META_LIST_NPC_TYPES: 'meta:list-npc-types',
+  META_LIST_CRAFTING_STATIONS: 'meta:list-crafting-stations',
+  META_LIST_CRAFTING_SPECIALIZATIONS: 'meta:list-crafting-specializations',
   META_LIST_STATS: 'meta:list-stats',
   META_GET_PROJECT_SETTINGS: 'meta:get-project-settings',
   META_LIST_DERIVED_STATS: 'meta:list-derived-stats',

@@ -116,6 +116,56 @@ describe('RecipeRepository', () => {
     expect(repo.update('does-not-exist', { displayName: 'X', exportKey: 'x', outputItemId })).toBeNull()
   })
 
+  // ── duplicate ────────────────────────────────────────────────────────────
+
+  it('duplicate: creates an active copy with a new id and regenerated export key', () => {
+    const record = repo.create({
+      displayName: 'Forge Iron Sword',
+      exportKey: 'forge_iron_sword',
+      outputItemId,
+      outputQuantity: 2,
+      craftingStationId: STATION_ID,
+    })
+
+    const copy = repo.duplicate(record.id)
+
+    expect(copy).not.toBeNull()
+    expect(copy!.id).not.toBe(record.id)
+    expect(copy!.displayName).toBe('Forge Iron Sword (Copy)')
+    expect(copy!.exportKey).toMatch(/^forge-iron-sword-copy-[a-f0-9]{8}$/)
+    expect(copy!.outputItemId).toBe(record.outputItemId)
+    expect(copy!.outputQuantity).toBe(2)
+    expect(copy!.craftingStationId).toBe(STATION_ID)
+    expect(copy!.deletedAt).toBeNull()
+  })
+
+  it('duplicate: copies ingredient references by internal id', () => {
+    const record = repo.create({
+      displayName: 'Forge Iron Sword',
+      exportKey: 'forge_iron_sword',
+      outputItemId,
+      outputQuantity: 1,
+    })
+    const itemRepo = new ItemRepository(() => db)
+    const ingredientItem = itemRepo.create({
+      displayName: 'Iron Ore',
+      exportKey: 'iron_ore',
+      itemCategoryId: 'item-category-crafting-resource',
+      rarityId: RARITY_ID,
+    })
+    const ingredients = [{ itemId: ingredientItem.id, quantity: 3, sortOrder: 0 }]
+    repo.setIngredients(record.id, ingredients)
+
+    const copy = repo.duplicate(record.id)
+
+    expect(copy).not.toBeNull()
+    expect(repo.getIngredients(copy!.id)).toEqual(ingredients)
+  })
+
+  it('duplicate: returns null for a non-existent id', () => {
+    expect(repo.duplicate('does-not-exist')).toBeNull()
+  })
+
   // ── softDelete + restore ─────────────────────────────────────────────────
 
   it('softDelete: sets deletedAt and excludes record from default list', () => {

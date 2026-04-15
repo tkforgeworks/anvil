@@ -1,6 +1,6 @@
 import { ipcMain } from 'electron'
 import { IPC_CHANNELS } from '../../shared/ipc-channels'
-import type { CreateRecipeInput, UpdateRecipeInput } from '../../shared/domain-types'
+import type { CreateRecipeInput, RecipeIngredient, UpdateRecipeInput } from '../../shared/domain-types'
 import { markProjectDirty } from '../project/project-service'
 import { recipeRepository } from '../repositories'
 
@@ -32,4 +32,22 @@ export function registerRecipesHandlers(): void {
     recipeRepository.restore(id)
     markProjectDirty()
   })
+
+  ipcMain.handle(IPC_CHANNELS.RECIPES_DUPLICATE, (_event, id: string) => {
+    const record = recipeRepository.duplicate(id)
+    if (record) markProjectDirty()
+    return record
+  })
+
+  ipcMain.handle(IPC_CHANNELS.RECIPES_GET_INGREDIENTS, (_event, id: string) =>
+    recipeRepository.getIngredients(id),
+  )
+
+  ipcMain.handle(
+    IPC_CHANNELS.RECIPES_SET_INGREDIENTS,
+    (_event, id: string, ingredients: RecipeIngredient[]) => {
+      recipeRepository.setIngredients(id, ingredients)
+      markProjectDirty()
+    },
+  )
 }

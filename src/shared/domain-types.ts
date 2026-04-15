@@ -180,6 +180,22 @@ export interface MetaNpcType {
   sortOrder: number
 }
 
+export interface MetaCraftingStation {
+  id: string
+  displayName: string
+  exportKey: string
+  description: string
+  sortOrder: number
+}
+
+export interface MetaCraftingSpecialization {
+  id: string
+  displayName: string
+  exportKey: string
+  description: string
+  sortOrder: number
+}
+
 export interface MetaStat {
   id: string
   displayName: string

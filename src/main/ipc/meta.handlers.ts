@@ -3,6 +3,8 @@ import { IPC_CHANNELS } from '../../shared/ipc-channels'
 import { getDb } from '../db/connection'
 import type {
   DerivedStatDefinition,
+  MetaCraftingSpecialization,
+  MetaCraftingStation,
   MetaItemCategory,
   MetaNpcType,
   MetaRarity,
@@ -19,6 +21,22 @@ interface ItemCategoryRow {
 }
 
 interface NpcTypeRow {
+  id: string
+  display_name: string
+  export_key: string
+  description: string
+  sort_order: number
+}
+
+interface CraftingStationRow {
+  id: string
+  display_name: string
+  export_key: string
+  description: string
+  sort_order: number
+}
+
+interface CraftingSpecializationRow {
   id: string
   display_name: string
   export_key: string
@@ -56,6 +74,28 @@ function toMetaItemCategory(row: ItemCategoryRow): MetaItemCategory {
 }
 
 function toMetaNpcType(row: NpcTypeRow): MetaNpcType {
+  return {
+    id: row.id,
+    displayName: row.display_name,
+    exportKey: row.export_key,
+    description: row.description,
+    sortOrder: row.sort_order,
+  }
+}
+
+function toMetaCraftingStation(row: CraftingStationRow): MetaCraftingStation {
+  return {
+    id: row.id,
+    displayName: row.display_name,
+    exportKey: row.export_key,
+    description: row.description,
+    sortOrder: row.sort_order,
+  }
+}
+
+function toMetaCraftingSpecialization(
+  row: CraftingSpecializationRow,
+): MetaCraftingSpecialization {
   return {
     id: row.id,
     displayName: row.display_name,
@@ -116,6 +156,28 @@ export function registerMetaHandlers(): void {
       )
       .all() as NpcTypeRow[]
     return rows.map(toMetaNpcType)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.META_LIST_CRAFTING_STATIONS, () => {
+    const rows = getDb()
+      .prepare(
+        `SELECT id, display_name, export_key, description, sort_order
+         FROM crafting_stations
+         ORDER BY sort_order, display_name COLLATE NOCASE`,
+      )
+      .all() as CraftingStationRow[]
+    return rows.map(toMetaCraftingStation)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.META_LIST_CRAFTING_SPECIALIZATIONS, () => {
+    const rows = getDb()
+      .prepare(
+        `SELECT id, display_name, export_key, description, sort_order
+         FROM crafting_specializations
+         ORDER BY sort_order, display_name COLLATE NOCASE`,
+      )
+      .all() as CraftingSpecializationRow[]
+    return rows.map(toMetaCraftingSpecialization)
   })
 
   ipcMain.handle(IPC_CHANNELS.META_LIST_STATS, () => {
