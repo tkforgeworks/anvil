@@ -10,6 +10,7 @@ import {
   itemRepository,
   npcRepository,
 } from '../repositories'
+import { markProjectDirty } from '../project/project-service'
 
 export function registerCustomFieldsHandlers(): void {
   ipcMain.handle(
@@ -22,19 +23,25 @@ export function registerCustomFieldsHandlers(): void {
   ipcMain.handle(
     IPC_CHANNELS.CUSTOM_FIELDS_CREATE_DEFINITION,
     (_event, input: CreateCustomFieldDefinitionInput) => {
-      return customFieldDefinitionRepository.create(input)
+      const record = customFieldDefinitionRepository.create(input)
+      markProjectDirty()
+      return record
     },
   )
 
   ipcMain.handle(
     IPC_CHANNELS.CUSTOM_FIELDS_UPDATE_DEFINITION,
     (_event, id: string, input: UpdateCustomFieldDefinitionInput) => {
-      return customFieldDefinitionRepository.update(id, input)
+      const record = customFieldDefinitionRepository.update(id, input)
+      if (record) markProjectDirty()
+      return record
     },
   )
 
   ipcMain.handle(IPC_CHANNELS.CUSTOM_FIELDS_DELETE_DEFINITION, (_event, id: string) => {
-    return customFieldDefinitionRepository.delete(id)
+    const result = customFieldDefinitionRepository.delete(id)
+    if (result.deleted) markProjectDirty()
+    return result
   })
 
   ipcMain.handle(
@@ -55,8 +62,12 @@ export function registerCustomFieldsHandlers(): void {
         values,
       }: { domain: 'items' | 'npcs'; recordId: string; values: CustomFieldValue[] },
     ) => {
-      if (domain === 'items') return itemRepository.setCustomFieldValues(recordId, values)
-      return npcRepository.setCustomFieldValues(recordId, values)
+      if (domain === 'items') {
+        itemRepository.setCustomFieldValues(recordId, values)
+      } else {
+        npcRepository.setCustomFieldValues(recordId, values)
+      }
+      markProjectDirty()
     },
   )
 }
