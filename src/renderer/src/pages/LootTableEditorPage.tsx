@@ -10,6 +10,7 @@ import {
   Autocomplete,
   Box,
   Button,
+  Chip,
   Divider,
   IconButton,
   Stack,
@@ -26,12 +27,14 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { itemsApi } from '../../api/items.api'
 import { lootTablesApi } from '../../api/loot-tables.api'
+import { metaApi } from '../../api/meta.api'
 import { npcsApi } from '../../api/npcs.api'
 import type {
   CreateLootTableEntryInput,
   ItemRecord,
   LootTableEntry,
   LootTableRecord,
+  MetaRarity,
   NpcRecord,
 } from '../../../shared/domain-types'
 
@@ -40,7 +43,6 @@ interface EntryDraft {
   weight: number
   quantityMin: number
   quantityMax: number
-  conditionalFlagsText: string
   sortOrder: number
 }
 
@@ -49,24 +51,12 @@ function itemLabel(item: ItemRecord | null): string {
   return item.deletedAt ? `${item.displayName} (deleted)` : item.displayName
 }
 
-function flagsToText(flags: Record<string, unknown>): string {
-  const text = flags.text
-  if (typeof text === 'string') return text
-  return Object.keys(flags).length > 0 ? JSON.stringify(flags) : ''
-}
-
-function flagsFromText(value: string): Record<string, unknown> {
-  const trimmed = value.trim()
-  return trimmed ? { text: trimmed } : {}
-}
-
 function toDraft(entry: LootTableEntry): EntryDraft {
   return {
     itemId: entry.itemId,
     weight: entry.weight,
     quantityMin: entry.quantityMin,
     quantityMax: entry.quantityMax,
-    conditionalFlagsText: flagsToText(entry.conditionalFlags),
     sortOrder: entry.sortOrder,
   }
 }
@@ -81,6 +71,7 @@ export default function LootTableEditorPage(): React.JSX.Element {
 
   const [record, setRecord] = useState<LootTableRecord | null>(null)
   const [items, setItems] = useState<ItemRecord[]>([])
+  const [rarities, setRarities] = useState<MetaRarity[]>([])
   const [npcs, setNpcs] = useState<NpcRecord[]>([])
   const [displayName, setDisplayName] = useState('')
   const [exportKey, setExportKey] = useState('')
@@ -93,6 +84,7 @@ export default function LootTableEditorPage(): React.JSX.Element {
   const [savedAt, setSavedAt] = useState<Date | null>(null)
 
   const itemById = useMemo(() => new Map(items.map((item) => [item.id, item])), [items])
+  const rarityById = useMemo(() => new Map(rarities.map((rarity) => [rarity.id, rarity])), [rarities])
   const activeItems = useMemo(() => items.filter((item) => !item.deletedAt), [items])
   const assignedNpcs = useMemo(
     () => npcs.filter((npc) => !npc.deletedAt && npc.lootTableId === id),
@@ -109,11 +101,12 @@ export default function LootTableEditorPage(): React.JSX.Element {
     setLoading(true)
     setError(null)
     try {
-      const [data, entryList, itemList, npcList] = await Promise.all([
+      const [data, entryList, itemList, npcList, rarityList] = await Promise.all([
         lootTablesApi.get(id),
         lootTablesApi.getEntries(id),
         itemsApi.list(true),
         npcsApi.list(),
+        metaApi.listRarities(),
       ])
       if (!data) {
         setError('Loot table not found.')
@@ -125,6 +118,7 @@ export default function LootTableEditorPage(): React.JSX.Element {
       setDescription(data.description)
       setEntries(entryList.map(toDraft))
       setItems(itemList)
+      setRarities(rarityList)
       setNpcs(npcList)
       setDirty(false)
     } catch (cause) {
@@ -175,7 +169,6 @@ export default function LootTableEditorPage(): React.JSX.Element {
         weight: 1,
         quantityMin: 1,
         quantityMax: 1,
-        conditionalFlagsText: '',
         sortOrder: prev.length,
       },
     ])
@@ -191,7 +184,6 @@ export default function LootTableEditorPage(): React.JSX.Element {
         weight: Math.max(1, Math.floor(entry.weight || 1)),
         quantityMin,
         quantityMax: Math.max(quantityMin, Math.floor(entry.quantityMax || quantityMin)),
-        conditionalFlags: flagsFromText(entry.conditionalFlagsText),
         sortOrder: index,
       }
     })
@@ -217,6 +209,26 @@ export default function LootTableEditorPage(): React.JSX.Element {
       setSaving(false)
     }
   }
+
+  const renderRarityChip = (rarity: MetaRarity | undefined): React.JSX.Element => (
+    rarity ? (
+      <Tooltip title={rarity.displayName}>
+        <Chip
+          label={rarity.displayName.slice(0, 1).toUpperCase()}
+          size="small"
+          variant="outlined"
+          sx={{
+            borderColor: rarity.colorHex,
+            color: rarity.colorHex,
+            minWidth: 32,
+            fontWeight: 700,
+          }}
+        />
+      </Tooltip>
+    ) : (
+      <Chip label="?" size="small" variant="outlined" sx={{ minWidth: 32 }} />
+    )
+  )
 
   if (isLoading) {
     return (
@@ -301,40 +313,63 @@ export default function LootTableEditorPage(): React.JSX.Element {
           {entries.length === 0 ? (
             <Typography variant="body2" color="text.secondary">No entries yet.</Typography>
           ) : (
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Item</TableCell>
-                  <TableCell width={110}>Weight</TableCell>
-                  <TableCell width={120}>Drop</TableCell>
-                  <TableCell width={120}>Min Qty</TableCell>
-                  <TableCell width={120}>Max Qty</TableCell>
-                  <TableCell>Conditional Flags</TableCell>
-                  <TableCell width={140} align="right">Actions</TableCell>
-                </TableRow>
-              </TableHead>
+            <Box sx={{ overflowX: 'auto', pb: 1 }}>
+              <Table size="small" sx={{ minWidth: 980 }}>
+                <TableHead>
+                  <TableRow>
+                    <TableCell width={460}>Item</TableCell>
+                    <TableCell width={110}>Weight</TableCell>
+                    <TableCell width={120}>Drop</TableCell>
+                    <TableCell width={120}>Min Qty</TableCell>
+                    <TableCell width={120}>Max Qty</TableCell>
+                    <TableCell width={140} align="right">Actions</TableCell>
+                  </TableRow>
+                </TableHead>
               <TableBody>
                 {entries.map((entry, index) => {
                   const item = itemById.get(entry.itemId) ?? null
                   const isDeleted = Boolean(item?.deletedAt)
+                  const rarity = item ? rarityById.get(item.rarityId) : undefined
                   const weight = Math.max(1, Math.floor(entry.weight || 1))
                   const percent = totalWeight > 0 ? (weight / totalWeight) * 100 : 0
                   return (
                     <TableRow key={`${entry.itemId}:${index}`}>
                       <TableCell>
-                        <Autocomplete
-                          options={activeItems}
-                          value={item}
-                          getOptionLabel={itemLabel}
-                          isOptionEqualToValue={(option, value) => option.id === value.id}
-                          onChange={(_, selectedItem) => {
-                            if (!selectedItem) return
-                            setEntryAt(index, { itemId: selectedItem.id })
-                          }}
-                          renderInput={(params) => (
-                            <TextField {...params} label="Item" size="small" error={isDeleted} helperText={isDeleted ? 'Soft-deleted item reference' : undefined} />
-                          )}
-                        />
+                        <Stack direction="row" spacing={1} alignItems="flex-start" sx={{ minWidth: 420 }}>
+                          <Box sx={{ pt: 0.75, width: 40, flex: '0 0 auto' }}>
+                            {renderRarityChip(rarity)}
+                          </Box>
+                          <Autocomplete
+                            options={activeItems}
+                            value={item}
+                            getOptionLabel={itemLabel}
+                            isOptionEqualToValue={(option, value) => option.id === value.id}
+                            onChange={(_, selectedItem) => {
+                              if (!selectedItem) return
+                              setEntryAt(index, { itemId: selectedItem.id })
+                            }}
+                            renderOption={(props, option) => {
+                              const optionRarity = rarityById.get(option.rarityId)
+                              return (
+                                <Box component="li" {...props}>
+                                  <Stack direction="row" spacing={1} alignItems="center" sx={{ width: '100%' }}>
+                                    {renderRarityChip(optionRarity)}
+                                    <Box sx={{ minWidth: 0 }}>
+                                      <Typography variant="body2">{option.displayName}</Typography>
+                                      <Typography variant="caption" color="text.secondary">
+                                        {optionRarity?.displayName ?? option.rarityId}
+                                      </Typography>
+                                    </Box>
+                                  </Stack>
+                                </Box>
+                              )
+                            }}
+                            renderInput={(params) => (
+                              <TextField {...params} label="Item" size="small" error={isDeleted} helperText={isDeleted ? 'Soft-deleted item reference' : undefined} />
+                            )}
+                            sx={{ flex: 1, minWidth: 360 }}
+                          />
+                        </Stack>
                         {isDeleted && <Typography variant="caption" color="warning.main" sx={{ textDecoration: 'line-through' }}>{item?.displayName}</Typography>}
                       </TableCell>
                       <TableCell>
@@ -370,15 +405,6 @@ export default function LootTableEditorPage(): React.JSX.Element {
                           fullWidth
                         />
                       </TableCell>
-                      <TableCell>
-                        <TextField
-                          size="small"
-                          value={entry.conditionalFlagsText}
-                          onChange={(e) => setEntryAt(index, { conditionalFlagsText: e.target.value })}
-                          placeholder="Optional"
-                          fullWidth
-                        />
-                      </TableCell>
                       <TableCell align="right">
                         <Tooltip title="Move up"><span><IconButton size="small" onClick={() => moveEntry(index, -1)} disabled={index === 0}><MoveUpIcon fontSize="small" /></IconButton></span></Tooltip>
                         <Tooltip title="Move down"><span><IconButton size="small" onClick={() => moveEntry(index, 1)} disabled={index === entries.length - 1}><MoveDownIcon fontSize="small" /></IconButton></span></Tooltip>
@@ -389,6 +415,7 @@ export default function LootTableEditorPage(): React.JSX.Element {
                 })}
               </TableBody>
             </Table>
+            </Box>
           )}
         </Stack>
 
