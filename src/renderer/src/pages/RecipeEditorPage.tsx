@@ -169,6 +169,11 @@ export default function RecipeEditorPage(): React.JSX.Element {
       quantity: Math.max(1, Math.floor(ingredient.quantity || 1)),
       sortOrder: index,
     }))
+    if (normalizedIngredients.some((ingredient) => ingredient.itemId === outputItemId)) {
+      setActiveTab(1)
+      setError('A recipe ingredient cannot be the same item as the output item.')
+      return
+    }
 
     setSaving(true)
     setError(null)
@@ -220,6 +225,7 @@ export default function RecipeEditorPage(): React.JSX.Element {
   const hasDeletedReferences =
     Boolean(outputItem?.deletedAt) ||
     ingredients.some((ingredient) => itemById.get(ingredient.itemId)?.deletedAt)
+  const hasOutputAsIngredient = ingredients.some((ingredient) => ingredient.itemId === outputItemId)
 
   return (
     <Box>
@@ -257,7 +263,7 @@ export default function RecipeEditorPage(): React.JSX.Element {
         </Box>
         <Stack direction="row" alignItems="center" spacing={2} sx={{ pt: 0.5 }}>
           {savedAt && <Typography variant="caption" color="success.main">Saved at {savedAt.toLocaleTimeString()}</Typography>}
-          <Button variant="contained" onClick={() => void handleSave()} disabled={!isDirty || isSaving || !displayName.trim() || !exportKey.trim() || !outputItemId}>
+          <Button variant="contained" onClick={() => void handleSave()} disabled={!isDirty || isSaving || !displayName.trim() || !exportKey.trim() || !outputItemId || hasOutputAsIngredient}>
             Save
           </Button>
         </Stack>
@@ -265,6 +271,7 @@ export default function RecipeEditorPage(): React.JSX.Element {
 
       {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>{error}</Alert>}
       {hasDeletedReferences && <Alert severity="warning" sx={{ mb: 2 }}>This recipe references a soft-deleted item. Validation will flag this recipe.</Alert>}
+      {hasOutputAsIngredient && <Alert severity="error" sx={{ mb: 2 }}>The output item cannot also be an ingredient.</Alert>}
 
       <Divider sx={{ mb: 0 }} />
       <Tabs value={activeTab} onChange={(_, value: number) => setActiveTab(value)}>
@@ -342,6 +349,7 @@ export default function RecipeEditorPage(): React.JSX.Element {
                 {ingredients.map((ingredient, index) => {
                   const item = itemById.get(ingredient.itemId) ?? null
                   const isDeleted = Boolean(item?.deletedAt)
+                  const matchesOutput = ingredient.itemId === outputItemId
                   return (
                     <TableRow key={`${ingredient.itemId}:${index}`}>
                       <TableCell>
@@ -355,7 +363,13 @@ export default function RecipeEditorPage(): React.JSX.Element {
                             setIngredientAt(index, { itemId: selectedItem.id })
                           }}
                           renderInput={(params) => (
-                            <TextField {...params} label="Ingredient Item" size="small" error={isDeleted} helperText={isDeleted ? 'Soft-deleted item reference' : undefined} />
+                            <TextField
+                              {...params}
+                              label="Ingredient Item"
+                              size="small"
+                              error={isDeleted || matchesOutput}
+                              helperText={matchesOutput ? 'Output item cannot be an ingredient' : isDeleted ? 'Soft-deleted item reference' : undefined}
+                            />
                           )}
                         />
                         {isDeleted && <Typography variant="caption" color="warning.main" sx={{ textDecoration: 'line-through' }}>{item?.displayName}</Typography>}

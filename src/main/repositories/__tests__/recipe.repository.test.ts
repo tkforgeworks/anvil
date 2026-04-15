@@ -222,4 +222,26 @@ describe('RecipeRepository', () => {
     expect(result).toHaveLength(1)
     expect(result[0].itemId).toBe(ing2.id)
   })
+
+  it('setIngredients: rejects an ingredient that matches the output item', () => {
+    const record = repo.create({ displayName: 'Forge Iron Sword', exportKey: 'forge_iron_sword', outputItemId, outputQuantity: 1 })
+
+    expect(() => repo.setIngredients(record.id, [{ itemId: outputItemId, quantity: 1, sortOrder: 0 }])).toThrow(
+      'A recipe ingredient cannot be the same item as the output item.',
+    )
+    expect(repo.getIngredients(record.id)).toEqual([])
+  })
+
+  it('update: rejects changing the output item to an existing ingredient', () => {
+    const record = repo.create({ displayName: 'Forge Iron Sword', exportKey: 'forge_iron_sword', outputItemId, outputQuantity: 1 })
+    const itemRepo = new ItemRepository(() => db)
+    const ing = itemRepo.create({ displayName: 'Iron Ore', exportKey: 'iron_ore', itemCategoryId: 'item-category-crafting-resource', rarityId: RARITY_ID })
+
+    repo.setIngredients(record.id, [{ itemId: ing.id, quantity: 3, sortOrder: 0 }])
+
+    expect(() => repo.update(record.id, { outputItemId: ing.id })).toThrow(
+      'A recipe ingredient cannot be the same item as the output item.',
+    )
+    expect(repo.get(record.id)!.outputItemId).toBe(outputItemId)
+  })
 })

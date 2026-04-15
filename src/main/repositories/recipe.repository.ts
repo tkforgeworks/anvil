@@ -57,6 +57,12 @@ function slugify(value: string): string {
     .replace(/^-|-$/g, '')
 }
 
+function assertOutputIsNotIngredient(outputItemId: string, ingredients: RecipeIngredient[]): void {
+  if (ingredients.some((ingredient) => ingredient.itemId === outputItemId)) {
+    throw new Error('A recipe ingredient cannot be the same item as the output item.')
+  }
+}
+
 export class RecipeRepository extends DomainRepository {
   constructor(dbProvider: () => DbConnection = getDb) {
     super('recipes', dbProvider)
@@ -152,6 +158,7 @@ export class RecipeRepository extends DomainRepository {
   update(id: string, input: UpdateRecipeInput): RecipeRecord | null {
     const current = this.get(id)
     if (!current) return null
+    assertOutputIsNotIngredient(input.outputItemId ?? current.outputItemId, this.getIngredients(id))
     this.dbProvider()
       .prepare(
         `UPDATE recipes
@@ -198,6 +205,9 @@ export class RecipeRepository extends DomainRepository {
   }
 
   setIngredients(recipeId: string, ingredients: RecipeIngredient[]): void {
+    const recipe = this.get(recipeId)
+    if (recipe) assertOutputIsNotIngredient(recipe.outputItemId, ingredients)
+
     const db = this.dbProvider()
     const del = db.prepare('DELETE FROM recipe_ingredients WHERE recipe_id = ?')
     const ins = db.prepare(
