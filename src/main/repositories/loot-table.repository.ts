@@ -60,6 +60,13 @@ const SELECT_COLS = `
   created_at, updated_at, deleted_at
 `
 
+function slugify(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+}
+
 export class LootTableRepository extends DomainRepository {
   constructor(dbProvider: () => DbConnection = getDb) {
     super('loot_tables', dbProvider)
@@ -96,6 +103,51 @@ export class LootTableRepository extends DomainRepository {
         description: input.description ?? '',
       })
     return this.get(id)!
+  }
+
+  duplicate(id: string): LootTableRecord | null {
+    const source = this.get(id)
+    if (!source) return null
+
+    const newId = randomUUID()
+    const copyName = `${source.displayName} (Copy)`
+    const entries = this.getEntries(id)
+    const db = this.dbProvider()
+
+    db.transaction(() => {
+      db.prepare(
+        `INSERT INTO loot_tables (id, display_name, export_key, description)
+         VALUES (@id, @displayName, @exportKey, @description)`,
+      ).run({
+        id: newId,
+        displayName: copyName,
+        exportKey: slugify(copyName),
+        description: source.description,
+      })
+
+      const ins = db.prepare(
+        `INSERT INTO loot_table_entries
+           (id, loot_table_id, item_id, weight, quantity_min, quantity_max,
+            conditional_flags, sort_order)
+         VALUES
+           (@id, @lootTableId, @itemId, @weight, @quantityMin, @quantityMax,
+            @conditionalFlags, @sortOrder)`,
+      )
+      for (const entry of entries) {
+        ins.run({
+          id: randomUUID(),
+          lootTableId: newId,
+          itemId: entry.itemId,
+          weight: entry.weight,
+          quantityMin: entry.quantityMin,
+          quantityMax: entry.quantityMax,
+          conditionalFlags: JSON.stringify(entry.conditionalFlags),
+          sortOrder: entry.sortOrder,
+        })
+      }
+    })()
+
+    return this.get(newId)!
   }
 
   update(id: string, input: UpdateLootTableInput): LootTableRecord | null {
@@ -146,13 +198,15 @@ export class LootTableRepository extends DomainRepository {
     db.transaction(() => {
       del.run(lootTableId)
       for (const [index, e] of entries.entries()) {
+        const quantityMin = Math.max(1, Math.floor(e.quantityMin ?? 1))
+        const quantityMax = Math.max(quantityMin, Math.floor(e.quantityMax ?? quantityMin))
         ins.run({
           id: randomUUID(),
           lootTableId,
           itemId: e.itemId,
-          weight: e.weight,
-          quantityMin: e.quantityMin ?? 1,
-          quantityMax: e.quantityMax ?? 1,
+          weight: Math.max(1, Math.floor(e.weight || 1)),
+          quantityMin,
+          quantityMax,
           conditionalFlags: JSON.stringify(e.conditionalFlags ?? {}),
           sortOrder: e.sortOrder ?? index,
         })

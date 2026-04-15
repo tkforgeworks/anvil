@@ -74,6 +74,9 @@ export const IPC_CHANNELS = {
   LOOT_TABLES_UPDATE: 'loot-tables:update',
   LOOT_TABLES_DELETE: 'loot-tables:delete',
   LOOT_TABLES_RESTORE: 'loot-tables:restore',
+  LOOT_TABLES_DUPLICATE: 'loot-tables:duplicate',
+  LOOT_TABLES_GET_ENTRIES: 'loot-tables:get-entries',
+  LOOT_TABLES_SET_ENTRIES: 'loot-tables:set-entries',
 
   // Validation
   VALIDATION_RUN: 'validation:run',

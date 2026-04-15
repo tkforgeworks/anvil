@@ -1,6 +1,10 @@
 import { ipcMain } from 'electron'
 import { IPC_CHANNELS } from '../../shared/ipc-channels'
-import type { CreateLootTableInput, UpdateLootTableInput } from '../../shared/domain-types'
+import type {
+  CreateLootTableEntryInput,
+  CreateLootTableInput,
+  UpdateLootTableInput,
+} from '../../shared/domain-types'
 import { markProjectDirty } from '../project/project-service'
 import { lootTableRepository } from '../repositories'
 
@@ -39,4 +43,23 @@ export function registerLootTablesHandlers(): void {
     lootTableRepository.restore(id)
     markProjectDirty()
   })
+
+  ipcMain.handle(IPC_CHANNELS.LOOT_TABLES_DUPLICATE, (_event, id: string) => {
+    const record = lootTableRepository.duplicate(id)
+    if (record) markProjectDirty()
+    return record
+  })
+
+  ipcMain.handle(IPC_CHANNELS.LOOT_TABLES_GET_ENTRIES, (_event, id: string) =>
+    lootTableRepository.getEntries(id),
+  )
+
+  ipcMain.handle(
+    IPC_CHANNELS.LOOT_TABLES_SET_ENTRIES,
+    (_event, id: string, entries: CreateLootTableEntryInput[]) => {
+      const result = lootTableRepository.setEntries(id, entries)
+      markProjectDirty()
+      return result
+    },
+  )
 }

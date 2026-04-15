@@ -13,6 +13,7 @@ import RecipesPage from './pages/RecipesPage'
 import RecipeEditorPage from './pages/RecipeEditorPage'
 import NpcsPage from './pages/NpcsPage'
 import LootTablesPage from './pages/LootTablesPage'
+import LootTableEditorPage from './pages/LootTableEditorPage'
 import ValidationPage from './pages/ValidationPage'
 import RecycleBinPage from './pages/RecycleBinPage'
 import ExportPage from './pages/ExportPage'
@@ -69,6 +70,7 @@ export default function App(): React.JSX.Element {
         <Route path="recipes/:id" element={<RecipeEditorPage />} />
         <Route path="npcs" element={<NpcsPage />} />
         <Route path="loot-tables" element={<LootTablesPage />} />
+        <Route path="loot-tables/:id" element={<LootTableEditorPage />} />
         <Route path="validation" element={<ValidationPage />} />
         <Route path="recycle-bin" element={<RecycleBinPage />} />
         <Route path="export" element={<ExportPage />} />

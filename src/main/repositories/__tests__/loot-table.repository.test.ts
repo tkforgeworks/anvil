@@ -85,6 +85,50 @@ describe('LootTableRepository', () => {
     expect(repo.update('does-not-exist', { displayName: 'X', exportKey: 'x' })).toBeNull()
   })
 
+  it('duplicate: copies the loot table and all entries with a new id', () => {
+    const table = repo.create({ displayName: 'Goblin Drops', exportKey: 'goblin_drops', description: 'Standard goblin loot' })
+    const itemRepo = new ItemRepository(() => db)
+    const item = itemRepo.create({
+      displayName: 'Goblin Ear',
+      exportKey: 'goblin_ear',
+      itemCategoryId: CATEGORY_ID,
+      rarityId: RARITY_ID,
+    })
+    repo.setEntries(table.id, [
+      {
+        itemId: item.id,
+        weight: 10,
+        quantityMin: 1,
+        quantityMax: 3,
+        conditionalFlags: { text: 'night' },
+        sortOrder: 0,
+      },
+    ])
+
+    const copy = repo.duplicate(table.id)
+
+    expect(copy).not.toBeNull()
+    expect(copy!.id).not.toBe(table.id)
+    expect(copy!.displayName).toBe('Goblin Drops (Copy)')
+    expect(copy!.exportKey).toBe('goblin-drops-copy')
+    expect(copy!.description).toBe('Standard goblin loot')
+
+    const copiedEntries = repo.getEntries(copy!.id)
+    expect(copiedEntries).toHaveLength(1)
+    expect(copiedEntries[0]).toMatchObject({
+      itemId: item.id,
+      weight: 10,
+      quantityMin: 1,
+      quantityMax: 3,
+      conditionalFlags: { text: 'night' },
+      sortOrder: 0,
+    })
+  })
+
+  it('duplicate: returns null for a non-existent id', () => {
+    expect(repo.duplicate('does-not-exist')).toBeNull()
+  })
+
   // ── softDelete + restore ─────────────────────────────────────────────────
 
   it('softDelete: sets deletedAt and excludes record from default list', () => {
@@ -147,5 +191,17 @@ describe('LootTableRepository', () => {
     expect(result).toHaveLength(1)
     expect(result[0].itemId).toBe(item2.id)
     expect(result[0].weight).toBe(5)
+  })
+
+  it('setEntries: normalizes weight and quantity bounds to positive integers', () => {
+    const table = repo.create({ displayName: 'Goblin Drops', exportKey: 'goblin_drops' })
+    const itemRepo = new ItemRepository(() => db)
+    const item = itemRepo.create({ displayName: 'Goblin Ear', exportKey: 'goblin_ear', itemCategoryId: CATEGORY_ID, rarityId: RARITY_ID })
+
+    const result = repo.setEntries(table.id, [{ itemId: item.id, weight: 0, quantityMin: 4, quantityMax: 2 }])
+
+    expect(result[0].weight).toBe(1)
+    expect(result[0].quantityMin).toBe(4)
+    expect(result[0].quantityMax).toBe(4)
   })
 })
