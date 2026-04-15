@@ -66,6 +66,11 @@ export const IPC_CHANNELS = {
   NPCS_UPDATE: 'npcs:update',
   NPCS_DELETE: 'npcs:delete',
   NPCS_RESTORE: 'npcs:restore',
+  NPCS_DUPLICATE: 'npcs:duplicate',
+  NPCS_GET_CLASS_ASSIGNMENTS: 'npcs:get-class-assignments',
+  NPCS_SET_CLASS_ASSIGNMENTS: 'npcs:set-class-assignments',
+  NPCS_GET_ABILITY_ASSIGNMENTS: 'npcs:get-ability-assignments',
+  NPCS_SET_ABILITY_ASSIGNMENTS: 'npcs:set-ability-assignments',
 
   // Loot Tables
   LOOT_TABLES_LIST: 'loot-tables:list',

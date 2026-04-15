@@ -100,6 +100,70 @@ describe('NpcRepository', () => {
     expect(repo.update('does-not-exist', { displayName: 'X', exportKey: 'x', npcTypeId: NPC_TYPE_ID })).toBeNull()
   })
 
+  it('update: removes custom field values outside the new NPC type scope', () => {
+    const record = repo.create({ displayName: 'Goblin Scout', exportKey: 'goblin_scout', npcTypeId: NPC_TYPE_ID })
+    db.prepare(
+      `INSERT INTO custom_field_definitions
+         (id, scope_type, scope_id, field_name, field_type, enum_options_json)
+       VALUES
+         ('field-enemy', 'npc_type', 'npc-type-enemy', 'Aggression', 'text', '[]'),
+         ('field-merchant', 'npc_type', 'npc-type-merchant', 'Shop Name', 'text', '[]')`,
+    ).run()
+    repo.setCustomFieldValues(record.id, [
+      { fieldDefinitionId: 'field-enemy', value: 'High' },
+      { fieldDefinitionId: 'field-merchant', value: 'Bad Data' },
+    ])
+
+    repo.update(record.id, { npcTypeId: 'npc-type-merchant' })
+
+    expect(repo.getCustomFieldValues(record.id)).toEqual([
+      { fieldDefinitionId: 'field-merchant', value: 'Bad Data' },
+    ])
+  })
+
+  it('duplicate: copies base fields, assignments, and custom field values', () => {
+    const record = repo.create({
+      displayName: 'Goblin Scout',
+      exportKey: 'goblin_scout',
+      description: 'A small goblin',
+      npcTypeId: NPC_TYPE_ID,
+      combatStats: { hp: 50 },
+    })
+    db.prepare(
+      `INSERT INTO classes (id, display_name, export_key, description, resource_multiplier)
+       VALUES ('class-fighter', 'Fighter', 'fighter', '', 1)`,
+    ).run()
+    db.prepare(
+      `INSERT INTO abilities (id, display_name, export_key, description, ability_type, resource_cost, cooldown, stat_modifiers_json)
+       VALUES ('ability-slash', 'Slash', 'slash', '', 'active', 0, 0, '{}')`,
+    ).run()
+    db.prepare(
+      `INSERT INTO custom_field_definitions
+         (id, scope_type, scope_id, field_name, field_type, enum_options_json)
+       VALUES ('field-enemy', 'npc_type', 'npc-type-enemy', 'Aggression', 'text', '[]')`,
+    ).run()
+    repo.setClassAssignments(record.id, [{ classId: 'class-fighter', level: 5, sortOrder: 0 }])
+    repo.setAbilityAssignments(record.id, [{ abilityId: 'ability-slash', sortOrder: 0 }])
+    repo.setCustomFieldValues(record.id, [{ fieldDefinitionId: 'field-enemy', value: 'High' }])
+
+    const copy = repo.duplicate(record.id)
+
+    expect(copy).not.toBeNull()
+    expect(copy!.id).not.toBe(record.id)
+    expect(copy!.displayName).toBe('Goblin Scout (Copy)')
+    expect(copy!.exportKey).toBe('goblin-scout-copy')
+    expect(copy!.description).toBe('A small goblin')
+    expect(copy!.npcTypeId).toBe(NPC_TYPE_ID)
+    expect(copy!.combatStats).toEqual({ hp: 50 })
+    expect(repo.getClassAssignments(copy!.id)).toEqual([{ classId: 'class-fighter', level: 5, sortOrder: 0 }])
+    expect(repo.getAbilityAssignments(copy!.id)).toEqual([{ abilityId: 'ability-slash', sortOrder: 0 }])
+    expect(repo.getCustomFieldValues(copy!.id)).toEqual([{ fieldDefinitionId: 'field-enemy', value: 'High' }])
+  })
+
+  it('duplicate: returns null for a non-existent id', () => {
+    expect(repo.duplicate('does-not-exist')).toBeNull()
+  })
+
   // ── softDelete + restore ─────────────────────────────────────────────────
 
   it('softDelete: sets deletedAt and excludes record from default list', () => {

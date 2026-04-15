@@ -1,6 +1,11 @@
 import { ipcMain } from 'electron'
 import { IPC_CHANNELS } from '../../shared/ipc-channels'
-import type { CreateNpcInput, UpdateNpcInput } from '../../shared/domain-types'
+import type {
+  CreateNpcInput,
+  NpcAbilityAssignment,
+  NpcClassAssignment,
+  UpdateNpcInput,
+} from '../../shared/domain-types'
 import { markProjectDirty } from '../project/project-service'
 import { npcRepository } from '../repositories'
 
@@ -32,4 +37,34 @@ export function registerNpcsHandlers(): void {
     npcRepository.restore(id)
     markProjectDirty()
   })
+
+  ipcMain.handle(IPC_CHANNELS.NPCS_DUPLICATE, (_event, id: string) => {
+    const record = npcRepository.duplicate(id)
+    if (record) markProjectDirty()
+    return record
+  })
+
+  ipcMain.handle(IPC_CHANNELS.NPCS_GET_CLASS_ASSIGNMENTS, (_event, id: string) =>
+    npcRepository.getClassAssignments(id),
+  )
+
+  ipcMain.handle(
+    IPC_CHANNELS.NPCS_SET_CLASS_ASSIGNMENTS,
+    (_event, id: string, assignments: NpcClassAssignment[]) => {
+      npcRepository.setClassAssignments(id, assignments)
+      markProjectDirty()
+    },
+  )
+
+  ipcMain.handle(IPC_CHANNELS.NPCS_GET_ABILITY_ASSIGNMENTS, (_event, id: string) =>
+    npcRepository.getAbilityAssignments(id),
+  )
+
+  ipcMain.handle(
+    IPC_CHANNELS.NPCS_SET_ABILITY_ASSIGNMENTS,
+    (_event, id: string, assignments: NpcAbilityAssignment[]) => {
+      npcRepository.setAbilityAssignments(id, assignments)
+      markProjectDirty()
+    },
+  )
 }

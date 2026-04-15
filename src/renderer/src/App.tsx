@@ -12,6 +12,7 @@ import ItemEditorPage from './pages/ItemEditorPage'
 import RecipesPage from './pages/RecipesPage'
 import RecipeEditorPage from './pages/RecipeEditorPage'
 import NpcsPage from './pages/NpcsPage'
+import NpcEditorPage from './pages/NpcEditorPage'
 import LootTablesPage from './pages/LootTablesPage'
 import LootTableEditorPage from './pages/LootTableEditorPage'
 import ValidationPage from './pages/ValidationPage'
@@ -69,6 +70,7 @@ export default function App(): React.JSX.Element {
         <Route path="recipes" element={<RecipesPage />} />
         <Route path="recipes/:id" element={<RecipeEditorPage />} />
         <Route path="npcs" element={<NpcsPage />} />
+        <Route path="npcs/:id" element={<NpcEditorPage />} />
         <Route path="loot-tables" element={<LootTablesPage />} />
         <Route path="loot-tables/:id" element={<LootTableEditorPage />} />
         <Route path="validation" element={<ValidationPage />} />

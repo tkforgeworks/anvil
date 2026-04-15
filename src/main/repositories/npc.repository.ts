@@ -49,6 +49,13 @@ const SELECT_COLS = `
   created_at, updated_at, deleted_at
 `
 
+function slugify(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+}
+
 export class NpcRepository extends DomainRepository {
   constructor(dbProvider: () => DbConnection = getDb) {
     super('npcs', dbProvider)
@@ -94,31 +101,99 @@ export class NpcRepository extends DomainRepository {
     return this.get(id)!
   }
 
+  duplicate(id: string): NpcRecord | null {
+    const source = this.get(id)
+    if (!source) return null
+
+    const newId = randomUUID()
+    const copyName = `${source.displayName} (Copy)`
+    const db = this.dbProvider()
+
+    db.transaction(() => {
+      db.prepare(
+        `INSERT INTO npcs
+           (id, display_name, export_key, description,
+            npc_type_id, loot_table_id, combat_stats_json)
+         VALUES
+           (@id, @displayName, @exportKey, @description,
+            @npcTypeId, @lootTableId, @combatStatsJson)`,
+      ).run({
+        id: newId,
+        displayName: copyName,
+        exportKey: slugify(copyName),
+        description: source.description,
+        npcTypeId: source.npcTypeId,
+        lootTableId: source.lootTableId,
+        combatStatsJson: JSON.stringify(source.combatStats),
+      })
+
+      const classIns = db.prepare(
+        `INSERT INTO npc_class_assignments (npc_id, class_id, level, sort_order)
+         VALUES (@npcId, @classId, @level, @sortOrder)`,
+      )
+      for (const assignment of this.getClassAssignments(id)) {
+        classIns.run({ npcId: newId, ...assignment })
+      }
+
+      const abilityIns = db.prepare(
+        `INSERT INTO npc_ability_assignments (npc_id, ability_id, sort_order)
+         VALUES (@npcId, @abilityId, @sortOrder)`,
+      )
+      for (const assignment of this.getAbilityAssignments(id)) {
+        abilityIns.run({ npcId: newId, ...assignment })
+      }
+
+      const valueIns = db.prepare(
+        `INSERT INTO custom_field_values (domain, record_id, field_definition_id, value)
+         VALUES ('npcs', @recordId, @fieldDefinitionId, @value)`,
+      )
+      for (const value of this.getCustomFieldValues(id)) {
+        valueIns.run({ recordId: newId, ...value })
+      }
+    })()
+
+    return this.get(newId)!
+  }
+
   update(id: string, input: UpdateNpcInput): NpcRecord | null {
     const current = this.get(id)
     if (!current) return null
-    this.dbProvider()
-      .prepare(
+    const npcTypeId = input.npcTypeId ?? current.npcTypeId
+    const db = this.dbProvider()
+    db.transaction(() => {
+      db.prepare(
         `UPDATE npcs
-         SET display_name     = @displayName,
-             export_key       = @exportKey,
-             description      = @description,
-             npc_type_id      = @npcTypeId,
-             loot_table_id    = @lootTableId,
-             combat_stats_json = @combatStatsJson,
-             updated_at       = datetime('now')
-         WHERE id = @id`,
-      )
-      .run({
+           SET display_name      = @displayName,
+               export_key        = @exportKey,
+               description       = @description,
+               npc_type_id       = @npcTypeId,
+               loot_table_id     = @lootTableId,
+               combat_stats_json = @combatStatsJson,
+               updated_at        = datetime('now')
+           WHERE id = @id`,
+      ).run({
         id,
         displayName: input.displayName ?? current.displayName,
         exportKey: input.exportKey ?? current.exportKey,
         description: input.description ?? current.description,
-        npcTypeId: input.npcTypeId ?? current.npcTypeId,
+        npcTypeId,
         lootTableId:
           input.lootTableId !== undefined ? input.lootTableId : current.lootTableId,
         combatStatsJson: JSON.stringify(input.combatStats ?? current.combatStats),
       })
+
+      if (npcTypeId !== current.npcTypeId) {
+        db.prepare(
+          `DELETE FROM custom_field_values
+           WHERE domain = 'npcs'
+             AND record_id = ?
+             AND field_definition_id NOT IN (
+               SELECT id FROM custom_field_definitions
+               WHERE scope_type = 'npc_type' AND scope_id = ?
+             )`,
+        ).run(id, npcTypeId)
+      }
+    })()
     return this.get(id)
   }
 
