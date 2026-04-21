@@ -36,7 +36,7 @@ function toNpcRecord(row: NpcDbRow): NpcRecord {
     description: row.description,
     npcTypeId: row.npc_type_id,
     lootTableId: row.loot_table_id,
-    combatStats: JSON.parse(row.combat_stats_json) as Record<string, number>,
+    combatStats: JSON.parse(row.combat_stats_json) as Record<string, number | null>,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     deletedAt: row.deleted_at,

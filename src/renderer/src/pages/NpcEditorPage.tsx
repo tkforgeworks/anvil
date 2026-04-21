@@ -16,10 +16,22 @@ import {
 } from '@mui/material'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { classesApi } from '../../api/classes.api'
 import { metaApi } from '../../api/meta.api'
 import { npcsApi } from '../../api/npcs.api'
+import ClassAssignmentPanel from '../components/ClassAssignmentPanel'
 import CustomFieldsPanel from '../components/CustomFieldsPanel'
-import type { MetaNpcType, NpcRecord } from '../../../shared/domain-types'
+import NpcStatBlockPanel from '../components/NpcStatBlockPanel'
+import type {
+  ClassRecord,
+  MetaNpcType,
+  MetaStat,
+  NpcClassAssignment,
+  NpcRecord,
+  StatGrowthEntry,
+} from '../../../shared/domain-types'
+
+const DEFAULT_MAX_LEVEL = 20
 
 export default function NpcEditorPage(): React.JSX.Element {
   const { id } = useParams<{ id: string }>()
@@ -27,6 +39,13 @@ export default function NpcEditorPage(): React.JSX.Element {
 
   const [record, setRecord] = useState<NpcRecord | null>(null)
   const [npcTypes, setNpcTypes] = useState<MetaNpcType[]>([])
+  const [classes, setClasses] = useState<ClassRecord[]>([])
+  const [stats, setStats] = useState<MetaStat[]>([])
+  const [maxLevel, setMaxLevel] = useState(DEFAULT_MAX_LEVEL)
+  const [assignments, setAssignments] = useState<NpcClassAssignment[]>([])
+  const [growthByClass, setGrowthByClass] = useState<Map<string, StatGrowthEntry[]>>(new Map())
+  const [overrides, setOverrides] = useState<Record<string, number | null>>({})
+
   const [displayName, setDisplayName] = useState('')
   const [exportKey, setExportKey] = useState('')
   const [description, setDescription] = useState('')
@@ -39,14 +58,32 @@ export default function NpcEditorPage(): React.JSX.Element {
 
   const typeById = useMemo(() => new Map(npcTypes.map((type) => [type.id, type])), [npcTypes])
 
+  const loadGrowthFor = useCallback(
+    async (classIds: string[], existing: Map<string, StatGrowthEntry[]>): Promise<Map<string, StatGrowthEntry[]>> => {
+      const next = new Map(existing)
+      const missing = classIds.filter((classId) => !next.has(classId))
+      if (missing.length === 0) return next
+      const fetched = await Promise.all(
+        missing.map(async (classId) => [classId, await classesApi.getStatGrowth(classId)] as const),
+      )
+      for (const [classId, entries] of fetched) next.set(classId, entries)
+      return next
+    },
+    [],
+  )
+
   const load = useCallback(async () => {
     if (!id) return
     setLoading(true)
     setError(null)
     try {
-      const [data, typeList] = await Promise.all([
+      const [data, typeList, classList, statList, settings, assignmentList] = await Promise.all([
         npcsApi.get(id),
         metaApi.listNpcTypes(),
+        classesApi.list(true),
+        metaApi.listStats(),
+        metaApi.getProjectSettings(),
+        npcsApi.getClassAssignments(id),
       ])
       if (!data) {
         setError('NPC not found.')
@@ -58,13 +95,24 @@ export default function NpcEditorPage(): React.JSX.Element {
       setDescription(data.description)
       setNpcTypeId(data.npcTypeId)
       setNpcTypes(typeList)
+      setClasses(classList)
+      setStats(statList)
+      setMaxLevel(settings.maxLevel)
+      setAssignments(assignmentList)
+      setOverrides({ ...data.combatStats })
+
+      const growth = await loadGrowthFor(
+        assignmentList.map((a) => a.classId),
+        new Map(),
+      )
+      setGrowthByClass(growth)
       setDirty(false)
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Failed to load NPC.')
     } finally {
       setLoading(false)
     }
-  }, [id])
+  }, [id, loadGrowthFor])
 
   useEffect(() => {
     void load()
@@ -86,6 +134,31 @@ export default function NpcEditorPage(): React.JSX.Element {
     markDirty()
   }
 
+  const handleAssignmentsChange = async (next: NpcClassAssignment[]): Promise<void> => {
+    if (!id) return
+    try {
+      await npcsApi.setClassAssignments(id, next)
+      setAssignments(next)
+      const growth = await loadGrowthFor(
+        next.map((a) => a.classId),
+        growthByClass,
+      )
+      setGrowthByClass(growth)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Failed to save class assignments.')
+    }
+  }
+
+  const handleOverrideChange = (statId: string, value: number | null): void => {
+    setOverrides((prev) => {
+      const next = { ...prev }
+      if (value == null) delete next[statId]
+      else next[statId] = value
+      return next
+    })
+    markDirty()
+  }
+
   const handleSave = async (): Promise<void> => {
     if (!id) return
     setSaving(true)
@@ -96,9 +169,11 @@ export default function NpcEditorPage(): React.JSX.Element {
         exportKey: exportKey.trim(),
         description: description.trim(),
         npcTypeId,
+        combatStats: overrides,
       })
       if (updated) {
         setRecord(updated)
+        setOverrides({ ...updated.combatStats })
         setDirty(false)
         setSavedAt(new Date())
       }
@@ -127,6 +202,10 @@ export default function NpcEditorPage(): React.JSX.Element {
       </Box>
     )
   }
+
+  const deletedAssignedClasses = assignments
+    .map((a) => classes.find((c) => c.id === a.classId))
+    .filter((c): c is ClassRecord => c != null && c.deletedAt != null)
 
   return (
     <Box>
@@ -172,15 +251,58 @@ export default function NpcEditorPage(): React.JSX.Element {
 
       {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>{error}</Alert>}
 
-      <Stack spacing={3} sx={{ maxWidth: 760 }}>
-        <FormControl fullWidth required>
+      <Stack spacing={3} sx={{ maxWidth: 900 }}>
+        <FormControl fullWidth required sx={{ maxWidth: 760 }}>
           <InputLabel id="npc-type-label">NPC Type</InputLabel>
           <Select labelId="npc-type-label" label="NPC Type" value={npcTypeId} onChange={(e) => handleTypeChange(e.target.value)}>
             {npcTypes.map((type) => <MenuItem key={type.id} value={type.id}>{type.displayName}</MenuItem>)}
           </Select>
         </FormControl>
 
-        <TextField label="Description" value={description} onChange={(e) => { setDescription(e.target.value); markDirty() }} multiline minRows={4} fullWidth />
+        <TextField label="Description" value={description} onChange={(e) => { setDescription(e.target.value); markDirty() }} multiline minRows={4} fullWidth sx={{ maxWidth: 760 }} />
+
+        <Divider />
+
+        <Box>
+          <Typography variant="subtitle1" gutterBottom>
+            Classes
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Assign one or more character classes at specified levels. Stat values from all assigned classes combine additively.
+          </Typography>
+          {deletedAssignedClasses.length > 0 && (
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              This NPC is assigned to soft-deleted {deletedAssignedClasses.length === 1 ? 'class' : 'classes'}:{' '}
+              {deletedAssignedClasses.map((c) => c.displayName).join(', ')}. Their stat contributions are still included.
+            </Alert>
+          )}
+          <ClassAssignmentPanel
+            assignments={assignments}
+            classes={classes}
+            maxLevel={maxLevel}
+            onChange={(next) => void handleAssignmentsChange(next)}
+            disabled={isSaving}
+          />
+        </Box>
+
+        <Divider />
+
+        <Box>
+          <Typography variant="subtitle1" gutterBottom>
+            Stat Block
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Inherited values are summed from assigned classes at their levels. Enter an override to replace the inherited value for any stat.
+          </Typography>
+          <NpcStatBlockPanel
+            stats={stats}
+            assignments={assignments}
+            growthByClass={growthByClass}
+            overrides={overrides}
+            onOverrideChange={handleOverrideChange}
+            disabled={isSaving}
+          />
+        </Box>
 
         <Divider />
 

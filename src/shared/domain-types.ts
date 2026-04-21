@@ -273,7 +273,7 @@ export interface UpdateRecipeInput {
 export interface NpcRecord extends BaseRecord {
   npcTypeId: string
   lootTableId: string | null
-  combatStats: Record<string, number>
+  combatStats: Record<string, number | null>
 }
 
 export interface NpcClassAssignment {
@@ -293,7 +293,7 @@ export interface CreateNpcInput {
   description?: string
   npcTypeId: string
   lootTableId?: string | null
-  combatStats?: Record<string, number>
+  combatStats?: Record<string, number | null>
 }
 
 export interface UpdateNpcInput {
@@ -302,7 +302,7 @@ export interface UpdateNpcInput {
   description?: string
   npcTypeId?: string
   lootTableId?: string | null
-  combatStats?: Record<string, number>
+  combatStats?: Record<string, number | null>
 }
 
 // ─── Loot Tables ──────────────────────────────────────────────────────────────
