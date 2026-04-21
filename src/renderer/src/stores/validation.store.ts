@@ -1,16 +1,5 @@
 import { create } from 'zustand'
-
-export type ValidationSeverity = 'error' | 'warning' | 'info'
-
-export interface ValidationIssue {
-  id: string
-  domain: string
-  recordId: string
-  recordDisplayName: string
-  field: string | null
-  severity: ValidationSeverity
-  message: string
-}
+import type { ValidationIssue } from '../../../shared/domain-types'
 
 interface ValidationState {
   issues: ValidationIssue[]

@@ -1,8 +1,15 @@
 import { ipcMain } from 'electron'
 import { IPC_CHANNELS } from '../../shared/ipc-channels'
+import type { ValidationIssue } from '../../shared/domain-types'
+import { getDb } from '../db/connection'
+import { validateProject } from '../validation/engine'
 
-// Full implementation in the Validation epic
+let lastIssues: ValidationIssue[] = []
+
 export function registerValidationHandlers(): void {
-  ipcMain.handle(IPC_CHANNELS.VALIDATION_RUN, () => [])
-  ipcMain.handle(IPC_CHANNELS.VALIDATION_GET_ISSUES, () => [])
+  ipcMain.handle(IPC_CHANNELS.VALIDATION_RUN, (): ValidationIssue[] => {
+    lastIssues = validateProject(getDb())
+    return lastIssues
+  })
+  ipcMain.handle(IPC_CHANNELS.VALIDATION_GET_ISSUES, (): ValidationIssue[] => lastIssues)
 }

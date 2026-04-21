@@ -333,6 +333,29 @@ export interface UpdateLootTableInput {
   description?: string
 }
 
+// ─── Validation ───────────────────────────────────────────────────────────────
+
+export type ValidationSeverity = 'error' | 'warning' | 'info'
+
+export type ValidationDomain =
+  | 'classes'
+  | 'abilities'
+  | 'items'
+  | 'recipes'
+  | 'npcs'
+  | 'loot-tables'
+  | 'derived-stats'
+
+export interface ValidationIssue {
+  id: string
+  domain: ValidationDomain
+  recordId: string
+  recordDisplayName: string
+  field: string | null
+  severity: ValidationSeverity
+  message: string
+}
+
 export interface CreateLootTableEntryInput {
   itemId: string
   weight: number
