@@ -14,9 +14,14 @@ import {
 } from '@mui/material'
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { abilitiesApi } from '../../api/abilities.api'
 import { classesApi } from '../../api/classes.api'
-import type { ClassRecord } from '../../../shared/domain-types'
-import AbilityAssignmentPanel from '../components/AbilityAssignmentPanel'
+import type {
+  AbilityRecord,
+  ClassAbilityAssignment,
+  ClassRecord,
+} from '../../../shared/domain-types'
+import AbilityAssignmentPanel, { type AbilityAssignmentRef } from '../components/AbilityAssignmentPanel'
 import DerivedStatsEditor from '../components/DerivedStatsEditor'
 import StatGrowthEditor from '../components/StatGrowthEditor'
 
@@ -53,13 +58,19 @@ export default function ClassEditorPage(): React.JSX.Element {
   const [error, setError] = useState<string | null>(null)
   const [savedAt, setSavedAt] = useState<Date | null>(null)
   const [activeTab, setActiveTab] = useState(0)
+  const [abilityAssignments, setAbilityAssignments] = useState<ClassAbilityAssignment[]>([])
+  const [allAbilities, setAllAbilities] = useState<AbilityRecord[]>([])
 
   const load = useCallback(async () => {
     if (!id) return
     setLoading(true)
     setError(null)
     try {
-      const data = await classesApi.get(id)
+      const [data, assignments, abilities] = await Promise.all([
+        classesApi.get(id),
+        classesApi.getAbilityAssignments(id),
+        abilitiesApi.list(true),
+      ])
       if (!data) {
         setError('Class not found.')
         return
@@ -69,6 +80,8 @@ export default function ClassEditorPage(): React.JSX.Element {
       setExportKey(data.exportKey)
       setDescription(data.description)
       setResourceMultiplier(String(data.resourceMultiplier))
+      setAbilityAssignments(assignments)
+      setAllAbilities(abilities)
       setDirty(false)
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Failed to load class.')
@@ -76,6 +89,16 @@ export default function ClassEditorPage(): React.JSX.Element {
       setLoading(false)
     }
   }, [id])
+
+  const handleAbilityAssignmentsChange = async (next: AbilityAssignmentRef[]): Promise<void> => {
+    if (!id) return
+    try {
+      await classesApi.setAbilityAssignments(id, next)
+      setAbilityAssignments(next)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Failed to save ability assignments.')
+    }
+  }
 
   useEffect(() => {
     void load()
@@ -254,7 +277,12 @@ export default function ClassEditorPage(): React.JSX.Element {
 
       {/* Abilities tab */}
       <TabPanel index={3} value={activeTab}>
-        <AbilityAssignmentPanel classId={record.id} />
+        <AbilityAssignmentPanel
+          assignments={abilityAssignments}
+          abilities={allAbilities}
+          onChange={(next) => void handleAbilityAssignmentsChange(next)}
+          disabled={isSaving}
+        />
       </TabPanel>
     </Box>
   )

@@ -16,16 +16,25 @@ import {
 } from '@mui/material'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { abilitiesApi } from '../../api/abilities.api'
 import { classesApi } from '../../api/classes.api'
+import { itemsApi } from '../../api/items.api'
+import { lootTablesApi } from '../../api/loot-tables.api'
 import { metaApi } from '../../api/meta.api'
 import { npcsApi } from '../../api/npcs.api'
+import AbilityAssignmentPanel, { type AbilityAssignmentRef } from '../components/AbilityAssignmentPanel'
 import ClassAssignmentPanel from '../components/ClassAssignmentPanel'
 import CustomFieldsPanel from '../components/CustomFieldsPanel'
+import LootTableAssignmentPanel from '../components/LootTableAssignmentPanel'
 import NpcStatBlockPanel from '../components/NpcStatBlockPanel'
 import type {
+  AbilityRecord,
   ClassRecord,
+  ItemRecord,
+  LootTableRecord,
   MetaNpcType,
   MetaStat,
+  NpcAbilityAssignment,
   NpcClassAssignment,
   NpcRecord,
   StatGrowthEntry,
@@ -45,6 +54,11 @@ export default function NpcEditorPage(): React.JSX.Element {
   const [assignments, setAssignments] = useState<NpcClassAssignment[]>([])
   const [growthByClass, setGrowthByClass] = useState<Map<string, StatGrowthEntry[]>>(new Map())
   const [overrides, setOverrides] = useState<Record<string, number | null>>({})
+  const [abilityAssignments, setAbilityAssignments] = useState<NpcAbilityAssignment[]>([])
+  const [allAbilities, setAllAbilities] = useState<AbilityRecord[]>([])
+  const [lootTables, setLootTables] = useState<LootTableRecord[]>([])
+  const [items, setItems] = useState<ItemRecord[]>([])
+  const [lootTableId, setLootTableId] = useState<string | null>(null)
 
   const [displayName, setDisplayName] = useState('')
   const [exportKey, setExportKey] = useState('')
@@ -77,13 +91,28 @@ export default function NpcEditorPage(): React.JSX.Element {
     setLoading(true)
     setError(null)
     try {
-      const [data, typeList, classList, statList, settings, assignmentList] = await Promise.all([
+      const [
+        data,
+        typeList,
+        classList,
+        statList,
+        settings,
+        classAssignmentList,
+        abilityAssignmentList,
+        abilityList,
+        lootTableList,
+        itemList,
+      ] = await Promise.all([
         npcsApi.get(id),
         metaApi.listNpcTypes(),
         classesApi.list(true),
         metaApi.listStats(),
         metaApi.getProjectSettings(),
         npcsApi.getClassAssignments(id),
+        npcsApi.getAbilityAssignments(id),
+        abilitiesApi.list(true),
+        lootTablesApi.list(true),
+        itemsApi.list(true),
       ])
       if (!data) {
         setError('NPC not found.')
@@ -94,15 +123,20 @@ export default function NpcEditorPage(): React.JSX.Element {
       setExportKey(data.exportKey)
       setDescription(data.description)
       setNpcTypeId(data.npcTypeId)
+      setLootTableId(data.lootTableId)
       setNpcTypes(typeList)
       setClasses(classList)
       setStats(statList)
       setMaxLevel(settings.maxLevel)
-      setAssignments(assignmentList)
+      setAssignments(classAssignmentList)
+      setAbilityAssignments(abilityAssignmentList)
+      setAllAbilities(abilityList)
+      setLootTables(lootTableList)
+      setItems(itemList)
       setOverrides({ ...data.combatStats })
 
       const growth = await loadGrowthFor(
-        assignmentList.map((a) => a.classId),
+        classAssignmentList.map((a) => a.classId),
         new Map(),
       )
       setGrowthByClass(growth)
@@ -149,6 +183,21 @@ export default function NpcEditorPage(): React.JSX.Element {
     }
   }
 
+  const handleAbilityAssignmentsChange = async (next: AbilityAssignmentRef[]): Promise<void> => {
+    if (!id) return
+    try {
+      await npcsApi.setAbilityAssignments(id, next)
+      setAbilityAssignments(next)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Failed to save ability assignments.')
+    }
+  }
+
+  const handleLootTableChange = (nextId: string | null): void => {
+    setLootTableId(nextId)
+    markDirty()
+  }
+
   const handleOverrideChange = (statId: string, value: number | null): void => {
     setOverrides((prev) => {
       const next = { ...prev }
@@ -169,11 +218,13 @@ export default function NpcEditorPage(): React.JSX.Element {
         exportKey: exportKey.trim(),
         description: description.trim(),
         npcTypeId,
+        lootTableId,
         combatStats: overrides,
       })
       if (updated) {
         setRecord(updated)
         setOverrides({ ...updated.combatStats })
+        setLootTableId(updated.lootTableId)
         setDirty(false)
         setSavedAt(new Date())
       }
@@ -300,6 +351,41 @@ export default function NpcEditorPage(): React.JSX.Element {
             growthByClass={growthByClass}
             overrides={overrides}
             onOverrideChange={handleOverrideChange}
+            disabled={isSaving}
+          />
+        </Box>
+
+        <Divider />
+
+        <Box>
+          <Typography variant="subtitle1" gutterBottom>
+            Abilities
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Assign abilities this NPC has access to. Changes are saved immediately.
+          </Typography>
+          <AbilityAssignmentPanel
+            assignments={abilityAssignments}
+            abilities={allAbilities}
+            onChange={(next) => void handleAbilityAssignmentsChange(next)}
+            disabled={isSaving}
+          />
+        </Box>
+
+        <Divider />
+
+        <Box>
+          <Typography variant="subtitle1" gutterBottom>
+            Loot Table
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Assign a loot table that drops when this NPC is defeated. The entries below are read-only.
+          </Typography>
+          <LootTableAssignmentPanel
+            value={lootTableId}
+            lootTables={lootTables}
+            items={items}
+            onChange={handleLootTableChange}
             disabled={isSaving}
           />
         </Box>
