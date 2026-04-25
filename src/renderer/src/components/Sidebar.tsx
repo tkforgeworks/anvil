@@ -1,4 +1,5 @@
 import {
+  Box,
   Drawer,
   List,
   ListItem,
@@ -6,7 +7,7 @@ import {
   ListItemIcon,
   ListItemText,
   Divider,
-  Tooltip,
+  Typography,
 } from '@mui/material'
 import {
   Dashboard as DashboardIcon,
@@ -22,6 +23,7 @@ import {
   Settings as SettingsIcon,
 } from '@mui/icons-material'
 import { NavLink } from 'react-router-dom'
+import { useValidationStore } from '../stores/validation.store'
 
 const DRAWER_WIDTH = 220
 
@@ -29,6 +31,8 @@ interface NavItem {
   label: string
   to: string
   icon: React.ReactNode
+  badge?: number
+  badgeColor?: string
 }
 
 const DOMAIN_NAV: NavItem[] = [
@@ -38,13 +42,6 @@ const DOMAIN_NAV: NavItem[] = [
   { label: 'Recipes', to: '/recipes', icon: <RecipesIcon fontSize="small" /> },
   { label: 'NPCs', to: '/npcs', icon: <NpcsIcon fontSize="small" /> },
   { label: 'Loot Tables', to: '/loot-tables', icon: <LootIcon fontSize="small" /> },
-]
-
-const UTILITY_NAV: NavItem[] = [
-  { label: 'Validation', to: '/validation', icon: <ValidationIcon fontSize="small" /> },
-  { label: 'Recycle Bin', to: '/recycle-bin', icon: <RecycleBinIcon fontSize="small" /> },
-  { label: 'Export', to: '/export', icon: <ExportIcon fontSize="small" /> },
-  { label: 'Settings', to: '/settings', icon: <SettingsIcon fontSize="small" /> },
 ]
 
 function NavListItem({ item }: { item: NavItem }): React.JSX.Element {
@@ -68,12 +65,42 @@ function NavListItem({ item }: { item: NavItem }): React.JSX.Element {
           primary={item.label}
           primaryTypographyProps={{ fontSize: '0.875rem' }}
         />
+        {item.badge != null && item.badge > 0 && (
+          <Box
+            sx={{
+              bgcolor: item.badgeColor ?? 'error.main',
+              color: 'common.white',
+              borderRadius: '10px',
+              minWidth: 20,
+              height: 20,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              px: 0.5,
+              ml: 1,
+            }}
+          >
+            <Typography sx={{ fontSize: '0.7rem', fontWeight: 700, lineHeight: 1 }}>
+              {item.badge > 99 ? '99+' : item.badge}
+            </Typography>
+          </Box>
+        )}
       </ListItemButton>
     </ListItem>
   )
 }
 
 export default function Sidebar(): React.JSX.Element {
+  const issueCount = useValidationStore((s) => s.issues.filter((i) => i.severity === 'error' || i.severity === 'warning').length)
+  const hasErrors = useValidationStore((s) => s.issues.some((i) => i.severity === 'error'))
+
+  const utilityNav: NavItem[] = [
+    { label: 'Validation', to: '/validation', icon: <ValidationIcon fontSize="small" />, badge: issueCount, badgeColor: hasErrors ? 'error.main' : 'warning.main' },
+    { label: 'Recycle Bin', to: '/recycle-bin', icon: <RecycleBinIcon fontSize="small" /> },
+    { label: 'Export', to: '/export', icon: <ExportIcon fontSize="small" /> },
+    { label: 'Settings', to: '/settings', icon: <SettingsIcon fontSize="small" /> },
+  ]
+
   return (
     <Drawer
       variant="permanent"
@@ -128,7 +155,7 @@ export default function Sidebar(): React.JSX.Element {
       <Divider sx={{ my: 0.5 }} />
 
       <List dense>
-        {UTILITY_NAV.map((item) => (
+        {utilityNav.map((item) => (
           <NavListItem key={item.to} item={item} />
         ))}
       </List>
