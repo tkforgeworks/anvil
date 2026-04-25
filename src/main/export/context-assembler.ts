@@ -43,20 +43,24 @@ export function assembleExportContext(db: DbConnection, scope: ExportScope): Exp
 
   if (scope.mode === 'full') {
     for (const [key, assembler] of Object.entries(domainAssemblers)) {
-      (ctx as Record<string, unknown>)[key] = assembler(db)
+      (ctx as unknown as Record<string, unknown>)[key] = assembler(db)
     }
   } else if (scope.mode === 'domain' && scope.domain) {
     const normalizedKey = scope.domain.replace(/-/g, '_')
     const assembler = domainAssemblers[normalizedKey]
     if (assembler) {
-      (ctx as Record<string, unknown>)[normalizedKey] = assembler(db)
+      (ctx as unknown as Record<string, unknown>)[normalizedKey] = assembler(db)
     }
   } else if (scope.mode === 'selection' && scope.domain && scope.recordIds?.length) {
     const normalizedKey = scope.domain.replace(/-/g, '_')
     const assembler = domainAssemblers[normalizedKey]
     if (assembler) {
-      (ctx as Record<string, unknown>)[normalizedKey] = assembler(db, scope.recordIds)
+      (ctx as unknown as Record<string, unknown>)[normalizedKey] = assembler(db, scope.recordIds)
     }
+  }
+
+  if (scope.mode === 'domain' || scope.mode === 'selection') {
+    resolveDependencies(db, ctx, domainAssemblers)
   }
 
   return ctx
@@ -298,6 +302,88 @@ function assembleNpcs(db: DbConnection, ids?: string[]): Record<string, unknown>
       custom_fields: getCustomFields(db, 'npcs', row.id),
     }
   })
+}
+
+const DOMAIN_FK_FIELDS: Record<string, { field: string; targetDomain: string }[]> = {
+  classes: [
+    { field: 'abilities[].ability_id', targetDomain: 'abilities' },
+  ],
+  recipes: [
+    { field: 'output_item_id', targetDomain: 'items' },
+    { field: 'ingredients[].item_id', targetDomain: 'items' },
+  ],
+  npcs: [
+    { field: 'loot_table_id', targetDomain: 'loot_tables' },
+    { field: 'class_assignments[].class_id', targetDomain: 'classes' },
+    { field: 'ability_assignments[].ability_id', targetDomain: 'abilities' },
+  ],
+  loot_tables: [
+    { field: 'entries[].item_id', targetDomain: 'items' },
+  ],
+}
+
+function collectReferencedIds(
+  records: Record<string, unknown>[],
+  fkDefs: { field: string; targetDomain: string }[],
+): Map<string, Set<string>> {
+  const refs = new Map<string, Set<string>>()
+  for (const fk of fkDefs) {
+    const set = refs.get(fk.targetDomain) ?? new Set<string>()
+    refs.set(fk.targetDomain, set)
+
+    if (fk.field.includes('[].')) {
+      const [arrayField, idField] = fk.field.split('[].')
+      for (const record of records) {
+        const arr = record[arrayField]
+        if (Array.isArray(arr)) {
+          for (const entry of arr as Record<string, unknown>[]) {
+            const id = entry[idField]
+            if (typeof id === 'string' && id) set.add(id)
+          }
+        }
+      }
+    } else {
+      for (const record of records) {
+        const id = record[fk.field]
+        if (typeof id === 'string' && id) set.add(id)
+      }
+    }
+  }
+  return refs
+}
+
+function resolveDependencies(
+  db: DbConnection,
+  ctx: ExportContext,
+  assemblers: Record<string, (db: DbConnection, ids?: string[]) => Record<string, unknown>[]>,
+): void {
+  const allDomains = ['classes', 'abilities', 'items', 'recipes', 'npcs', 'loot_tables'] as const
+  const needed = new Map<string, Set<string>>()
+
+  for (const domain of allDomains) {
+    const records = ctx[domain]
+    if (records.length === 0) continue
+    const fkDefs = DOMAIN_FK_FIELDS[domain]
+    if (!fkDefs) continue
+    const refs = collectReferencedIds(records, fkDefs)
+    for (const [targetDomain, ids] of refs) {
+      const existing = new Set((ctx[targetDomain as keyof ExportContext] as Record<string, unknown>[])
+        .map((r) => r.id as string))
+      const missing = new Set([...ids].filter((id) => !existing.has(id)))
+      if (missing.size === 0) continue
+      const combined = needed.get(targetDomain) ?? new Set<string>()
+      for (const id of missing) combined.add(id)
+      needed.set(targetDomain, combined)
+    }
+  }
+
+  for (const [domain, ids] of needed) {
+    const assembler = assemblers[domain]
+    if (!assembler) continue
+    const existing = ctx[domain as keyof ExportContext] as Record<string, unknown>[]
+    const fetched = assembler(db, [...ids])
+    ;(ctx as unknown as Record<string, unknown>)[domain] = [...existing, ...fetched]
+  }
 }
 
 function assembleLootTables(db: DbConnection, ids?: string[]): Record<string, unknown>[] {

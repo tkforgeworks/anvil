@@ -3,6 +3,7 @@ import * as migration001 from './001_init'
 import * as migration002 from './002_seed_meta_layer'
 import * as migration003 from './003_class_overrides_and_metadata'
 import * as migration004 from './004_ability_resource_type'
+import * as migration005 from './005_custom_templates'
 
 interface Migration {
   filename: string
@@ -18,6 +19,7 @@ const MIGRATIONS: Migration[] = [
   { filename: '002_seed_meta_layer', up: migration002.up },
   { filename: '003_class_overrides_and_metadata', up: migration003.up },
   { filename: '004_ability_resource_type', up: migration004.up },
+  { filename: '005_custom_templates', up: migration005.up },
 ]
 
 export const CURRENT_SCHEMA_VERSION = MIGRATIONS.length

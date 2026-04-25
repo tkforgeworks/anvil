@@ -91,6 +91,10 @@ export const IPC_CHANNELS = {
   EXPORT_PREVIEW: 'export:preview',
   EXPORT_EXECUTE: 'export:execute',
   EXPORT_GET_TEMPLATES: 'export:get-templates',
+  EXPORT_LIST_CUSTOM_TEMPLATES: 'export:list-custom-templates',
+  EXPORT_CREATE_TEMPLATE: 'export:create-template',
+  EXPORT_UPDATE_TEMPLATE: 'export:update-template',
+  EXPORT_DELETE_TEMPLATE: 'export:delete-template',
 
   // Settings
   SETTINGS_GET_APP: 'settings:get-app',
