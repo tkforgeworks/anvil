@@ -7,8 +7,8 @@ import type {
 } from '../../shared/domain-types'
 
 export const abilitiesApi = {
-  list: (includeDeleted = false) =>
-    window.anvil.invoke<AbilityRecord[]>(IPC_CHANNELS.ABILITIES_LIST, { includeDeleted }),
+  list: (includeDeleted = false, deletedOnly = false) =>
+    window.anvil.invoke<AbilityRecord[]>(IPC_CHANNELS.ABILITIES_LIST, { includeDeleted, deletedOnly }),
 
   get: (id: string) =>
     window.anvil.invoke<AbilityRecord | null>(IPC_CHANNELS.ABILITIES_GET, id),
@@ -24,6 +24,9 @@ export const abilitiesApi = {
 
   restore: (id: string) =>
     window.anvil.invoke<void>(IPC_CHANNELS.ABILITIES_RESTORE, id),
+
+  hardDelete: (id: string) =>
+    window.anvil.invoke<void>(IPC_CHANNELS.ABILITIES_HARD_DELETE, id),
 
   duplicate: (id: string) =>
     window.anvil.invoke<AbilityRecord | null>(IPC_CHANNELS.ABILITIES_DUPLICATE, id),

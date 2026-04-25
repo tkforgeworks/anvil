@@ -72,8 +72,10 @@ export class LootTableRepository extends DomainRepository {
     super('loot_tables', dbProvider)
   }
 
-  override list(includeDeleted = false): LootTableRecord[] {
-    const where = includeDeleted ? '' : 'WHERE deleted_at IS NULL'
+  override list(includeDeleted = false, deletedOnly = false): LootTableRecord[] {
+    const where = deletedOnly
+      ? 'WHERE deleted_at IS NOT NULL'
+      : includeDeleted ? '' : 'WHERE deleted_at IS NULL'
     const rows = this.dbProvider()
       .prepare(
         `SELECT ${SELECT_COLS} FROM loot_tables ${where} ORDER BY display_name COLLATE NOCASE`,

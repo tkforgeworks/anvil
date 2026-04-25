@@ -34,6 +34,7 @@ import { useNavigate } from 'react-router-dom'
 import { lootTablesApi } from '../../api/loot-tables.api'
 import { npcsApi } from '../../api/npcs.api'
 import type { LootTableEntry, LootTableRecord, NpcRecord } from '../../../shared/domain-types'
+import { ArchiveToggle, ArchiveTable, type ViewMode } from '../components/ArchiveView'
 
 function slugify(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
@@ -159,6 +160,8 @@ function DeleteDialog({ record, onClose, onDeleted }: DeleteDialogProps): React.
 export default function LootTablesPage(): React.JSX.Element {
   const navigate = useNavigate()
   const [lootTables, setLootTables] = useState<LootTableRecord[]>([])
+  const [archivedLootTables, setArchivedLootTables] = useState<LootTableRecord[]>([])
+  const [viewMode, setViewMode] = useState<ViewMode>('active')
   const [entriesByTableId, setEntriesByTableId] = useState<Map<string, LootTableEntry[]>>(new Map())
   const [npcs, setNpcs] = useState<NpcRecord[]>([])
   const [search, setSearch] = useState('')
@@ -191,9 +194,19 @@ export default function LootTablesPage(): React.JSX.Element {
     }
   }, [])
 
+  const loadArchived = useCallback(async () => {
+    try {
+      const records = await lootTablesApi.list(false, true)
+      setArchivedLootTables(records)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Failed to load archived loot tables.')
+    }
+  }, [])
+
   useEffect(() => {
-    void load()
-  }, [load])
+    if (viewMode === 'active') void load()
+    else void loadArchived()
+  }, [load, loadArchived, viewMode])
 
   const handleCreated = (record: LootTableRecord): void => {
     setCreateOpen(false)
@@ -203,6 +216,16 @@ export default function LootTablesPage(): React.JSX.Element {
   const handleDeleted = (id: string): void => {
     setDeleteTarget(null)
     setLootTables((prev) => prev.filter((table) => table.id !== id))
+  }
+
+  const handleArchiveRestore = async (id: string): Promise<void> => {
+    await lootTablesApi.restore(id)
+    setArchivedLootTables((prev) => prev.filter((r) => r.id !== id))
+  }
+
+  const handleArchiveHardDelete = async (id: string): Promise<void> => {
+    await lootTablesApi.hardDelete(id)
+    setArchivedLootTables((prev) => prev.filter((r) => r.id !== id))
   }
 
   const handleDuplicate = async (record: LootTableRecord): Promise<void> => {
@@ -229,11 +252,28 @@ export default function LootTablesPage(): React.JSX.Element {
     <Box>
       <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 3 }}>
         <Typography variant="h5">Loot Tables</Typography>
-        <Button startIcon={<AddIcon />} variant="contained" onClick={() => setCreateOpen(true)}>New Loot Table</Button>
+        <Stack direction="row" spacing={2} alignItems="center">
+          <ArchiveToggle value={viewMode} onChange={setViewMode} />
+          {viewMode === 'active' && (
+            <Button startIcon={<AddIcon />} variant="contained" onClick={() => setCreateOpen(true)}>New Loot Table</Button>
+          )}
+        </Stack>
       </Stack>
 
       {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>{error}</Alert>}
 
+      {viewMode === 'archived' ? (
+        <ArchiveTable
+          records={archivedLootTables}
+          domainLabel="Loot Table"
+          emptyMessage="No archived loot tables."
+          error={error}
+          onClearError={() => setError(null)}
+          onRestore={handleArchiveRestore}
+          onHardDelete={handleArchiveHardDelete}
+        />
+      ) : (
+        <>
       <Stack direction="row" spacing={2} sx={{ mb: 2 }} flexWrap="wrap" useFlexGap>
         <TextField size="small" placeholder="Search loot tables..." value={search} onChange={(e) => setSearch(e.target.value)} sx={{ flex: 1, minWidth: 220, maxWidth: 360 }} />
         <FormControl size="small" sx={{ minWidth: 180 }}>
@@ -278,6 +318,8 @@ export default function LootTablesPage(): React.JSX.Element {
             ))}
           </TableBody>
         </Table>
+      )}
+        </>
       )}
 
       <CreateDialog open={createOpen} onClose={() => setCreateOpen(false)} onCreated={handleCreated} />

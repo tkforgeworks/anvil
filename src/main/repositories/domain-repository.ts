@@ -46,8 +46,10 @@ export class DomainRepository {
     protected readonly dbProvider: () => DbConnection = getDb,
   ) {}
 
-  list(includeDeleted = false): DomainRecordRow[] {
-    const whereClause = includeDeleted ? '' : 'WHERE deleted_at IS NULL'
+  list(includeDeleted = false, deletedOnly = false): DomainRecordRow[] {
+    const whereClause = deletedOnly
+      ? 'WHERE deleted_at IS NOT NULL'
+      : includeDeleted ? '' : 'WHERE deleted_at IS NULL'
     const rows = this.dbProvider()
       .prepare(
         `SELECT id, display_name, export_key, description, created_at, updated_at, deleted_at

@@ -10,8 +10,8 @@ import type {
 } from '../../shared/domain-types'
 
 export const classesApi = {
-  list: (includeDeleted = false) =>
-    window.anvil.invoke<ClassRecord[]>(IPC_CHANNELS.CLASSES_LIST, { includeDeleted }),
+  list: (includeDeleted = false, deletedOnly = false) =>
+    window.anvil.invoke<ClassRecord[]>(IPC_CHANNELS.CLASSES_LIST, { includeDeleted, deletedOnly }),
 
   get: (id: string) =>
     window.anvil.invoke<ClassRecord | null>(IPC_CHANNELS.CLASSES_GET, id),
@@ -27,6 +27,9 @@ export const classesApi = {
 
   restore: (id: string) =>
     window.anvil.invoke<void>(IPC_CHANNELS.CLASSES_RESTORE, id),
+
+  hardDelete: (id: string) =>
+    window.anvil.invoke<void>(IPC_CHANNELS.CLASSES_HARD_DELETE, id),
 
   duplicate: (id: string) =>
     window.anvil.invoke<ClassRecord | null>(IPC_CHANNELS.CLASSES_DUPLICATE, id),

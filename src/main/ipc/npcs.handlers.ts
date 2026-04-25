@@ -10,8 +10,8 @@ import { markProjectDirty } from '../project/project-service'
 import { npcRepository } from '../repositories'
 
 export function registerNpcsHandlers(): void {
-  ipcMain.handle(IPC_CHANNELS.NPCS_LIST, (_event, options?: { includeDeleted?: boolean }) =>
-    npcRepository.list(options?.includeDeleted ?? false),
+  ipcMain.handle(IPC_CHANNELS.NPCS_LIST, (_event, options?: { includeDeleted?: boolean; deletedOnly?: boolean }) =>
+    npcRepository.list(options?.includeDeleted ?? false, options?.deletedOnly ?? false),
   )
 
   ipcMain.handle(IPC_CHANNELS.NPCS_GET, (_event, id: string) => npcRepository.get(id))
@@ -35,6 +35,11 @@ export function registerNpcsHandlers(): void {
 
   ipcMain.handle(IPC_CHANNELS.NPCS_RESTORE, (_event, id: string) => {
     npcRepository.restore(id)
+    markProjectDirty()
+  })
+
+  ipcMain.handle(IPC_CHANNELS.NPCS_HARD_DELETE, (_event, id: string) => {
+    npcRepository.hardDelete(id)
     markProjectDirty()
   })
 

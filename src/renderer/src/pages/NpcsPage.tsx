@@ -34,6 +34,7 @@ import { useNavigate } from 'react-router-dom'
 import { metaApi } from '../../api/meta.api'
 import { npcsApi } from '../../api/npcs.api'
 import type { MetaNpcType, NpcRecord } from '../../../shared/domain-types'
+import { ArchiveToggle, ArchiveTable, type ViewMode } from '../components/ArchiveView'
 
 function slugify(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
@@ -170,6 +171,8 @@ function DeleteDialog({ record, onClose, onDeleted }: DeleteDialogProps): React.
 export default function NpcsPage(): React.JSX.Element {
   const navigate = useNavigate()
   const [npcs, setNpcs] = useState<NpcRecord[]>([])
+  const [archivedNPCs, setArchivedNPCs] = useState<NpcRecord[]>([])
+  const [viewMode, setViewMode] = useState<ViewMode>('active')
   const [npcTypes, setNpcTypes] = useState<MetaNpcType[]>([])
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('all')
@@ -194,9 +197,19 @@ export default function NpcsPage(): React.JSX.Element {
     }
   }, [])
 
+  const loadArchived = useCallback(async () => {
+    try {
+      const records = await npcsApi.list(false, true)
+      setArchivedNPCs(records)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Failed to load archived NPCs.')
+    }
+  }, [])
+
   useEffect(() => {
-    void load()
-  }, [load])
+    if (viewMode === 'active') void load()
+    else void loadArchived()
+  }, [load, loadArchived, viewMode])
 
   const handleCreated = (record: NpcRecord): void => {
     setCreateOpen(false)
@@ -206,6 +219,16 @@ export default function NpcsPage(): React.JSX.Element {
   const handleDeleted = (id: string): void => {
     setDeleteTarget(null)
     setNpcs((prev) => prev.filter((npc) => npc.id !== id))
+  }
+
+  const handleArchiveRestore = async (id: string): Promise<void> => {
+    await npcsApi.restore(id)
+    setArchivedNPCs((prev) => prev.filter((r) => r.id !== id))
+  }
+
+  const handleArchiveHardDelete = async (id: string): Promise<void> => {
+    await npcsApi.hardDelete(id)
+    setArchivedNPCs((prev) => prev.filter((r) => r.id !== id))
   }
 
   const handleDuplicate = async (record: NpcRecord): Promise<void> => {
@@ -230,11 +253,28 @@ export default function NpcsPage(): React.JSX.Element {
     <Box>
       <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 3 }}>
         <Typography variant="h5">NPCs</Typography>
-        <Button startIcon={<AddIcon />} variant="contained" onClick={() => setCreateOpen(true)}>New NPC</Button>
+        <Stack direction="row" spacing={2} alignItems="center">
+          <ArchiveToggle value={viewMode} onChange={setViewMode} />
+          {viewMode === 'active' && (
+            <Button startIcon={<AddIcon />} variant="contained" onClick={() => setCreateOpen(true)}>New NPC</Button>
+          )}
+        </Stack>
       </Stack>
 
       {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>{error}</Alert>}
 
+      {viewMode === 'archived' ? (
+        <ArchiveTable
+          records={archivedNPCs}
+          domainLabel="NPC"
+          emptyMessage="No archived NPCs."
+          error={error}
+          onClearError={() => setError(null)}
+          onRestore={handleArchiveRestore}
+          onHardDelete={handleArchiveHardDelete}
+        />
+      ) : (
+        <>
       <Stack direction="row" spacing={2} sx={{ mb: 2 }} flexWrap="wrap" useFlexGap>
         <TextField size="small" placeholder="Search NPCs..." value={search} onChange={(e) => setSearch(e.target.value)} sx={{ flex: 1, minWidth: 220, maxWidth: 360 }} />
         <FormControl size="small" sx={{ minWidth: 190 }}>
@@ -284,6 +324,8 @@ export default function NpcsPage(): React.JSX.Element {
             ))}
           </TableBody>
         </Table>
+      )}
+        </>
       )}
 
       <CreateDialog open={createOpen} npcTypes={npcTypes} onClose={() => setCreateOpen(false)} onCreated={handleCreated} />

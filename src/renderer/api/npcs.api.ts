@@ -8,8 +8,8 @@ import type {
 } from '../../shared/domain-types'
 
 export const npcsApi = {
-  list: (includeDeleted = false) =>
-    window.anvil.invoke<NpcRecord[]>(IPC_CHANNELS.NPCS_LIST, { includeDeleted }),
+  list: (includeDeleted = false, deletedOnly = false) =>
+    window.anvil.invoke<NpcRecord[]>(IPC_CHANNELS.NPCS_LIST, { includeDeleted, deletedOnly }),
 
   get: (id: string) =>
     window.anvil.invoke<NpcRecord | null>(IPC_CHANNELS.NPCS_GET, id),
@@ -25,6 +25,9 @@ export const npcsApi = {
 
   restore: (id: string) =>
     window.anvil.invoke<void>(IPC_CHANNELS.NPCS_RESTORE, id),
+
+  hardDelete: (id: string) =>
+    window.anvil.invoke<void>(IPC_CHANNELS.NPCS_HARD_DELETE, id),
 
   duplicate: (id: string) =>
     window.anvil.invoke<NpcRecord | null>(IPC_CHANNELS.NPCS_DUPLICATE, id),

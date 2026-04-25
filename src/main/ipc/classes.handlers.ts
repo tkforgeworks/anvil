@@ -12,8 +12,8 @@ import { markProjectDirty } from '../project/project-service'
 import { classRepository } from '../repositories'
 
 export function registerClassesHandlers(): void {
-  ipcMain.handle(IPC_CHANNELS.CLASSES_LIST, (_event, options?: { includeDeleted?: boolean }) =>
-    classRepository.list(options?.includeDeleted ?? false),
+  ipcMain.handle(IPC_CHANNELS.CLASSES_LIST, (_event, options?: { includeDeleted?: boolean; deletedOnly?: boolean }) =>
+    classRepository.list(options?.includeDeleted ?? false, options?.deletedOnly ?? false),
   )
 
   ipcMain.handle(IPC_CHANNELS.CLASSES_GET, (_event, id: string) => classRepository.get(id))
@@ -37,6 +37,11 @@ export function registerClassesHandlers(): void {
 
   ipcMain.handle(IPC_CHANNELS.CLASSES_RESTORE, (_event, id: string) => {
     classRepository.restore(id)
+    markProjectDirty()
+  })
+
+  ipcMain.handle(IPC_CHANNELS.CLASSES_HARD_DELETE, (_event, id: string) => {
+    classRepository.hardDelete(id)
     markProjectDirty()
   })
 

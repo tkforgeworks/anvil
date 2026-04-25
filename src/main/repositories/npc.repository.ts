@@ -61,8 +61,10 @@ export class NpcRepository extends DomainRepository {
     super('npcs', dbProvider)
   }
 
-  override list(includeDeleted = false): NpcRecord[] {
-    const where = includeDeleted ? '' : 'WHERE deleted_at IS NULL'
+  override list(includeDeleted = false, deletedOnly = false): NpcRecord[] {
+    const where = deletedOnly
+      ? 'WHERE deleted_at IS NOT NULL'
+      : includeDeleted ? '' : 'WHERE deleted_at IS NULL'
     const rows = this.dbProvider()
       .prepare(
         `SELECT ${SELECT_COLS} FROM npcs ${where} ORDER BY display_name COLLATE NOCASE`,

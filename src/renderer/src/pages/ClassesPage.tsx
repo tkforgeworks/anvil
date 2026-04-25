@@ -33,6 +33,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { classesApi } from '../../api/classes.api'
 import type { ClassRecord } from '../../../shared/domain-types'
+import { ArchiveToggle, ArchiveTable, type ViewMode } from '../components/ArchiveView'
 
 function slugify(value: string): string {
   return value
@@ -202,6 +203,8 @@ type SortKey = 'name' | 'updated'
 export default function ClassesPage(): React.JSX.Element {
   const navigate = useNavigate()
   const [classes, setClasses] = useState<ClassRecord[]>([])
+  const [archivedClasses, setArchivedClasses] = useState<ClassRecord[]>([])
+  const [viewMode, setViewMode] = useState<ViewMode>('active')
   const [search, setSearch] = useState('')
   const [sortKey, setSortKey] = useState<SortKey>('name')
   const [createOpen, setCreateOpen] = useState(false)
@@ -217,9 +220,19 @@ export default function ClassesPage(): React.JSX.Element {
     }
   }, [])
 
+  const loadArchived = useCallback(async () => {
+    try {
+      const records = await classesApi.list(false, true)
+      setArchivedClasses(records)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Failed to load archived classes.')
+    }
+  }, [])
+
   useEffect(() => {
-    void load()
-  }, [load])
+    if (viewMode === 'active') void load()
+    else void loadArchived()
+  }, [load, loadArchived, viewMode])
 
   const handleCreated = (record: ClassRecord): void => {
     setCreateOpen(false)
@@ -229,6 +242,16 @@ export default function ClassesPage(): React.JSX.Element {
   const handleDeleted = (id: string): void => {
     setDeleteTarget(null)
     setClasses((prev) => prev.filter((c) => c.id !== id))
+  }
+
+  const handleArchiveRestore = async (id: string): Promise<void> => {
+    await classesApi.restore(id)
+    setArchivedClasses((prev) => prev.filter((c) => c.id !== id))
+  }
+
+  const handleArchiveHardDelete = async (id: string): Promise<void> => {
+    await classesApi.hardDelete(id)
+    setArchivedClasses((prev) => prev.filter((c) => c.id !== id))
   }
 
   const handleDuplicate = async (record: ClassRecord): Promise<void> => {
@@ -253,9 +276,14 @@ export default function ClassesPage(): React.JSX.Element {
       {/* Header */}
       <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 3 }}>
         <Typography variant="h5">Character Classes</Typography>
-        <Button startIcon={<AddIcon />} variant="contained" onClick={() => setCreateOpen(true)}>
-          New Class
-        </Button>
+        <Stack direction="row" spacing={2} alignItems="center">
+          <ArchiveToggle value={viewMode} onChange={setViewMode} />
+          {viewMode === 'active' && (
+            <Button startIcon={<AddIcon />} variant="contained" onClick={() => setCreateOpen(true)}>
+              New Class
+            </Button>
+          )}
+        </Stack>
       </Stack>
 
       {error && (
@@ -264,103 +292,117 @@ export default function ClassesPage(): React.JSX.Element {
         </Alert>
       )}
 
-      {/* Toolbar */}
-      <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
-        <TextField
-          size="small"
-          placeholder="Search classes…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          sx={{ flex: 1, maxWidth: 360 }}
+      {viewMode === 'archived' ? (
+        <ArchiveTable
+          records={archivedClasses}
+          domainLabel="Class"
+          emptyMessage="No archived classes."
+          error={error}
+          onClearError={() => setError(null)}
+          onRestore={handleArchiveRestore}
+          onHardDelete={handleArchiveHardDelete}
         />
-        <FormControl size="small" sx={{ minWidth: 180 }}>
-          <InputLabel id="sort-label">Sort by</InputLabel>
-          <Select
-            labelId="sort-label"
-            label="Sort by"
-            value={sortKey}
-            onChange={(e) => setSortKey(e.target.value as SortKey)}
-          >
-            <MenuItem value="name">Name</MenuItem>
-            <MenuItem value="updated">Last Modified</MenuItem>
-          </Select>
-        </FormControl>
-      </Stack>
-
-      {/* List */}
-      {filtered.length === 0 ? (
-        <Typography variant="body2" color="text.secondary">
-          {classes.length === 0
-            ? 'No classes yet. Click "New Class" to create one.'
-            : 'No classes match your search.'}
-        </Typography>
       ) : (
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>Name</TableCell>
-              <TableCell>Export Key</TableCell>
-              <TableCell>Description</TableCell>
-              <TableCell align="right">Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filtered.map((cls) => (
-              <TableRow
-                key={cls.id}
-                hover
-                sx={{ cursor: 'pointer' }}
-                onClick={() => void navigate(`/classes/${cls.id}`)}
+        <>
+          {/* Toolbar */}
+          <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
+            <TextField
+              size="small"
+              placeholder="Search classes…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              sx={{ flex: 1, maxWidth: 360 }}
+            />
+            <FormControl size="small" sx={{ minWidth: 180 }}>
+              <InputLabel id="sort-label">Sort by</InputLabel>
+              <Select
+                labelId="sort-label"
+                label="Sort by"
+                value={sortKey}
+                onChange={(e) => setSortKey(e.target.value as SortKey)}
               >
-                <TableCell>
-                  <Typography variant="body2" fontWeight={500}>
-                    {cls.displayName}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Typography variant="body2" color="text.secondary" fontFamily="monospace">
-                    {cls.exportKey}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{
-                      maxWidth: 300,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
+                <MenuItem value="name">Name</MenuItem>
+                <MenuItem value="updated">Last Modified</MenuItem>
+              </Select>
+            </FormControl>
+          </Stack>
+
+          {/* List */}
+          {filtered.length === 0 ? (
+            <Typography variant="body2" color="text.secondary">
+              {classes.length === 0
+                ? 'No classes yet. Click "New Class" to create one.'
+                : 'No classes match your search.'}
+            </Typography>
+          ) : (
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Name</TableCell>
+                  <TableCell>Export Key</TableCell>
+                  <TableCell>Description</TableCell>
+                  <TableCell align="right">Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {filtered.map((cls) => (
+                  <TableRow
+                    key={cls.id}
+                    hover
+                    sx={{ cursor: 'pointer' }}
+                    onClick={() => void navigate(`/classes/${cls.id}`)}
                   >
-                    {cls.description || '—'}
-                  </Typography>
-                </TableCell>
-                <TableCell align="right" onClick={(e) => e.stopPropagation()}>
-                  <Tooltip title="Edit">
-                    <IconButton size="small" onClick={() => void navigate(`/classes/${cls.id}`)}>
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Duplicate">
-                    <IconButton size="small" onClick={() => void handleDuplicate(cls)}>
-                      <DuplicateIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Delete">
-                    <IconButton
-                      size="small"
-                      color="error"
-                      onClick={() => setDeleteTarget(cls)}
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+                    <TableCell>
+                      <Typography variant="body2" fontWeight={500}>
+                        {cls.displayName}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" color="text.secondary" fontFamily="monospace">
+                        {cls.exportKey}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{
+                          maxWidth: 300,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {cls.description || '—'}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="right" onClick={(e) => e.stopPropagation()}>
+                      <Tooltip title="Edit">
+                        <IconButton size="small" onClick={() => void navigate(`/classes/${cls.id}`)}>
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Duplicate">
+                        <IconButton size="small" onClick={() => void handleDuplicate(cls)}>
+                          <DuplicateIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Delete">
+                        <IconButton
+                          size="small"
+                          color="error"
+                          onClick={() => setDeleteTarget(cls)}
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </>
       )}
 
       <CreateDialog

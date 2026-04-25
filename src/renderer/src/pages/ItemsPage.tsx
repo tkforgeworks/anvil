@@ -35,6 +35,7 @@ import { useNavigate } from 'react-router-dom'
 import { itemsApi } from '../../api/items.api'
 import { metaApi } from '../../api/meta.api'
 import type { ItemRecord, MetaItemCategory, MetaRarity } from '../../../shared/domain-types'
+import { ArchiveToggle, ArchiveTable, type ViewMode } from '../components/ArchiveView'
 
 function slugify(value: string): string {
   return value
@@ -258,6 +259,8 @@ type SortKey = 'name' | 'updated'
 export default function ItemsPage(): React.JSX.Element {
   const navigate = useNavigate()
   const [items, setItems] = useState<ItemRecord[]>([])
+  const [archivedItems, setArchivedItems] = useState<ItemRecord[]>([])
+  const [viewMode, setViewMode] = useState<ViewMode>('active')
   const [categories, setCategories] = useState<MetaItemCategory[]>([])
   const [rarities, setRarities] = useState<MetaRarity[]>([])
   const [search, setSearch] = useState('')
@@ -293,9 +296,19 @@ export default function ItemsPage(): React.JSX.Element {
     }
   }, [])
 
+  const loadArchived = useCallback(async () => {
+    try {
+      const records = await itemsApi.list(false, true)
+      setArchivedItems(records)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Failed to load archived items.')
+    }
+  }, [])
+
   useEffect(() => {
-    void load()
-  }, [load])
+    if (viewMode === 'active') void load()
+    else void loadArchived()
+  }, [load, loadArchived, viewMode])
 
   const handleCreated = (record: ItemRecord): void => {
     setCreateOpen(false)
@@ -305,6 +318,16 @@ export default function ItemsPage(): React.JSX.Element {
   const handleDeleted = (id: string): void => {
     setDeleteTarget(null)
     setItems((prev) => prev.filter((item) => item.id !== id))
+  }
+
+  const handleArchiveRestore = async (id: string): Promise<void> => {
+    await itemsApi.restore(id)
+    setArchivedItems((prev) => prev.filter((r) => r.id !== id))
+  }
+
+  const handleArchiveHardDelete = async (id: string): Promise<void> => {
+    await itemsApi.hardDelete(id)
+    setArchivedItems((prev) => prev.filter((r) => r.id !== id))
   }
 
   const handleDuplicate = async (record: ItemRecord): Promise<void> => {
@@ -330,9 +353,14 @@ export default function ItemsPage(): React.JSX.Element {
     <Box>
       <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 3 }}>
         <Typography variant="h5">Items</Typography>
-        <Button startIcon={<AddIcon />} variant="contained" onClick={() => setCreateOpen(true)}>
-          New Item
-        </Button>
+        <Stack direction="row" spacing={2} alignItems="center">
+          <ArchiveToggle value={viewMode} onChange={setViewMode} />
+          {viewMode === 'active' && (
+            <Button startIcon={<AddIcon />} variant="contained" onClick={() => setCreateOpen(true)}>
+              New Item
+            </Button>
+          )}
+        </Stack>
       </Stack>
 
       {error && (
@@ -341,6 +369,18 @@ export default function ItemsPage(): React.JSX.Element {
         </Alert>
       )}
 
+      {viewMode === 'archived' ? (
+        <ArchiveTable
+          records={archivedItems}
+          domainLabel="Item"
+          emptyMessage="No archived items."
+          error={error}
+          onClearError={() => setError(null)}
+          onRestore={handleArchiveRestore}
+          onHardDelete={handleArchiveHardDelete}
+        />
+      ) : (
+        <>
       <Stack direction="row" spacing={2} sx={{ mb: 2 }} flexWrap="wrap" useFlexGap>
         <TextField
           size="small"
@@ -489,6 +529,8 @@ export default function ItemsPage(): React.JSX.Element {
             })}
           </TableBody>
         </Table>
+      )}
+        </>
       )}
 
       <CreateDialog

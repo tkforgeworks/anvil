@@ -57,8 +57,10 @@ export class ItemRepository extends DomainRepository {
     super('items', dbProvider)
   }
 
-  override list(includeDeleted = false): ItemRecord[] {
-    const where = includeDeleted ? '' : 'WHERE deleted_at IS NULL'
+  override list(includeDeleted = false, deletedOnly = false): ItemRecord[] {
+    const where = deletedOnly
+      ? 'WHERE deleted_at IS NOT NULL'
+      : includeDeleted ? '' : 'WHERE deleted_at IS NULL'
     const rows = this.dbProvider()
       .prepare(
         `SELECT ${SELECT_COLS} FROM items ${where} ORDER BY display_name COLLATE NOCASE`,

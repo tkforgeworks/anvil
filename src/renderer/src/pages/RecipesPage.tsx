@@ -41,6 +41,7 @@ import type {
   MetaCraftingStation,
   RecipeRecord,
 } from '../../../shared/domain-types'
+import { ArchiveToggle, ArchiveTable, type ViewMode } from '../components/ArchiveView'
 
 function slugify(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
@@ -218,6 +219,8 @@ function DeleteDialog({ record, onClose, onDeleted }: DeleteDialogProps): React.
 export default function RecipesPage(): React.JSX.Element {
   const navigate = useNavigate()
   const [recipes, setRecipes] = useState<RecipeRecord[]>([])
+  const [archivedRecipes, setArchivedRecipes] = useState<RecipeRecord[]>([])
+  const [viewMode, setViewMode] = useState<ViewMode>('active')
   const [items, setItems] = useState<ItemRecord[]>([])
   const [stations, setStations] = useState<MetaCraftingStation[]>([])
   const [specializations, setSpecializations] = useState<MetaCraftingSpecialization[]>([])
@@ -253,9 +256,19 @@ export default function RecipesPage(): React.JSX.Element {
     }
   }, [])
 
+  const loadArchived = useCallback(async () => {
+    try {
+      const records = await recipesApi.list(false, true)
+      setArchivedRecipes(records)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Failed to load archived recipes.')
+    }
+  }, [])
+
   useEffect(() => {
-    void load()
-  }, [load])
+    if (viewMode === 'active') void load()
+    else void loadArchived()
+  }, [load, loadArchived, viewMode])
 
   const handleCreated = (record: RecipeRecord): void => {
     setCreateOpen(false)
@@ -265,6 +278,16 @@ export default function RecipesPage(): React.JSX.Element {
   const handleDeleted = (id: string): void => {
     setDeleteTarget(null)
     setRecipes((prev) => prev.filter((recipe) => recipe.id !== id))
+  }
+
+  const handleArchiveRestore = async (id: string): Promise<void> => {
+    await recipesApi.restore(id)
+    setArchivedRecipes((prev) => prev.filter((r) => r.id !== id))
+  }
+
+  const handleArchiveHardDelete = async (id: string): Promise<void> => {
+    await recipesApi.hardDelete(id)
+    setArchivedRecipes((prev) => prev.filter((r) => r.id !== id))
   }
 
   const handleDuplicate = async (record: RecipeRecord): Promise<void> => {
@@ -287,11 +310,28 @@ export default function RecipesPage(): React.JSX.Element {
     <Box>
       <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 3 }}>
         <Typography variant="h5">Crafting Recipes</Typography>
-        <Button startIcon={<AddIcon />} variant="contained" onClick={() => setCreateOpen(true)}>New Recipe</Button>
+        <Stack direction="row" spacing={2} alignItems="center">
+          <ArchiveToggle value={viewMode} onChange={setViewMode} />
+          {viewMode === 'active' && (
+            <Button startIcon={<AddIcon />} variant="contained" onClick={() => setCreateOpen(true)}>New Recipe</Button>
+          )}
+        </Stack>
       </Stack>
 
       {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>{error}</Alert>}
 
+      {viewMode === 'archived' ? (
+        <ArchiveTable
+          records={archivedRecipes}
+          domainLabel="Recipe"
+          emptyMessage="No archived recipes."
+          error={error}
+          onClearError={() => setError(null)}
+          onRestore={handleArchiveRestore}
+          onHardDelete={handleArchiveHardDelete}
+        />
+      ) : (
+        <>
       <Stack direction="row" spacing={2} sx={{ mb: 2 }} flexWrap="wrap" useFlexGap>
         <TextField size="small" placeholder="Search recipes..." value={search} onChange={(e) => setSearch(e.target.value)} sx={{ flex: 1, minWidth: 220, maxWidth: 360 }} />
         <FormControl size="small" sx={{ minWidth: 190 }}>
@@ -345,6 +385,8 @@ export default function RecipesPage(): React.JSX.Element {
             ))}
           </TableBody>
         </Table>
+      )}
+        </>
       )}
 
       <CreateDialog open={createOpen} items={items} stations={stations} specializations={specializations} onClose={() => setCreateOpen(false)} onCreated={handleCreated} />

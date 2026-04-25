@@ -17,6 +17,7 @@ export const IPC_CHANNELS = {
   CLASSES_UPDATE: 'classes:update',
   CLASSES_DELETE: 'classes:delete',
   CLASSES_RESTORE: 'classes:restore',
+  CLASSES_HARD_DELETE: 'classes:hard-delete',
   CLASSES_DUPLICATE: 'classes:duplicate',
   CLASSES_GET_STAT_GROWTH: 'classes:get-stat-growth',
   CLASSES_SET_STAT_GROWTH: 'classes:set-stat-growth',
@@ -36,6 +37,7 @@ export const IPC_CHANNELS = {
   ABILITIES_UPDATE: 'abilities:update',
   ABILITIES_DELETE: 'abilities:delete',
   ABILITIES_RESTORE: 'abilities:restore',
+  ABILITIES_HARD_DELETE: 'abilities:hard-delete',
   ABILITIES_DUPLICATE: 'abilities:duplicate',
   ABILITIES_GET_USED_BY: 'abilities:get-used-by',
 
@@ -46,6 +48,7 @@ export const IPC_CHANNELS = {
   ITEMS_UPDATE: 'items:update',
   ITEMS_DELETE: 'items:delete',
   ITEMS_RESTORE: 'items:restore',
+  ITEMS_HARD_DELETE: 'items:hard-delete',
   ITEMS_DUPLICATE: 'items:duplicate',
 
   // Crafting Recipes
@@ -55,6 +58,7 @@ export const IPC_CHANNELS = {
   RECIPES_UPDATE: 'recipes:update',
   RECIPES_DELETE: 'recipes:delete',
   RECIPES_RESTORE: 'recipes:restore',
+  RECIPES_HARD_DELETE: 'recipes:hard-delete',
   RECIPES_DUPLICATE: 'recipes:duplicate',
   RECIPES_GET_INGREDIENTS: 'recipes:get-ingredients',
   RECIPES_SET_INGREDIENTS: 'recipes:set-ingredients',
@@ -66,6 +70,7 @@ export const IPC_CHANNELS = {
   NPCS_UPDATE: 'npcs:update',
   NPCS_DELETE: 'npcs:delete',
   NPCS_RESTORE: 'npcs:restore',
+  NPCS_HARD_DELETE: 'npcs:hard-delete',
   NPCS_DUPLICATE: 'npcs:duplicate',
   NPCS_GET_CLASS_ASSIGNMENTS: 'npcs:get-class-assignments',
   NPCS_SET_CLASS_ASSIGNMENTS: 'npcs:set-class-assignments',
@@ -79,6 +84,7 @@ export const IPC_CHANNELS = {
   LOOT_TABLES_UPDATE: 'loot-tables:update',
   LOOT_TABLES_DELETE: 'loot-tables:delete',
   LOOT_TABLES_RESTORE: 'loot-tables:restore',
+  LOOT_TABLES_HARD_DELETE: 'loot-tables:hard-delete',
   LOOT_TABLES_DUPLICATE: 'loot-tables:duplicate',
   LOOT_TABLES_GET_ENTRIES: 'loot-tables:get-entries',
   LOOT_TABLES_SET_ENTRIES: 'loot-tables:set-entries',

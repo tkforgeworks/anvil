@@ -5,8 +5,8 @@ import { markProjectDirty } from '../project/project-service'
 import { recipeRepository } from '../repositories'
 
 export function registerRecipesHandlers(): void {
-  ipcMain.handle(IPC_CHANNELS.RECIPES_LIST, (_event, options?: { includeDeleted?: boolean }) =>
-    recipeRepository.list(options?.includeDeleted ?? false),
+  ipcMain.handle(IPC_CHANNELS.RECIPES_LIST, (_event, options?: { includeDeleted?: boolean; deletedOnly?: boolean }) =>
+    recipeRepository.list(options?.includeDeleted ?? false, options?.deletedOnly ?? false),
   )
 
   ipcMain.handle(IPC_CHANNELS.RECIPES_GET, (_event, id: string) => recipeRepository.get(id))
@@ -30,6 +30,11 @@ export function registerRecipesHandlers(): void {
 
   ipcMain.handle(IPC_CHANNELS.RECIPES_RESTORE, (_event, id: string) => {
     recipeRepository.restore(id)
+    markProjectDirty()
+  })
+
+  ipcMain.handle(IPC_CHANNELS.RECIPES_HARD_DELETE, (_event, id: string) => {
+    recipeRepository.hardDelete(id)
     markProjectDirty()
   })
 

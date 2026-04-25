@@ -33,6 +33,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { abilitiesApi } from '../../api/abilities.api'
 import type { AbilityRecord } from '../../../shared/domain-types'
+import { ArchiveToggle, ArchiveTable, type ViewMode } from '../components/ArchiveView'
 
 function slugify(value: string): string {
   return value
@@ -202,6 +203,8 @@ type SortKey = 'name' | 'updated'
 export default function AbilitiesPage(): React.JSX.Element {
   const navigate = useNavigate()
   const [abilities, setAbilities] = useState<AbilityRecord[]>([])
+  const [archivedAbilitys, setArchivedAbilitys] = useState<AbilityRecord[]>([])
+  const [viewMode, setViewMode] = useState<ViewMode>('active')
   const [search, setSearch] = useState('')
   const [sortKey, setSortKey] = useState<SortKey>('name')
   const [createOpen, setCreateOpen] = useState(false)
@@ -217,9 +220,19 @@ export default function AbilitiesPage(): React.JSX.Element {
     }
   }, [])
 
+  const loadArchived = useCallback(async () => {
+    try {
+      const records = await abilitiesApi.list(false, true)
+      setArchivedAbilitys(records)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Failed to load archived abilitys.')
+    }
+  }, [])
+
   useEffect(() => {
-    void load()
-  }, [load])
+    if (viewMode === 'active') void load()
+    else void loadArchived()
+  }, [load, loadArchived, viewMode])
 
   const handleCreated = (record: AbilityRecord): void => {
     setCreateOpen(false)
@@ -229,6 +242,16 @@ export default function AbilitiesPage(): React.JSX.Element {
   const handleDeleted = (id: string): void => {
     setDeleteTarget(null)
     setAbilities((prev) => prev.filter((a) => a.id !== id))
+  }
+
+  const handleArchiveRestore = async (id: string): Promise<void> => {
+    await abilitiesApi.restore(id)
+    setArchivedAbilitys((prev) => prev.filter((r) => r.id !== id))
+  }
+
+  const handleArchiveHardDelete = async (id: string): Promise<void> => {
+    await abilitiesApi.hardDelete(id)
+    setArchivedAbilitys((prev) => prev.filter((r) => r.id !== id))
   }
 
   const handleDuplicate = async (record: AbilityRecord): Promise<void> => {
@@ -253,9 +276,14 @@ export default function AbilitiesPage(): React.JSX.Element {
       {/* Header */}
       <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 3 }}>
         <Typography variant="h5">Abilities</Typography>
-        <Button startIcon={<AddIcon />} variant="contained" onClick={() => setCreateOpen(true)}>
-          New Ability
-        </Button>
+        <Stack direction="row" spacing={2} alignItems="center">
+          <ArchiveToggle value={viewMode} onChange={setViewMode} />
+          {viewMode === 'active' && (
+            <Button startIcon={<AddIcon />} variant="contained" onClick={() => setCreateOpen(true)}>
+              New Ability
+            </Button>
+          )}
+        </Stack>
       </Stack>
 
       {error && (
@@ -264,112 +292,126 @@ export default function AbilitiesPage(): React.JSX.Element {
         </Alert>
       )}
 
-      {/* Toolbar */}
-      <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
-        <TextField
-          size="small"
-          placeholder="Search abilities…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          sx={{ flex: 1, maxWidth: 360 }}
+      {viewMode === 'archived' ? (
+        <ArchiveTable
+          records={archivedAbilitys}
+          domainLabel="Ability"
+          emptyMessage="No archived abilitys."
+          error={error}
+          onClearError={() => setError(null)}
+          onRestore={handleArchiveRestore}
+          onHardDelete={handleArchiveHardDelete}
         />
-        <FormControl size="small" sx={{ minWidth: 180 }}>
-          <InputLabel id="sort-label">Sort by</InputLabel>
-          <Select
-            labelId="sort-label"
-            label="Sort by"
-            value={sortKey}
-            onChange={(e) => setSortKey(e.target.value as SortKey)}
-          >
-            <MenuItem value="name">Name</MenuItem>
-            <MenuItem value="updated">Last Modified</MenuItem>
-          </Select>
-        </FormControl>
-      </Stack>
-
-      {/* List */}
-      {filtered.length === 0 ? (
-        <Typography variant="body2" color="text.secondary">
-          {abilities.length === 0
-            ? 'No abilities yet. Click "New Ability" to create one.'
-            : 'No abilities match your search.'}
-        </Typography>
       ) : (
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>Name</TableCell>
-              <TableCell>Export Key</TableCell>
-              <TableCell>Type</TableCell>
-              <TableCell>Description</TableCell>
-              <TableCell align="right">Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filtered.map((ability) => (
-              <TableRow
-                key={ability.id}
-                hover
-                sx={{ cursor: 'pointer' }}
-                onClick={() => void navigate(`/abilities/${ability.id}`)}
+        <>
+          {/* Toolbar */}
+          <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
+            <TextField
+              size="small"
+              placeholder="Search abilities…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              sx={{ flex: 1, maxWidth: 360 }}
+            />
+            <FormControl size="small" sx={{ minWidth: 180 }}>
+              <InputLabel id="sort-label">Sort by</InputLabel>
+              <Select
+                labelId="sort-label"
+                label="Sort by"
+                value={sortKey}
+                onChange={(e) => setSortKey(e.target.value as SortKey)}
               >
-                <TableCell>
-                  <Typography variant="body2" fontWeight={500}>
-                    {ability.displayName}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Typography variant="body2" color="text.secondary" fontFamily="monospace">
-                    {ability.exportKey}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Typography variant="body2" color="text.secondary">
-                    {ability.abilityType || '—'}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{
-                      maxWidth: 260,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
+                <MenuItem value="name">Name</MenuItem>
+                <MenuItem value="updated">Last Modified</MenuItem>
+              </Select>
+            </FormControl>
+          </Stack>
+
+          {/* List */}
+          {filtered.length === 0 ? (
+            <Typography variant="body2" color="text.secondary">
+              {abilities.length === 0
+                ? 'No abilities yet. Click "New Ability" to create one.'
+                : 'No abilities match your search.'}
+            </Typography>
+          ) : (
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Name</TableCell>
+                  <TableCell>Export Key</TableCell>
+                  <TableCell>Type</TableCell>
+                  <TableCell>Description</TableCell>
+                  <TableCell align="right">Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {filtered.map((ability) => (
+                  <TableRow
+                    key={ability.id}
+                    hover
+                    sx={{ cursor: 'pointer' }}
+                    onClick={() => void navigate(`/abilities/${ability.id}`)}
                   >
-                    {ability.description || '—'}
-                  </Typography>
-                </TableCell>
-                <TableCell align="right" onClick={(e) => e.stopPropagation()}>
-                  <Tooltip title="Edit">
-                    <IconButton
-                      size="small"
-                      onClick={() => void navigate(`/abilities/${ability.id}`)}
-                    >
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Duplicate">
-                    <IconButton size="small" onClick={() => void handleDuplicate(ability)}>
-                      <DuplicateIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Delete">
-                    <IconButton
-                      size="small"
-                      color="error"
-                      onClick={() => setDeleteTarget(ability)}
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+                    <TableCell>
+                      <Typography variant="body2" fontWeight={500}>
+                        {ability.displayName}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" color="text.secondary" fontFamily="monospace">
+                        {ability.exportKey}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" color="text.secondary">
+                        {ability.abilityType || '—'}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{
+                          maxWidth: 260,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {ability.description || '—'}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="right" onClick={(e) => e.stopPropagation()}>
+                      <Tooltip title="Edit">
+                        <IconButton
+                          size="small"
+                          onClick={() => void navigate(`/abilities/${ability.id}`)}
+                        >
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Duplicate">
+                        <IconButton size="small" onClick={() => void handleDuplicate(ability)}>
+                          <DuplicateIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Delete">
+                        <IconButton
+                          size="small"
+                          color="error"
+                          onClick={() => setDeleteTarget(ability)}
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </>
       )}
 
       <CreateDialog

@@ -45,8 +45,10 @@ export class ClassRepository extends DomainRepository {
     super('classes', dbProvider)
   }
 
-  override list(includeDeleted = false): ClassRecord[] {
-    const where = includeDeleted ? '' : 'WHERE deleted_at IS NULL'
+  override list(includeDeleted = false, deletedOnly = false): ClassRecord[] {
+    const where = deletedOnly
+      ? 'WHERE deleted_at IS NOT NULL'
+      : includeDeleted ? '' : 'WHERE deleted_at IS NULL'
     const rows = this.dbProvider()
       .prepare(
         `SELECT ${SELECT_COLS} FROM classes ${where} ORDER BY display_name COLLATE NOCASE`,

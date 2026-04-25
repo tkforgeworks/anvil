@@ -11,8 +11,8 @@ import { lootTableRepository } from '../repositories'
 export function registerLootTablesHandlers(): void {
   ipcMain.handle(
     IPC_CHANNELS.LOOT_TABLES_LIST,
-    (_event, options?: { includeDeleted?: boolean }) =>
-      lootTableRepository.list(options?.includeDeleted ?? false),
+    (_event, options?: { includeDeleted?: boolean; deletedOnly?: boolean }) =>
+      lootTableRepository.list(options?.includeDeleted ?? false, options?.deletedOnly ?? false),
   )
 
   ipcMain.handle(IPC_CHANNELS.LOOT_TABLES_GET, (_event, id: string) =>
@@ -41,6 +41,11 @@ export function registerLootTablesHandlers(): void {
 
   ipcMain.handle(IPC_CHANNELS.LOOT_TABLES_RESTORE, (_event, id: string) => {
     lootTableRepository.restore(id)
+    markProjectDirty()
+  })
+
+  ipcMain.handle(IPC_CHANNELS.LOOT_TABLES_HARD_DELETE, (_event, id: string) => {
+    lootTableRepository.hardDelete(id)
     markProjectDirty()
   })
 

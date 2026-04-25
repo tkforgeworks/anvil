@@ -5,8 +5,8 @@ import { markProjectDirty } from '../project/project-service'
 import { abilityRepository } from '../repositories'
 
 export function registerAbilitiesHandlers(): void {
-  ipcMain.handle(IPC_CHANNELS.ABILITIES_LIST, (_event, options?: { includeDeleted?: boolean }) =>
-    abilityRepository.list(options?.includeDeleted ?? false),
+  ipcMain.handle(IPC_CHANNELS.ABILITIES_LIST, (_event, options?: { includeDeleted?: boolean; deletedOnly?: boolean }) =>
+    abilityRepository.list(options?.includeDeleted ?? false, options?.deletedOnly ?? false),
   )
 
   ipcMain.handle(IPC_CHANNELS.ABILITIES_GET, (_event, id: string) => abilityRepository.get(id))
@@ -30,6 +30,11 @@ export function registerAbilitiesHandlers(): void {
 
   ipcMain.handle(IPC_CHANNELS.ABILITIES_RESTORE, (_event, id: string) => {
     abilityRepository.restore(id)
+    markProjectDirty()
+  })
+
+  ipcMain.handle(IPC_CHANNELS.ABILITIES_HARD_DELETE, (_event, id: string) => {
+    abilityRepository.hardDelete(id)
     markProjectDirty()
   })
 

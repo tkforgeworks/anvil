@@ -7,8 +7,8 @@ import type {
 } from '../../shared/domain-types'
 
 export const recipesApi = {
-  list: (includeDeleted = false) =>
-    window.anvil.invoke<RecipeRecord[]>(IPC_CHANNELS.RECIPES_LIST, { includeDeleted }),
+  list: (includeDeleted = false, deletedOnly = false) =>
+    window.anvil.invoke<RecipeRecord[]>(IPC_CHANNELS.RECIPES_LIST, { includeDeleted, deletedOnly }),
 
   get: (id: string) =>
     window.anvil.invoke<RecipeRecord | null>(IPC_CHANNELS.RECIPES_GET, id),
@@ -24,6 +24,9 @@ export const recipesApi = {
 
   restore: (id: string) =>
     window.anvil.invoke<void>(IPC_CHANNELS.RECIPES_RESTORE, id),
+
+  hardDelete: (id: string) =>
+    window.anvil.invoke<void>(IPC_CHANNELS.RECIPES_HARD_DELETE, id),
 
   duplicate: (id: string) =>
     window.anvil.invoke<RecipeRecord | null>(IPC_CHANNELS.RECIPES_DUPLICATE, id),

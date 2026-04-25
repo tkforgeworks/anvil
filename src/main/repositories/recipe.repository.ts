@@ -68,8 +68,10 @@ export class RecipeRepository extends DomainRepository {
     super('recipes', dbProvider)
   }
 
-  override list(includeDeleted = false): RecipeRecord[] {
-    const where = includeDeleted ? '' : 'WHERE deleted_at IS NULL'
+  override list(includeDeleted = false, deletedOnly = false): RecipeRecord[] {
+    const where = deletedOnly
+      ? 'WHERE deleted_at IS NOT NULL'
+      : includeDeleted ? '' : 'WHERE deleted_at IS NULL'
     const rows = this.dbProvider()
       .prepare(
         `SELECT ${SELECT_COLS} FROM recipes ${where} ORDER BY display_name COLLATE NOCASE`,

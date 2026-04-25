@@ -50,8 +50,10 @@ export class AbilityRepository extends DomainRepository {
     super('abilities', dbProvider)
   }
 
-  override list(includeDeleted = false): AbilityRecord[] {
-    const where = includeDeleted ? '' : 'WHERE deleted_at IS NULL'
+  override list(includeDeleted = false, deletedOnly = false): AbilityRecord[] {
+    const where = deletedOnly
+      ? 'WHERE deleted_at IS NOT NULL'
+      : includeDeleted ? '' : 'WHERE deleted_at IS NULL'
     const rows = this.dbProvider()
       .prepare(
         `SELECT ${SELECT_COLS} FROM abilities ${where} ORDER BY display_name COLLATE NOCASE`,
