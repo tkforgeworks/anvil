@@ -24,6 +24,8 @@ import type {
 import AbilityAssignmentPanel, { type AbilityAssignmentRef } from '../components/AbilityAssignmentPanel'
 import DerivedStatsEditor from '../components/DerivedStatsEditor'
 import StatGrowthEditor from '../components/StatGrowthEditor'
+import ValidationBanner from '../components/ValidationBanner'
+import { useRecordValidation } from '../hooks/useRecordValidation'
 
 // ─── Tab panels ───────────────────────────────────────────────────────────────
 
@@ -60,6 +62,7 @@ export default function ClassEditorPage(): React.JSX.Element {
   const [activeTab, setActiveTab] = useState(0)
   const [abilityAssignments, setAbilityAssignments] = useState<ClassAbilityAssignment[]>([])
   const [allAbilities, setAllAbilities] = useState<AbilityRecord[]>([])
+  const { recordIssues, runValidation } = useRecordValidation('classes', id)
 
   const load = useCallback(async () => {
     if (!id) return
@@ -95,6 +98,7 @@ export default function ClassEditorPage(): React.JSX.Element {
     try {
       await classesApi.setAbilityAssignments(id, next)
       setAbilityAssignments(next)
+      await runValidation()
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Failed to save ability assignments.')
     }
@@ -124,6 +128,7 @@ export default function ClassEditorPage(): React.JSX.Element {
         setRecord(updated)
         setDirty(false)
         setSavedAt(new Date())
+        await runValidation()
       }
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Failed to save class.')
@@ -220,6 +225,8 @@ export default function ClassEditorPage(): React.JSX.Element {
           {error}
         </Alert>
       )}
+
+      <ValidationBanner issues={recordIssues} />
 
       <Divider sx={{ mb: 0 }} />
 

@@ -27,6 +27,8 @@ import ClassAssignmentPanel from '../components/ClassAssignmentPanel'
 import CustomFieldsPanel from '../components/CustomFieldsPanel'
 import LootTableAssignmentPanel from '../components/LootTableAssignmentPanel'
 import NpcStatBlockPanel from '../components/NpcStatBlockPanel'
+import ValidationBanner from '../components/ValidationBanner'
+import { useRecordValidation } from '../hooks/useRecordValidation'
 import type {
   AbilityRecord,
   ClassRecord,
@@ -69,6 +71,7 @@ export default function NpcEditorPage(): React.JSX.Element {
   const [isLoading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [savedAt, setSavedAt] = useState<Date | null>(null)
+  const { recordIssues, issuesForField, runValidation } = useRecordValidation('npcs', id)
 
   const typeById = useMemo(() => new Map(npcTypes.map((type) => [type.id, type])), [npcTypes])
 
@@ -178,6 +181,7 @@ export default function NpcEditorPage(): React.JSX.Element {
         growthByClass,
       )
       setGrowthByClass(growth)
+      await runValidation()
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Failed to save class assignments.')
     }
@@ -188,6 +192,7 @@ export default function NpcEditorPage(): React.JSX.Element {
     try {
       await npcsApi.setAbilityAssignments(id, next)
       setAbilityAssignments(next)
+      await runValidation()
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Failed to save ability assignments.')
     }
@@ -227,6 +232,7 @@ export default function NpcEditorPage(): React.JSX.Element {
         setLootTableId(updated.lootTableId)
         setDirty(false)
         setSavedAt(new Date())
+        await runValidation()
       }
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Failed to save NPC.')
@@ -302,8 +308,10 @@ export default function NpcEditorPage(): React.JSX.Element {
 
       {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>{error}</Alert>}
 
+      <ValidationBanner issues={recordIssues} />
+
       <Stack spacing={3} sx={{ maxWidth: 900 }}>
-        <FormControl fullWidth required sx={{ maxWidth: 760 }}>
+        <FormControl fullWidth required sx={{ maxWidth: 760 }} error={issuesForField('npcTypeId').length > 0}>
           <InputLabel id="npc-type-label">NPC Type</InputLabel>
           <Select labelId="npc-type-label" label="NPC Type" value={npcTypeId} onChange={(e) => handleTypeChange(e.target.value)}>
             {npcTypes.map((type) => <MenuItem key={type.id} value={type.id}>{type.displayName}</MenuItem>)}

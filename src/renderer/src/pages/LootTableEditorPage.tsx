@@ -29,6 +29,8 @@ import { itemsApi } from '../../api/items.api'
 import { lootTablesApi } from '../../api/loot-tables.api'
 import { metaApi } from '../../api/meta.api'
 import { npcsApi } from '../../api/npcs.api'
+import ValidationBanner from '../components/ValidationBanner'
+import { useRecordValidation } from '../hooks/useRecordValidation'
 import type {
   CreateLootTableEntryInput,
   ItemRecord,
@@ -82,6 +84,7 @@ export default function LootTableEditorPage(): React.JSX.Element {
   const [isLoading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [savedAt, setSavedAt] = useState<Date | null>(null)
+  const { recordIssues, runValidation } = useRecordValidation('loot-tables', id)
 
   const itemById = useMemo(() => new Map(items.map((item) => [item.id, item])), [items])
   const rarityById = useMemo(() => new Map(rarities.map((rarity) => [rarity.id, rarity])), [rarities])
@@ -202,6 +205,7 @@ export default function LootTableEditorPage(): React.JSX.Element {
         setEntries(savedEntries.map(toDraft))
         setDirty(false)
         setSavedAt(new Date())
+        await runValidation()
       }
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Failed to save loot table.')
@@ -292,6 +296,7 @@ export default function LootTableEditorPage(): React.JSX.Element {
       </Stack>
 
       {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>{error}</Alert>}
+      <ValidationBanner issues={recordIssues} />
       {hasDeletedReferences && <Alert severity="warning" sx={{ mb: 2 }}>This loot table references a soft-deleted item. Validation will flag this loot table.</Alert>}
 
       <Stack spacing={3}>

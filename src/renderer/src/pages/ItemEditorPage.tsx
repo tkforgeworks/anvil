@@ -22,6 +22,9 @@ import { itemsApi } from '../../api/items.api'
 import { metaApi } from '../../api/meta.api'
 import type { ItemRecord, MetaItemCategory, MetaRarity } from '../../../shared/domain-types'
 import CustomFieldsPanel from '../components/CustomFieldsPanel'
+import ValidationBanner from '../components/ValidationBanner'
+import { useRecordValidation } from '../hooks/useRecordValidation'
+import { fieldValidationProps } from '../hooks/fieldValidationProps'
 
 interface TabPanelProps {
   index: number
@@ -55,6 +58,7 @@ export default function ItemEditorPage(): React.JSX.Element {
   const [error, setError] = useState<string | null>(null)
   const [savedAt, setSavedAt] = useState<Date | null>(null)
   const [activeTab, setActiveTab] = useState(0)
+  const { recordIssues, issuesForField, runValidation } = useRecordValidation('items', id)
 
   const load = useCallback(async () => {
     if (!id) return
@@ -111,6 +115,7 @@ export default function ItemEditorPage(): React.JSX.Element {
         setRecord(updated)
         setDirty(false)
         setSavedAt(new Date())
+        await runValidation()
       }
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Failed to save item.')
@@ -214,6 +219,8 @@ export default function ItemEditorPage(): React.JSX.Element {
         </Alert>
       )}
 
+      <ValidationBanner issues={recordIssues} />
+
       <Divider sx={{ mb: 0 }} />
       <Tabs value={activeTab} onChange={(_, value: number) => setActiveTab(value)}>
         <Tab label="Details" />
@@ -224,7 +231,7 @@ export default function ItemEditorPage(): React.JSX.Element {
       <TabPanel index={0} value={activeTab}>
         <Stack spacing={3} sx={{ maxWidth: 680 }}>
           <Stack direction="row" spacing={2}>
-            <FormControl fullWidth required>
+            <FormControl fullWidth required error={issuesForField('itemCategoryId').length > 0}>
               <InputLabel id="item-category-label">Category</InputLabel>
               <Select
                 labelId="item-category-label"
@@ -242,7 +249,7 @@ export default function ItemEditorPage(): React.JSX.Element {
                 ))}
               </Select>
             </FormControl>
-            <FormControl fullWidth required>
+            <FormControl fullWidth required error={issuesForField('rarityId').length > 0}>
               <InputLabel id="item-rarity-label">Rarity</InputLabel>
               <Select
                 labelId="item-rarity-label"

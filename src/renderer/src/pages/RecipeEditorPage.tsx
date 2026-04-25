@@ -40,6 +40,9 @@ import type {
   RecipeIngredient,
   RecipeRecord,
 } from '../../../shared/domain-types'
+import ValidationBanner from '../components/ValidationBanner'
+import { useRecordValidation } from '../hooks/useRecordValidation'
+import { fieldValidationProps } from '../hooks/fieldValidationProps'
 
 interface TabPanelProps {
   index: number
@@ -82,6 +85,7 @@ export default function RecipeEditorPage(): React.JSX.Element {
   const [error, setError] = useState<string | null>(null)
   const [savedAt, setSavedAt] = useState<Date | null>(null)
   const [activeTab, setActiveTab] = useState(0)
+  const { recordIssues, issuesForField, runValidation } = useRecordValidation('recipes', id)
 
   const itemById = useMemo(() => new Map(items.map((item) => [item.id, item])), [items])
   const activeItems = useMemo(() => items.filter((item) => !item.deletedAt), [items])
@@ -194,6 +198,7 @@ export default function RecipeEditorPage(): React.JSX.Element {
         setIngredients(normalizedIngredients)
         setDirty(false)
         setSavedAt(new Date())
+        await runValidation()
       }
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Failed to save recipe.')
@@ -270,6 +275,7 @@ export default function RecipeEditorPage(): React.JSX.Element {
       </Stack>
 
       {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>{error}</Alert>}
+      <ValidationBanner issues={recordIssues} />
       {hasDeletedReferences && <Alert severity="warning" sx={{ mb: 2 }}>This recipe references a soft-deleted item. Validation will flag this recipe.</Alert>}
       {hasOutputAsIngredient && <Alert severity="error" sx={{ mb: 2 }}>The output item cannot also be an ingredient.</Alert>}
 
@@ -289,7 +295,7 @@ export default function RecipeEditorPage(): React.JSX.Element {
               getOptionLabel={itemLabel}
               isOptionEqualToValue={(option, value) => option.id === value.id}
               onChange={(_, item) => { setOutputItemId(item?.id ?? ''); markDirty() }}
-              renderInput={(params) => <TextField {...params} label="Output Item" required />}
+              renderInput={(params) => <TextField {...params} label="Output Item" required {...fieldValidationProps(issuesForField('outputItemId'))} />}
               sx={{ flex: 1 }}
             />
             <TextField
@@ -305,14 +311,14 @@ export default function RecipeEditorPage(): React.JSX.Element {
           {outputItem?.deletedAt && <Alert severity="warning">The selected output item is soft-deleted.</Alert>}
 
           <Stack direction="row" spacing={2}>
-            <FormControl fullWidth>
+            <FormControl fullWidth error={issuesForField('craftingStationId').length > 0}>
               <InputLabel id="recipe-station-label">Crafting Station</InputLabel>
               <Select labelId="recipe-station-label" label="Crafting Station" value={craftingStationId} onChange={(e) => { setCraftingStationId(e.target.value); markDirty() }}>
                 <MenuItem value="">None</MenuItem>
                 {stations.map((station) => <MenuItem key={station.id} value={station.id}>{station.displayName}</MenuItem>)}
               </Select>
             </FormControl>
-            <FormControl fullWidth>
+            <FormControl fullWidth error={issuesForField('craftingSpecializationId').length > 0}>
               <InputLabel id="recipe-specialization-label">Specialization</InputLabel>
               <Select labelId="recipe-specialization-label" label="Specialization" value={craftingSpecializationId} onChange={(e) => { setCraftingSpecializationId(e.target.value); markDirty() }}>
                 <MenuItem value="">None</MenuItem>

@@ -25,6 +25,8 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { abilitiesApi } from '../../api/abilities.api'
 import { metaApi } from '../../api/meta.api'
 import type { AbilityRecord, AbilityUsedBy, MetaStat } from '../../../shared/domain-types'
+import ValidationBanner from '../components/ValidationBanner'
+import { useRecordValidation } from '../hooks/useRecordValidation'
 
 // ─── Tab panel ────────────────────────────────────────────────────────────────
 
@@ -67,6 +69,7 @@ export default function AbilityEditorPage(): React.JSX.Element {
   const [activeTab, setActiveTab] = useState(0)
   const [usedBy, setUsedBy] = useState<AbilityUsedBy | null>(null)
   const [usedByLoading, setUsedByLoading] = useState(false)
+  const { recordIssues, runValidation } = useRecordValidation('abilities', id)
 
   const load = useCallback(async () => {
     if (!id) return
@@ -148,6 +151,7 @@ export default function AbilityEditorPage(): React.JSX.Element {
         setRecord(updated)
         setDirty(false)
         setSavedAt(new Date())
+        await runValidation()
       }
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Failed to save ability.')
@@ -245,6 +249,8 @@ export default function AbilityEditorPage(): React.JSX.Element {
           {error}
         </Alert>
       )}
+
+      <ValidationBanner issues={recordIssues} />
 
       <Divider sx={{ mb: 0 }} />
       <Tabs value={activeTab} onChange={(_, v: number) => setActiveTab(v)}>
