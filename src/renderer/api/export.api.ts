@@ -1,11 +1,36 @@
 import { IPC_CHANNELS } from '../../shared/ipc-channels'
 
-// Full types defined in the Export epic
+export interface ExportPresetInfo {
+  id: string
+  name: string
+  description: string
+  format: string
+  builtIn: boolean
+}
+
+export interface ExportScope {
+  mode: 'full' | 'domain' | 'selection'
+  domain?: string
+  recordIds?: string[]
+}
+
+export interface PreviewResult {
+  output: string
+  files?: { filename: string; content: string }[]
+  error?: string
+}
+
+export interface ExecuteResult {
+  success: boolean
+  error?: string
+  path?: string
+}
+
 export const exportApi = {
-  preview: (templateId: string, scope: unknown) =>
-    window.anvil.invoke<string>(IPC_CHANNELS.EXPORT_PREVIEW, templateId, scope),
-  execute: (templateId: string, scope: unknown, outputPath: string) =>
-    window.anvil.invoke<void>(IPC_CHANNELS.EXPORT_EXECUTE, templateId, scope, outputPath),
-  getTemplates: () =>
-    window.anvil.invoke<unknown[]>(IPC_CHANNELS.EXPORT_GET_TEMPLATES),
+  getPresets: () =>
+    window.anvil.invoke<ExportPresetInfo[]>(IPC_CHANNELS.EXPORT_GET_TEMPLATES),
+  preview: (presetId: string, scope: ExportScope) =>
+    window.anvil.invoke<PreviewResult>(IPC_CHANNELS.EXPORT_PREVIEW, presetId, scope),
+  execute: (presetId: string, scope: ExportScope) =>
+    window.anvil.invoke<ExecuteResult>(IPC_CHANNELS.EXPORT_EXECUTE, presetId, scope),
 }
