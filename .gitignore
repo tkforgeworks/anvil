@@ -1,5 +1,6 @@
 archive/
 testing/
+test-project-exports/
 .claude/settings.local.json
 
 # Dependencies
