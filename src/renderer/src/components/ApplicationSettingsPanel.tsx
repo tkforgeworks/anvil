@@ -1,8 +1,13 @@
 import {
+  ContentCopy as CopyIcon,
+  ExpandMore as ExpandIcon,
   FolderOpen as FolderIcon,
   Upload as UploadIcon,
 } from '@mui/icons-material'
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Alert,
   Box,
   Button,
@@ -13,12 +18,130 @@ import {
   RadioGroup,
   Stack,
   TextField,
+  Tooltip,
   Typography,
 } from '@mui/material'
 import { useEffect, useState } from 'react'
 import { settingsApi } from '../../api/settings.api'
 import type { AppSettings } from '../../../shared/settings-types'
 import { useSettingsStore } from '../stores/settings.store'
+
+const SAMPLE_THEME = `{
+  "mode": "dark",
+  "primary": "#bb86fc",
+  "secondary": "#03dac6",
+  "backgroundDefault": "#121212",
+  "backgroundPaper": "#1e1e1e",
+  "textPrimary": "#e0e0e0",
+  "textSecondary": "#a0a0a0",
+  "error": "#cf6679",
+  "warning": "#ffb74d",
+  "info": "#64b5f6",
+  "success": "#81c784",
+  "divider": "#333333"
+}`
+
+const THEME_KEY_DESCRIPTIONS: [string, string][] = [
+  ['mode', '"dark" or "light" — base palette that fills in any keys you omit'],
+  ['primary', 'Main accent color (buttons, links, active indicators)'],
+  ['secondary', 'Secondary accent (less prominent highlights)'],
+  ['backgroundDefault', 'Page background'],
+  ['backgroundPaper', 'Cards, dialogs, and elevated surfaces'],
+  ['textPrimary', 'Main body text'],
+  ['textSecondary', 'Muted / helper text'],
+  ['error', 'Error indicators and destructive actions'],
+  ['warning', 'Warning banners and badges'],
+  ['info', 'Informational highlights'],
+  ['success', 'Success indicators'],
+  ['divider', 'Lines between sections'],
+]
+
+function CustomThemeGuide(): React.JSX.Element {
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = async (): Promise<void> => {
+    await navigator.clipboard.writeText(SAMPLE_THEME)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  return (
+    <Accordion
+      disableGutters
+      elevation={0}
+      sx={{
+        mt: 1.5,
+        bgcolor: 'transparent',
+        '&:before': { display: 'none' },
+        border: 1,
+        borderColor: 'divider',
+        borderRadius: 1,
+      }}
+    >
+      <AccordionSummary expandIcon={<ExpandIcon />} sx={{ minHeight: 36, px: 1.5 }}>
+        <Typography variant="caption" fontWeight={600}>
+          Theme file reference & sample
+        </Typography>
+      </AccordionSummary>
+      <AccordionDetails sx={{ px: 1.5, pt: 0 }}>
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
+          Create a <code>.json</code> file with any combination of the keys below.
+          All color values must be hex format (<code>#RRGGBB</code> or <code>#RRGGBBAA</code>).
+          Any key you omit will use the default from the chosen <strong>mode</strong>.
+        </Typography>
+
+        <Box sx={{ mb: 1.5 }}>
+          {THEME_KEY_DESCRIPTIONS.map(([key, desc]) => (
+            <Stack key={key} direction="row" spacing={1} sx={{ mb: 0.25 }}>
+              <Typography
+                variant="caption"
+                sx={{ fontFamily: 'monospace', fontWeight: 600, minWidth: 140, flexShrink: 0 }}
+              >
+                {key}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {desc}
+              </Typography>
+            </Stack>
+          ))}
+        </Box>
+
+        <Typography variant="caption" fontWeight={600} sx={{ display: 'block', mb: 0.5 }}>
+          Sample theme (Material Dark variant)
+        </Typography>
+        <Box sx={{ position: 'relative' }}>
+          <Box
+            component="pre"
+            sx={{
+              bgcolor: 'background.default',
+              border: 1,
+              borderColor: 'divider',
+              borderRadius: 1,
+              p: 1.5,
+              fontSize: '0.75rem',
+              fontFamily: 'monospace',
+              overflow: 'auto',
+              m: 0,
+            }}
+          >
+            {SAMPLE_THEME}
+          </Box>
+          <Tooltip title={copied ? 'Copied!' : 'Copy to clipboard'}>
+            <Button
+              size="small"
+              variant="outlined"
+              startIcon={<CopyIcon />}
+              onClick={() => void handleCopy()}
+              sx={{ position: 'absolute', top: 8, right: 8, minWidth: 0, px: 1, py: 0.25, fontSize: '0.7rem' }}
+            >
+              {copied ? 'Copied' : 'Copy'}
+            </Button>
+          </Tooltip>
+        </Box>
+      </AccordionDetails>
+    </Accordion>
+  )
+}
 
 export default function ApplicationSettingsPanel(): React.JSX.Element {
   const appSettings = useSettingsStore((s) => s.appSettings)
@@ -194,9 +317,7 @@ export default function ApplicationSettingsPanel(): React.JSX.Element {
                 {themeParseError}
               </Alert>
             )}
-            <Typography variant="caption" color="text.secondary">
-              JSON file with hex color values. Valid keys: mode, primary, secondary, backgroundDefault, backgroundPaper, textPrimary, textSecondary, error, warning, info, success, divider.
-            </Typography>
+            <CustomThemeGuide />
           </Box>
         )}
       </Box>
