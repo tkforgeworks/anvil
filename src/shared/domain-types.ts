@@ -364,3 +364,24 @@ export interface CreateLootTableEntryInput {
   conditionalFlags?: Record<string, unknown>
   sortOrder?: number
 }
+
+// ─── Lifecycle / Bulk Operations ─────────────────────────────────────────────
+
+export type LifecycleDomain = 'classes' | 'abilities' | 'items' | 'recipes' | 'npcs' | 'loot-tables'
+
+export interface BulkOperationInput {
+  domain: LifecycleDomain
+  ids: string[]
+}
+
+export interface DeleteImpactReference {
+  domain: LifecycleDomain
+  field: string
+  recordCount: number
+  description: string
+}
+
+export interface DeleteImpactSummary {
+  recordCount: number
+  references: DeleteImpactReference[]
+}

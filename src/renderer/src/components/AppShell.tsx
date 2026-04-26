@@ -2,11 +2,13 @@ import { Alert, Box, Snackbar } from '@mui/material'
 import { useCallback, useEffect } from 'react'
 import { Outlet } from 'react-router-dom'
 import { projectApi } from '../../api/project.api'
+import { useLifecycleStore } from '../stores/lifecycle.store'
 import { useProjectStore } from '../stores/project.store'
 import TitleBar from './TitleBar'
 import Sidebar from './Sidebar'
 
 export default function AppShell(): React.JSX.Element {
+  const refreshTrashCount = useLifecycleStore((state) => state.refreshTrashCount)
   const activeProject = useProjectStore((state) => state.activeProject)
   const hydrate = useProjectStore((state) => state.hydrate)
   const isRecoveryMode = useProjectStore((state) => state.isRecoveryMode)
@@ -43,6 +45,8 @@ export default function AppShell(): React.JSX.Element {
   useEffect(() => {
     if (!activeProject) return undefined
 
+    void refreshTrashCount()
+
     const intervalId = window.setInterval(() => {
       void projectApi
         .getState()
@@ -50,10 +54,11 @@ export default function AppShell(): React.JSX.Element {
         .catch((cause) => {
           setSaveError(cause instanceof Error ? cause.message : 'Unable to refresh project state.')
         })
+      void refreshTrashCount()
     }, 2000)
 
     return () => window.clearInterval(intervalId)
-  }, [activeProject, hydrate, setSaveError])
+  }, [activeProject, hydrate, refreshTrashCount, setSaveError])
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>

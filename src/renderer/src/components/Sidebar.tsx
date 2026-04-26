@@ -23,6 +23,7 @@ import {
   Settings as SettingsIcon,
 } from '@mui/icons-material'
 import { NavLink } from 'react-router-dom'
+import { useLifecycleStore } from '../stores/lifecycle.store'
 import { useValidationStore } from '../stores/validation.store'
 
 const DRAWER_WIDTH = 220
@@ -93,10 +94,11 @@ function NavListItem({ item }: { item: NavItem }): React.JSX.Element {
 export default function Sidebar(): React.JSX.Element {
   const issueCount = useValidationStore((s) => s.issues.filter((i) => i.severity === 'error' || i.severity === 'warning').length)
   const hasErrors = useValidationStore((s) => s.issues.some((i) => i.severity === 'error'))
+  const trashCount = useLifecycleStore((s) => s.trashCount)
 
   const utilityNav: NavItem[] = [
     { label: 'Validation', to: '/validation', icon: <ValidationIcon fontSize="small" />, badge: issueCount, badgeColor: hasErrors ? 'error.main' : 'warning.main' },
-    { label: 'Recycle Bin', to: '/recycle-bin', icon: <RecycleBinIcon fontSize="small" /> },
+    { label: 'Recycle Bin', to: '/recycle-bin', icon: <RecycleBinIcon fontSize="small" />, badge: trashCount, badgeColor: 'text.secondary' },
     { label: 'Export', to: '/export', icon: <ExportIcon fontSize="small" /> },
     { label: 'Settings', to: '/settings', icon: <SettingsIcon fontSize="small" /> },
   ]

@@ -8,6 +8,7 @@ import {
   Alert,
   Box,
   Button,
+  Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
@@ -31,10 +32,13 @@ import {
 } from '@mui/material'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { lifecycleApi } from '../../api/lifecycle.api'
 import { lootTablesApi } from '../../api/loot-tables.api'
 import { npcsApi } from '../../api/npcs.api'
 import type { LootTableEntry, LootTableRecord, NpcRecord } from '../../../shared/domain-types'
 import { ArchiveToggle, ArchiveTable, type ViewMode } from '../components/ArchiveView'
+import { BulkActionToolbar, BulkDeleteDialog } from '../components/BulkActions'
+import { useMultiSelect } from '../hooks/useMultiSelect'
 
 function slugify(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
@@ -168,7 +172,9 @@ export default function LootTablesPage(): React.JSX.Element {
   const [sortBy, setSortBy] = useState<'name' | 'updated'>('name')
   const [createOpen, setCreateOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<LootTableRecord | null>(null)
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const multiSelect = useMultiSelect()
 
   const assignmentCounts = useMemo(() => {
     const counts = new Map<string, number>()
@@ -204,6 +210,7 @@ export default function LootTablesPage(): React.JSX.Element {
   }, [])
 
   useEffect(() => {
+    multiSelect.clear()
     if (viewMode === 'active') void load()
     else void loadArchived()
   }, [load, loadArchived, viewMode])
@@ -228,6 +235,16 @@ export default function LootTablesPage(): React.JSX.Element {
     setArchivedLootTables((prev) => prev.filter((r) => r.id !== id))
   }
 
+  const handleArchiveBulkRestore = async (ids: string[]): Promise<void> => {
+    await lifecycleApi.bulkRestore('loot-tables', ids)
+    void loadArchived()
+  }
+
+  const handleArchiveBulkHardDelete = async (ids: string[]): Promise<void> => {
+    await lifecycleApi.bulkHardDelete('loot-tables', ids)
+    void loadArchived()
+  }
+
   const handleDuplicate = async (record: LootTableRecord): Promise<void> => {
     setError(null)
     try {
@@ -241,12 +258,26 @@ export default function LootTablesPage(): React.JSX.Element {
     }
   }
 
+  const handleBulkDelete = async (): Promise<void> => {
+    setError(null)
+    try {
+      await lifecycleApi.bulkSoftDelete('loot-tables', [...multiSelect.selected])
+      setBulkDeleteOpen(false)
+      multiSelect.clear()
+      void load()
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Bulk delete failed.')
+    }
+  }
+
   const filtered = lootTables
     .filter((table) => table.displayName.toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => {
       if (sortBy === 'updated') return b.updatedAt.localeCompare(a.updatedAt)
       return a.displayName.localeCompare(b.displayName, undefined, { sensitivity: 'base' })
     })
+
+  const filteredIds = filtered.map((table) => table.id)
 
   return (
     <Box>
@@ -271,6 +302,8 @@ export default function LootTablesPage(): React.JSX.Element {
           onClearError={() => setError(null)}
           onRestore={handleArchiveRestore}
           onHardDelete={handleArchiveHardDelete}
+          onBulkRestore={handleArchiveBulkRestore}
+          onBulkHardDelete={handleArchiveBulkHardDelete}
         />
       ) : (
         <>
@@ -285,6 +318,12 @@ export default function LootTablesPage(): React.JSX.Element {
         </FormControl>
       </Stack>
 
+      <BulkActionToolbar
+        count={multiSelect.count}
+        mode="active"
+        onBulkDelete={() => setBulkDeleteOpen(true)}
+      />
+
       {filtered.length === 0 ? (
         <Typography variant="body2" color="text.secondary">
           {lootTables.length === 0 ? 'No loot tables yet. Click "New Loot Table" to create one.' : 'No loot tables match your search.'}
@@ -293,6 +332,14 @@ export default function LootTablesPage(): React.JSX.Element {
         <Table size="small">
           <TableHead>
             <TableRow>
+              <TableCell padding="checkbox">
+                <Checkbox
+                  size="small"
+                  checked={multiSelect.isAllSelected(filteredIds)}
+                  indeterminate={multiSelect.count > 0 && !multiSelect.isAllSelected(filteredIds)}
+                  onChange={() => multiSelect.toggleAll(filteredIds)}
+                />
+              </TableCell>
               <TableCell>Name</TableCell>
               <TableCell>Export Key</TableCell>
               <TableCell>Entries</TableCell>
@@ -304,6 +351,13 @@ export default function LootTablesPage(): React.JSX.Element {
           <TableBody>
             {filtered.map((table) => (
               <TableRow key={table.id} hover sx={{ cursor: 'pointer' }} onClick={() => void navigate(`/loot-tables/${table.id}`)}>
+                <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}>
+                  <Checkbox
+                    size="small"
+                    checked={multiSelect.isSelected(table.id)}
+                    onChange={() => multiSelect.toggle(table.id)}
+                  />
+                </TableCell>
                 <TableCell><Typography variant="body2" fontWeight={500}>{table.displayName}</Typography></TableCell>
                 <TableCell><Typography variant="body2" color="text.secondary" fontFamily="monospace">{table.exportKey}</Typography></TableCell>
                 <TableCell><Typography variant="body2" color="text.secondary">{entriesByTableId.get(table.id)?.length ?? 0}</Typography></TableCell>
@@ -324,6 +378,14 @@ export default function LootTablesPage(): React.JSX.Element {
 
       <CreateDialog open={createOpen} onClose={() => setCreateOpen(false)} onCreated={handleCreated} />
       <DeleteDialog record={deleteTarget} onClose={() => setDeleteTarget(null)} onDeleted={handleDeleted} />
+
+      <BulkDeleteDialog
+        open={bulkDeleteOpen}
+        domain="loot-tables"
+        ids={[...multiSelect.selected]}
+        onClose={() => setBulkDeleteOpen(false)}
+        onConfirm={() => void handleBulkDelete()}
+      />
     </Box>
   )
 }

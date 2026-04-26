@@ -127,6 +127,14 @@ export const IPC_CHANNELS = {
   // Custom field values (EAV read/write)
   CUSTOM_FIELDS_GET_VALUES: 'custom-fields:get-values',
   CUSTOM_FIELDS_SET_VALUES: 'custom-fields:set-values',
+
+  // Lifecycle / Bulk Operations
+  LIFECYCLE_BULK_SOFT_DELETE: 'lifecycle:bulk-soft-delete',
+  LIFECYCLE_BULK_RESTORE: 'lifecycle:bulk-restore',
+  LIFECYCLE_BULK_HARD_DELETE: 'lifecycle:bulk-hard-delete',
+  LIFECYCLE_EMPTY_TRASH: 'lifecycle:empty-trash',
+  LIFECYCLE_COMPUTE_DELETE_IMPACT: 'lifecycle:compute-delete-impact',
+  LIFECYCLE_COUNT_DELETED: 'lifecycle:count-deleted',
 } as const
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS]

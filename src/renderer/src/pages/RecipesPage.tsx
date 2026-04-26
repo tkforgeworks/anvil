@@ -9,6 +9,7 @@ import {
   Autocomplete,
   Box,
   Button,
+  Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
@@ -33,6 +34,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { itemsApi } from '../../api/items.api'
+import { lifecycleApi } from '../../api/lifecycle.api'
 import { metaApi } from '../../api/meta.api'
 import { recipesApi } from '../../api/recipes.api'
 import type {
@@ -42,6 +44,8 @@ import type {
   RecipeRecord,
 } from '../../../shared/domain-types'
 import { ArchiveToggle, ArchiveTable, type ViewMode } from '../components/ArchiveView'
+import { BulkActionToolbar, BulkDeleteDialog } from '../components/BulkActions'
+import { useMultiSelect } from '../hooks/useMultiSelect'
 
 function slugify(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
@@ -229,7 +233,9 @@ export default function RecipesPage(): React.JSX.Element {
   const [specializationFilter, setSpecializationFilter] = useState('all')
   const [createOpen, setCreateOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<RecipeRecord | null>(null)
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const multiSelect = useMultiSelect()
 
   const itemById = useMemo(() => new Map(items.map((item) => [item.id, item])), [items])
   const stationById = useMemo(() => new Map(stations.map((station) => [station.id, station])), [stations])
@@ -266,6 +272,7 @@ export default function RecipesPage(): React.JSX.Element {
   }, [])
 
   useEffect(() => {
+    multiSelect.clear()
     if (viewMode === 'active') void load()
     else void loadArchived()
   }, [load, loadArchived, viewMode])
@@ -290,6 +297,16 @@ export default function RecipesPage(): React.JSX.Element {
     setArchivedRecipes((prev) => prev.filter((r) => r.id !== id))
   }
 
+  const handleArchiveBulkRestore = async (ids: string[]): Promise<void> => {
+    await lifecycleApi.bulkRestore('recipes', ids)
+    void loadArchived()
+  }
+
+  const handleArchiveBulkHardDelete = async (ids: string[]): Promise<void> => {
+    await lifecycleApi.bulkHardDelete('recipes', ids)
+    void loadArchived()
+  }
+
   const handleDuplicate = async (record: RecipeRecord): Promise<void> => {
     setError(null)
     try {
@@ -300,11 +317,25 @@ export default function RecipesPage(): React.JSX.Element {
     }
   }
 
+  const handleBulkDelete = async (): Promise<void> => {
+    setError(null)
+    try {
+      await lifecycleApi.bulkSoftDelete('recipes', [...multiSelect.selected])
+      setBulkDeleteOpen(false)
+      multiSelect.clear()
+      void load()
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Bulk delete failed.')
+    }
+  }
+
   const filtered = recipes
     .filter((recipe) => recipe.displayName.toLowerCase().includes(search.toLowerCase()))
     .filter((recipe) => stationFilter === 'all' || (recipe.craftingStationId ?? '') === stationFilter)
     .filter((recipe) => specializationFilter === 'all' || (recipe.craftingSpecializationId ?? '') === specializationFilter)
     .sort((a, b) => a.displayName.localeCompare(b.displayName, undefined, { sensitivity: 'base' }))
+
+  const filteredIds = filtered.map((recipe) => recipe.id)
 
   return (
     <Box>
@@ -329,6 +360,8 @@ export default function RecipesPage(): React.JSX.Element {
           onClearError={() => setError(null)}
           onRestore={handleArchiveRestore}
           onHardDelete={handleArchiveHardDelete}
+          onBulkRestore={handleArchiveBulkRestore}
+          onBulkHardDelete={handleArchiveBulkHardDelete}
         />
       ) : (
         <>
@@ -352,6 +385,12 @@ export default function RecipesPage(): React.JSX.Element {
         </FormControl>
       </Stack>
 
+      <BulkActionToolbar
+        count={multiSelect.count}
+        mode="active"
+        onBulkDelete={() => setBulkDeleteOpen(true)}
+      />
+
       {filtered.length === 0 ? (
         <Typography variant="body2" color="text.secondary">
           {recipes.length === 0 ? 'No recipes yet. Click "New Recipe" to create one.' : 'No recipes match your filters.'}
@@ -360,6 +399,14 @@ export default function RecipesPage(): React.JSX.Element {
         <Table size="small">
           <TableHead>
             <TableRow>
+              <TableCell padding="checkbox">
+                <Checkbox
+                  size="small"
+                  checked={multiSelect.isAllSelected(filteredIds)}
+                  indeterminate={multiSelect.count > 0 && !multiSelect.isAllSelected(filteredIds)}
+                  onChange={() => multiSelect.toggleAll(filteredIds)}
+                />
+              </TableCell>
               <TableCell>Name</TableCell>
               <TableCell>Export Key</TableCell>
               <TableCell>Output</TableCell>
@@ -371,6 +418,13 @@ export default function RecipesPage(): React.JSX.Element {
           <TableBody>
             {filtered.map((recipe) => (
               <TableRow key={recipe.id} hover sx={{ cursor: 'pointer' }} onClick={() => void navigate(`/recipes/${recipe.id}`)}>
+                <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}>
+                  <Checkbox
+                    size="small"
+                    checked={multiSelect.isSelected(recipe.id)}
+                    onChange={() => multiSelect.toggle(recipe.id)}
+                  />
+                </TableCell>
                 <TableCell><Typography variant="body2" fontWeight={500}>{recipe.displayName}</Typography></TableCell>
                 <TableCell><Typography variant="body2" color="text.secondary" fontFamily="monospace">{recipe.exportKey}</Typography></TableCell>
                 <TableCell><Typography variant="body2" color="text.secondary">{itemById.get(recipe.outputItemId)?.displayName ?? recipe.outputItemId} x{recipe.outputQuantity}</Typography></TableCell>
@@ -391,6 +445,14 @@ export default function RecipesPage(): React.JSX.Element {
 
       <CreateDialog open={createOpen} items={items} stations={stations} specializations={specializations} onClose={() => setCreateOpen(false)} onCreated={handleCreated} />
       <DeleteDialog record={deleteTarget} onClose={() => setDeleteTarget(null)} onDeleted={handleDeleted} />
+
+      <BulkDeleteDialog
+        open={bulkDeleteOpen}
+        domain="recipes"
+        ids={[...multiSelect.selected]}
+        onClose={() => setBulkDeleteOpen(false)}
+        onConfirm={() => void handleBulkDelete()}
+      />
     </Box>
   )
 }

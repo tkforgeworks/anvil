@@ -8,6 +8,7 @@ import {
   Alert,
   Box,
   Button,
+  Checkbox,
   Chip,
   Dialog,
   DialogActions,
@@ -33,9 +34,12 @@ import {
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { itemsApi } from '../../api/items.api'
+import { lifecycleApi } from '../../api/lifecycle.api'
 import { metaApi } from '../../api/meta.api'
 import type { ItemRecord, MetaItemCategory, MetaRarity } from '../../../shared/domain-types'
 import { ArchiveToggle, ArchiveTable, type ViewMode } from '../components/ArchiveView'
+import { BulkActionToolbar, BulkDeleteDialog } from '../components/BulkActions'
+import { useMultiSelect } from '../hooks/useMultiSelect'
 
 function slugify(value: string): string {
   return value
@@ -269,7 +273,9 @@ export default function ItemsPage(): React.JSX.Element {
   const [sortKey, setSortKey] = useState<SortKey>('name')
   const [createOpen, setCreateOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<ItemRecord | null>(null)
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const multiSelect = useMultiSelect()
 
   const categoryById = useMemo(
     () => new Map(categories.map((category) => [category.id, category])),
@@ -306,6 +312,7 @@ export default function ItemsPage(): React.JSX.Element {
   }, [])
 
   useEffect(() => {
+    multiSelect.clear()
     if (viewMode === 'active') void load()
     else void loadArchived()
   }, [load, loadArchived, viewMode])
@@ -330,6 +337,16 @@ export default function ItemsPage(): React.JSX.Element {
     setArchivedItems((prev) => prev.filter((r) => r.id !== id))
   }
 
+  const handleArchiveBulkRestore = async (ids: string[]): Promise<void> => {
+    await lifecycleApi.bulkRestore('items', ids)
+    void loadArchived()
+  }
+
+  const handleArchiveBulkHardDelete = async (ids: string[]): Promise<void> => {
+    await lifecycleApi.bulkHardDelete('items', ids)
+    void loadArchived()
+  }
+
   const handleDuplicate = async (record: ItemRecord): Promise<void> => {
     setError(null)
     try {
@@ -337,6 +354,18 @@ export default function ItemsPage(): React.JSX.Element {
       if (copy) setItems((prev) => [...prev, copy])
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Failed to duplicate item.')
+    }
+  }
+
+  const handleBulkDelete = async (): Promise<void> => {
+    setError(null)
+    try {
+      await lifecycleApi.bulkSoftDelete('items', [...multiSelect.selected])
+      setBulkDeleteOpen(false)
+      multiSelect.clear()
+      void load()
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Bulk delete failed.')
     }
   }
 
@@ -348,6 +377,8 @@ export default function ItemsPage(): React.JSX.Element {
       if (sortKey === 'updated') return b.updatedAt.localeCompare(a.updatedAt)
       return a.displayName.localeCompare(b.displayName, undefined, { sensitivity: 'base' })
     })
+
+  const filteredIds = filtered.map((item) => item.id)
 
   return (
     <Box>
@@ -378,6 +409,8 @@ export default function ItemsPage(): React.JSX.Element {
           onClearError={() => setError(null)}
           onRestore={handleArchiveRestore}
           onHardDelete={handleArchiveHardDelete}
+          onBulkRestore={handleArchiveBulkRestore}
+          onBulkHardDelete={handleArchiveBulkHardDelete}
         />
       ) : (
         <>
@@ -435,6 +468,12 @@ export default function ItemsPage(): React.JSX.Element {
         </FormControl>
       </Stack>
 
+      <BulkActionToolbar
+        count={multiSelect.count}
+        mode="active"
+        onBulkDelete={() => setBulkDeleteOpen(true)}
+      />
+
       {filtered.length === 0 ? (
         <Typography variant="body2" color="text.secondary">
           {items.length === 0
@@ -445,6 +484,14 @@ export default function ItemsPage(): React.JSX.Element {
         <Table size="small">
           <TableHead>
             <TableRow>
+              <TableCell padding="checkbox">
+                <Checkbox
+                  size="small"
+                  checked={multiSelect.isAllSelected(filteredIds)}
+                  indeterminate={multiSelect.count > 0 && !multiSelect.isAllSelected(filteredIds)}
+                  onChange={() => multiSelect.toggleAll(filteredIds)}
+                />
+              </TableCell>
               <TableCell>Name</TableCell>
               <TableCell>Export Key</TableCell>
               <TableCell>Category</TableCell>
@@ -464,6 +511,13 @@ export default function ItemsPage(): React.JSX.Element {
                   sx={{ cursor: 'pointer' }}
                   onClick={() => void navigate(`/items/${item.id}`)}
                 >
+                  <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}>
+                    <Checkbox
+                      size="small"
+                      checked={multiSelect.isSelected(item.id)}
+                      onChange={() => multiSelect.toggle(item.id)}
+                    />
+                  </TableCell>
                   <TableCell>
                     <Typography variant="body2" fontWeight={500}>
                       {item.displayName}
@@ -545,6 +599,14 @@ export default function ItemsPage(): React.JSX.Element {
         record={deleteTarget}
         onClose={() => setDeleteTarget(null)}
         onDeleted={handleDeleted}
+      />
+
+      <BulkDeleteDialog
+        open={bulkDeleteOpen}
+        domain="items"
+        ids={[...multiSelect.selected]}
+        onClose={() => setBulkDeleteOpen(false)}
+        onConfirm={() => void handleBulkDelete()}
       />
     </Box>
   )

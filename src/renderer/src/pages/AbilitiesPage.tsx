@@ -8,6 +8,7 @@ import {
   Alert,
   Box,
   Button,
+  Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
@@ -32,8 +33,11 @@ import {
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { abilitiesApi } from '../../api/abilities.api'
+import { lifecycleApi } from '../../api/lifecycle.api'
 import type { AbilityRecord } from '../../../shared/domain-types'
 import { ArchiveToggle, ArchiveTable, type ViewMode } from '../components/ArchiveView'
+import { BulkActionToolbar, BulkDeleteDialog } from '../components/BulkActions'
+import { useMultiSelect } from '../hooks/useMultiSelect'
 
 function slugify(value: string): string {
   return value
@@ -209,7 +213,9 @@ export default function AbilitiesPage(): React.JSX.Element {
   const [sortKey, setSortKey] = useState<SortKey>('name')
   const [createOpen, setCreateOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<AbilityRecord | null>(null)
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const multiSelect = useMultiSelect()
 
   const load = useCallback(async () => {
     try {
@@ -230,6 +236,7 @@ export default function AbilitiesPage(): React.JSX.Element {
   }, [])
 
   useEffect(() => {
+    multiSelect.clear()
     if (viewMode === 'active') void load()
     else void loadArchived()
   }, [load, loadArchived, viewMode])
@@ -254,6 +261,16 @@ export default function AbilitiesPage(): React.JSX.Element {
     setArchivedAbilitys((prev) => prev.filter((r) => r.id !== id))
   }
 
+  const handleArchiveBulkRestore = async (ids: string[]): Promise<void> => {
+    await lifecycleApi.bulkRestore('abilities', ids)
+    void loadArchived()
+  }
+
+  const handleArchiveBulkHardDelete = async (ids: string[]): Promise<void> => {
+    await lifecycleApi.bulkHardDelete('abilities', ids)
+    void loadArchived()
+  }
+
   const handleDuplicate = async (record: AbilityRecord): Promise<void> => {
     setError(null)
     try {
@@ -264,12 +281,26 @@ export default function AbilitiesPage(): React.JSX.Element {
     }
   }
 
+  const handleBulkDelete = async (): Promise<void> => {
+    setError(null)
+    try {
+      await lifecycleApi.bulkSoftDelete('abilities', [...multiSelect.selected])
+      setBulkDeleteOpen(false)
+      multiSelect.clear()
+      void load()
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Bulk delete failed.')
+    }
+  }
+
   const filtered = abilities
     .filter((a) => a.displayName.toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => {
       if (sortKey === 'updated') return b.updatedAt.localeCompare(a.updatedAt)
       return a.displayName.localeCompare(b.displayName, undefined, { sensitivity: 'base' })
     })
+
+  const filteredIds = filtered.map((a) => a.id)
 
   return (
     <Box>
@@ -301,6 +332,8 @@ export default function AbilitiesPage(): React.JSX.Element {
           onClearError={() => setError(null)}
           onRestore={handleArchiveRestore}
           onHardDelete={handleArchiveHardDelete}
+          onBulkRestore={handleArchiveBulkRestore}
+          onBulkHardDelete={handleArchiveBulkHardDelete}
         />
       ) : (
         <>
@@ -327,6 +360,12 @@ export default function AbilitiesPage(): React.JSX.Element {
             </FormControl>
           </Stack>
 
+          <BulkActionToolbar
+            count={multiSelect.count}
+            mode="active"
+            onBulkDelete={() => setBulkDeleteOpen(true)}
+          />
+
           {/* List */}
           {filtered.length === 0 ? (
             <Typography variant="body2" color="text.secondary">
@@ -338,6 +377,14 @@ export default function AbilitiesPage(): React.JSX.Element {
             <Table size="small">
               <TableHead>
                 <TableRow>
+                  <TableCell padding="checkbox">
+                    <Checkbox
+                      size="small"
+                      checked={multiSelect.isAllSelected(filteredIds)}
+                      indeterminate={multiSelect.count > 0 && !multiSelect.isAllSelected(filteredIds)}
+                      onChange={() => multiSelect.toggleAll(filteredIds)}
+                    />
+                  </TableCell>
                   <TableCell>Name</TableCell>
                   <TableCell>Export Key</TableCell>
                   <TableCell>Type</TableCell>
@@ -353,6 +400,13 @@ export default function AbilitiesPage(): React.JSX.Element {
                     sx={{ cursor: 'pointer' }}
                     onClick={() => void navigate(`/abilities/${ability.id}`)}
                   >
+                    <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}>
+                      <Checkbox
+                        size="small"
+                        checked={multiSelect.isSelected(ability.id)}
+                        onChange={() => multiSelect.toggle(ability.id)}
+                      />
+                    </TableCell>
                     <TableCell>
                       <Typography variant="body2" fontWeight={500}>
                         {ability.displayName}
@@ -424,6 +478,14 @@ export default function AbilitiesPage(): React.JSX.Element {
         record={deleteTarget}
         onClose={() => setDeleteTarget(null)}
         onDeleted={handleDeleted}
+      />
+
+      <BulkDeleteDialog
+        open={bulkDeleteOpen}
+        domain="abilities"
+        ids={[...multiSelect.selected]}
+        onClose={() => setBulkDeleteOpen(false)}
+        onConfirm={() => void handleBulkDelete()}
       />
     </Box>
   )

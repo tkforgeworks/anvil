@@ -8,6 +8,7 @@ import {
   Alert,
   Box,
   Button,
+  Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
@@ -31,10 +32,13 @@ import {
 } from '@mui/material'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { lifecycleApi } from '../../api/lifecycle.api'
 import { metaApi } from '../../api/meta.api'
 import { npcsApi } from '../../api/npcs.api'
 import type { MetaNpcType, NpcRecord } from '../../../shared/domain-types'
 import { ArchiveToggle, ArchiveTable, type ViewMode } from '../components/ArchiveView'
+import { BulkActionToolbar, BulkDeleteDialog } from '../components/BulkActions'
+import { useMultiSelect } from '../hooks/useMultiSelect'
 
 function slugify(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
@@ -179,7 +183,9 @@ export default function NpcsPage(): React.JSX.Element {
   const [sortBy, setSortBy] = useState<'name' | 'updated'>('name')
   const [createOpen, setCreateOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<NpcRecord | null>(null)
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const multiSelect = useMultiSelect()
 
   const typeById = useMemo(() => new Map(npcTypes.map((type) => [type.id, type])), [npcTypes])
 
@@ -207,6 +213,7 @@ export default function NpcsPage(): React.JSX.Element {
   }, [])
 
   useEffect(() => {
+    multiSelect.clear()
     if (viewMode === 'active') void load()
     else void loadArchived()
   }, [load, loadArchived, viewMode])
@@ -231,6 +238,16 @@ export default function NpcsPage(): React.JSX.Element {
     setArchivedNPCs((prev) => prev.filter((r) => r.id !== id))
   }
 
+  const handleArchiveBulkRestore = async (ids: string[]): Promise<void> => {
+    await lifecycleApi.bulkRestore('npcs', ids)
+    void loadArchived()
+  }
+
+  const handleArchiveBulkHardDelete = async (ids: string[]): Promise<void> => {
+    await lifecycleApi.bulkHardDelete('npcs', ids)
+    void loadArchived()
+  }
+
   const handleDuplicate = async (record: NpcRecord): Promise<void> => {
     setError(null)
     try {
@@ -241,6 +258,18 @@ export default function NpcsPage(): React.JSX.Element {
     }
   }
 
+  const handleBulkDelete = async (): Promise<void> => {
+    setError(null)
+    try {
+      await lifecycleApi.bulkSoftDelete('npcs', [...multiSelect.selected])
+      setBulkDeleteOpen(false)
+      multiSelect.clear()
+      void load()
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Bulk delete failed.')
+    }
+  }
+
   const filtered = npcs
     .filter((npc) => npc.displayName.toLowerCase().includes(search.toLowerCase()))
     .filter((npc) => typeFilter === 'all' || npc.npcTypeId === typeFilter)
@@ -248,6 +277,8 @@ export default function NpcsPage(): React.JSX.Element {
       if (sortBy === 'updated') return b.updatedAt.localeCompare(a.updatedAt)
       return a.displayName.localeCompare(b.displayName, undefined, { sensitivity: 'base' })
     })
+
+  const filteredIds = filtered.map((npc) => npc.id)
 
   return (
     <Box>
@@ -272,6 +303,8 @@ export default function NpcsPage(): React.JSX.Element {
           onClearError={() => setError(null)}
           onRestore={handleArchiveRestore}
           onHardDelete={handleArchiveHardDelete}
+          onBulkRestore={handleArchiveBulkRestore}
+          onBulkHardDelete={handleArchiveBulkHardDelete}
         />
       ) : (
         <>
@@ -293,6 +326,12 @@ export default function NpcsPage(): React.JSX.Element {
         </FormControl>
       </Stack>
 
+      <BulkActionToolbar
+        count={multiSelect.count}
+        mode="active"
+        onBulkDelete={() => setBulkDeleteOpen(true)}
+      />
+
       {filtered.length === 0 ? (
         <Typography variant="body2" color="text.secondary">
           {npcs.length === 0 ? 'No NPCs yet. Click "New NPC" to create one.' : 'No NPCs match your filters.'}
@@ -301,6 +340,14 @@ export default function NpcsPage(): React.JSX.Element {
         <Table size="small">
           <TableHead>
             <TableRow>
+              <TableCell padding="checkbox">
+                <Checkbox
+                  size="small"
+                  checked={multiSelect.isAllSelected(filteredIds)}
+                  indeterminate={multiSelect.count > 0 && !multiSelect.isAllSelected(filteredIds)}
+                  onChange={() => multiSelect.toggleAll(filteredIds)}
+                />
+              </TableCell>
               <TableCell>Name</TableCell>
               <TableCell>Export Key</TableCell>
               <TableCell>NPC Type</TableCell>
@@ -311,6 +358,13 @@ export default function NpcsPage(): React.JSX.Element {
           <TableBody>
             {filtered.map((npc) => (
               <TableRow key={npc.id} hover sx={{ cursor: 'pointer' }} onClick={() => void navigate(`/npcs/${npc.id}`)}>
+                <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}>
+                  <Checkbox
+                    size="small"
+                    checked={multiSelect.isSelected(npc.id)}
+                    onChange={() => multiSelect.toggle(npc.id)}
+                  />
+                </TableCell>
                 <TableCell><Typography variant="body2" fontWeight={500}>{npc.displayName}</Typography></TableCell>
                 <TableCell><Typography variant="body2" color="text.secondary" fontFamily="monospace">{npc.exportKey}</Typography></TableCell>
                 <TableCell><Typography variant="body2" color="text.secondary">{typeById.get(npc.npcTypeId)?.displayName ?? npc.npcTypeId}</Typography></TableCell>
@@ -330,6 +384,14 @@ export default function NpcsPage(): React.JSX.Element {
 
       <CreateDialog open={createOpen} npcTypes={npcTypes} onClose={() => setCreateOpen(false)} onCreated={handleCreated} />
       <DeleteDialog record={deleteTarget} onClose={() => setDeleteTarget(null)} onDeleted={handleDeleted} />
+
+      <BulkDeleteDialog
+        open={bulkDeleteOpen}
+        domain="npcs"
+        ids={[...multiSelect.selected]}
+        onClose={() => setBulkDeleteOpen(false)}
+        onConfirm={() => void handleBulkDelete()}
+      />
     </Box>
   )
 }

@@ -8,6 +8,7 @@ import {
   Alert,
   Box,
   Button,
+  Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
@@ -32,8 +33,11 @@ import {
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { classesApi } from '../../api/classes.api'
+import { lifecycleApi } from '../../api/lifecycle.api'
 import type { ClassRecord } from '../../../shared/domain-types'
 import { ArchiveToggle, ArchiveTable, type ViewMode } from '../components/ArchiveView'
+import { BulkActionToolbar, BulkDeleteDialog } from '../components/BulkActions'
+import { useMultiSelect } from '../hooks/useMultiSelect'
 
 function slugify(value: string): string {
   return value
@@ -42,7 +46,7 @@ function slugify(value: string): string {
     .replace(/^-|-$/g, '')
 }
 
-// ─── Create dialog ────────────────────────────────────────────────────────────
+// ─── Create dialog ────────────────────��───────────────────────────────────────
 
 interface CreateDialogProps {
   open: boolean
@@ -196,7 +200,7 @@ function DeleteDialog({ record, onClose, onDeleted }: DeleteDialogProps): React.
   )
 }
 
-// ─── Classes page ─────────────────────────────────────────────────────────────
+// ─── Classes page ─────────���─────────────────────────────���─────────────────────
 
 type SortKey = 'name' | 'updated'
 
@@ -209,7 +213,9 @@ export default function ClassesPage(): React.JSX.Element {
   const [sortKey, setSortKey] = useState<SortKey>('name')
   const [createOpen, setCreateOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<ClassRecord | null>(null)
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const multiSelect = useMultiSelect()
 
   const load = useCallback(async () => {
     try {
@@ -230,6 +236,7 @@ export default function ClassesPage(): React.JSX.Element {
   }, [])
 
   useEffect(() => {
+    multiSelect.clear()
     if (viewMode === 'active') void load()
     else void loadArchived()
   }, [load, loadArchived, viewMode])
@@ -254,6 +261,16 @@ export default function ClassesPage(): React.JSX.Element {
     setArchivedClasses((prev) => prev.filter((c) => c.id !== id))
   }
 
+  const handleArchiveBulkRestore = async (ids: string[]): Promise<void> => {
+    await lifecycleApi.bulkRestore('classes', ids)
+    void loadArchived()
+  }
+
+  const handleArchiveBulkHardDelete = async (ids: string[]): Promise<void> => {
+    await lifecycleApi.bulkHardDelete('classes', ids)
+    void loadArchived()
+  }
+
   const handleDuplicate = async (record: ClassRecord): Promise<void> => {
     setError(null)
     try {
@@ -264,12 +281,26 @@ export default function ClassesPage(): React.JSX.Element {
     }
   }
 
+  const handleBulkDelete = async (): Promise<void> => {
+    setError(null)
+    try {
+      await lifecycleApi.bulkSoftDelete('classes', [...multiSelect.selected])
+      setBulkDeleteOpen(false)
+      multiSelect.clear()
+      void load()
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Bulk delete failed.')
+    }
+  }
+
   const filtered = classes
     .filter((c) => c.displayName.toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => {
       if (sortKey === 'updated') return b.updatedAt.localeCompare(a.updatedAt)
       return a.displayName.localeCompare(b.displayName, undefined, { sensitivity: 'base' })
     })
+
+  const filteredIds = filtered.map((c) => c.id)
 
   return (
     <Box>
@@ -301,6 +332,8 @@ export default function ClassesPage(): React.JSX.Element {
           onClearError={() => setError(null)}
           onRestore={handleArchiveRestore}
           onHardDelete={handleArchiveHardDelete}
+          onBulkRestore={handleArchiveBulkRestore}
+          onBulkHardDelete={handleArchiveBulkHardDelete}
         />
       ) : (
         <>
@@ -327,6 +360,12 @@ export default function ClassesPage(): React.JSX.Element {
             </FormControl>
           </Stack>
 
+          <BulkActionToolbar
+            count={multiSelect.count}
+            mode="active"
+            onBulkDelete={() => setBulkDeleteOpen(true)}
+          />
+
           {/* List */}
           {filtered.length === 0 ? (
             <Typography variant="body2" color="text.secondary">
@@ -338,6 +377,14 @@ export default function ClassesPage(): React.JSX.Element {
             <Table size="small">
               <TableHead>
                 <TableRow>
+                  <TableCell padding="checkbox">
+                    <Checkbox
+                      size="small"
+                      checked={multiSelect.isAllSelected(filteredIds)}
+                      indeterminate={multiSelect.count > 0 && !multiSelect.isAllSelected(filteredIds)}
+                      onChange={() => multiSelect.toggleAll(filteredIds)}
+                    />
+                  </TableCell>
                   <TableCell>Name</TableCell>
                   <TableCell>Export Key</TableCell>
                   <TableCell>Description</TableCell>
@@ -352,6 +399,13 @@ export default function ClassesPage(): React.JSX.Element {
                     sx={{ cursor: 'pointer' }}
                     onClick={() => void navigate(`/classes/${cls.id}`)}
                   >
+                    <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}>
+                      <Checkbox
+                        size="small"
+                        checked={multiSelect.isSelected(cls.id)}
+                        onChange={() => multiSelect.toggle(cls.id)}
+                      />
+                    </TableCell>
                     <TableCell>
                       <Typography variant="body2" fontWeight={500}>
                         {cls.displayName}
@@ -415,6 +469,14 @@ export default function ClassesPage(): React.JSX.Element {
         record={deleteTarget}
         onClose={() => setDeleteTarget(null)}
         onDeleted={handleDeleted}
+      />
+
+      <BulkDeleteDialog
+        open={bulkDeleteOpen}
+        domain="classes"
+        ids={[...multiSelect.selected]}
+        onClose={() => setBulkDeleteOpen(false)}
+        onConfirm={() => void handleBulkDelete()}
       />
     </Box>
   )

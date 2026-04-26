@@ -5,6 +5,7 @@ import {
 import {
   Alert,
   Button,
+  Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
@@ -24,6 +25,8 @@ import {
 } from '@mui/material'
 import { useState } from 'react'
 import type { BaseRecord } from '../../../shared/domain-types'
+import { useMultiSelect } from '../hooks/useMultiSelect'
+import { BulkActionToolbar, BulkHardDeleteDialog } from './BulkActions'
 
 export type ViewMode = 'active' | 'archived'
 
@@ -109,6 +112,8 @@ interface ArchiveTableProps<T extends BaseRecord> {
   onClearError?: () => void
   onRestore: (id: string) => Promise<void>
   onHardDelete: (id: string) => Promise<void>
+  onBulkRestore?: (ids: string[]) => Promise<void>
+  onBulkHardDelete?: (ids: string[]) => Promise<void>
 }
 
 export function ArchiveTable<T extends BaseRecord>({
@@ -119,14 +124,19 @@ export function ArchiveTable<T extends BaseRecord>({
   onClearError,
   onRestore,
   onHardDelete,
+  onBulkRestore,
+  onBulkHardDelete,
 }: ArchiveTableProps<T>): React.JSX.Element {
   const [deleteTarget, setDeleteTarget] = useState<T | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
+  const [bulkHardDeleteOpen, setBulkHardDeleteOpen] = useState(false)
+  const multiSelect = useMultiSelect()
 
   const handleRestore = async (id: string): Promise<void> => {
     setActionError(null)
     try {
       await onRestore(id)
+      multiSelect.clear()
     } catch (cause) {
       setActionError(cause instanceof Error ? cause.message : 'Restore failed.')
     }
@@ -137,12 +147,37 @@ export function ArchiveTable<T extends BaseRecord>({
     try {
       await onHardDelete(id)
       setDeleteTarget(null)
+      multiSelect.clear()
     } catch (cause) {
       setActionError(cause instanceof Error ? cause.message : 'Delete failed.')
     }
   }
 
+  const handleBulkRestore = async (): Promise<void> => {
+    if (!onBulkRestore) return
+    setActionError(null)
+    try {
+      await onBulkRestore([...multiSelect.selected])
+      multiSelect.clear()
+    } catch (cause) {
+      setActionError(cause instanceof Error ? cause.message : 'Bulk restore failed.')
+    }
+  }
+
+  const handleBulkHardDelete = async (): Promise<void> => {
+    if (!onBulkHardDelete) return
+    setActionError(null)
+    try {
+      await onBulkHardDelete([...multiSelect.selected])
+      setBulkHardDeleteOpen(false)
+      multiSelect.clear()
+    } catch (cause) {
+      setActionError(cause instanceof Error ? cause.message : 'Bulk delete failed.')
+    }
+  }
+
   const displayError = error ?? actionError
+  const allIds = records.map((r) => r.id)
 
   return (
     <>
@@ -152,6 +187,13 @@ export function ArchiveTable<T extends BaseRecord>({
         </Alert>
       )}
 
+      <BulkActionToolbar
+        count={multiSelect.count}
+        mode="archived"
+        onBulkRestore={() => void handleBulkRestore()}
+        onBulkHardDelete={() => setBulkHardDeleteOpen(true)}
+      />
+
       {records.length === 0 ? (
         <Typography variant="body2" color="text.secondary">
           {emptyMessage ?? 'No archived records.'}
@@ -160,6 +202,14 @@ export function ArchiveTable<T extends BaseRecord>({
         <Table size="small">
           <TableHead>
             <TableRow>
+              <TableCell padding="checkbox">
+                <Checkbox
+                  size="small"
+                  checked={multiSelect.isAllSelected(allIds)}
+                  indeterminate={multiSelect.count > 0 && !multiSelect.isAllSelected(allIds)}
+                  onChange={() => multiSelect.toggleAll(allIds)}
+                />
+              </TableCell>
               <TableCell>Name</TableCell>
               <TableCell>Export Key</TableCell>
               <TableCell>Deleted At</TableCell>
@@ -169,6 +219,13 @@ export function ArchiveTable<T extends BaseRecord>({
           <TableBody>
             {records.map((record) => (
               <TableRow key={record.id}>
+                <TableCell padding="checkbox">
+                  <Checkbox
+                    size="small"
+                    checked={multiSelect.isSelected(record.id)}
+                    onChange={() => multiSelect.toggle(record.id)}
+                  />
+                </TableCell>
                 <TableCell>
                   <Typography variant="body2" fontWeight={500} color="text.secondary">
                     {record.displayName}
@@ -209,6 +266,13 @@ export function ArchiveTable<T extends BaseRecord>({
         domainLabel={domainLabel}
         onClose={() => setDeleteTarget(null)}
         onConfirm={(id) => void handlePermanentDelete(id)}
+      />
+
+      <BulkHardDeleteDialog
+        open={bulkHardDeleteOpen}
+        count={multiSelect.count}
+        onClose={() => setBulkHardDeleteOpen(false)}
+        onConfirm={() => void handleBulkHardDelete()}
       />
     </>
   )
