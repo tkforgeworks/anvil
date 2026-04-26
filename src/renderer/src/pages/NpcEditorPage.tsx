@@ -53,9 +53,16 @@ interface FormSnapshot {
   lootTableId: string | null
 }
 
-export default function NpcEditorPage(): React.JSX.Element {
-  const { id } = useParams<{ id: string }>()
+interface NpcEditorPageProps {
+  recordId?: string
+  onClose?: () => void
+}
+
+export default function NpcEditorPage({ recordId, onClose }: NpcEditorPageProps = {}): React.JSX.Element {
+  const { id: paramId } = useParams<{ id: string }>()
+  const id = recordId ?? paramId
   const navigate = useNavigate()
+  const goBack = onClose ?? (() => void navigate('/npcs'))
 
   const [record, setRecord] = useState<NpcRecord | null>(null)
   const [npcTypes, setNpcTypes] = useState<MetaNpcType[]>([])
@@ -282,7 +289,7 @@ export default function NpcEditorPage(): React.JSX.Element {
     return (
       <Box sx={{ p: 4 }}>
         <Alert severity="error">{error ?? 'NPC not found.'}</Alert>
-        <Button sx={{ mt: 2 }} onClick={() => void navigate('/npcs')}>
+        <Button sx={{ mt: 2 }} onClick={goBack}>
           Back to NPCs
         </Button>
       </Box>
@@ -297,7 +304,7 @@ export default function NpcEditorPage(): React.JSX.Element {
     <Box>
       <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
         <Tooltip title="Back to NPCs">
-          <IconButton size="small" onClick={() => void navigate('/npcs')}>
+          <IconButton size="small" onClick={goBack}>
             <BackIcon fontSize="small" />
           </IconButton>
         </Tooltip>

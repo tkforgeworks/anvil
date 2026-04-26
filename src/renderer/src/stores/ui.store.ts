@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-export type AppTheme = 'dark' | 'light'
+export type AppTheme = 'dark' | 'light' | 'custom'
 export type EditingMode = 'modal' | 'full-page'
 
 interface UiState {

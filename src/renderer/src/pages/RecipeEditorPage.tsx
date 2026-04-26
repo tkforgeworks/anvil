@@ -77,9 +77,16 @@ function itemLabel(item: ItemRecord | null): string {
   return item.deletedAt ? `${item.displayName} (deleted)` : item.displayName
 }
 
-export default function RecipeEditorPage(): React.JSX.Element {
-  const { id } = useParams<{ id: string }>()
+interface RecipeEditorPageProps {
+  recordId?: string
+  onClose?: () => void
+}
+
+export default function RecipeEditorPage({ recordId, onClose }: RecipeEditorPageProps = {}): React.JSX.Element {
+  const { id: paramId } = useParams<{ id: string }>()
+  const id = recordId ?? paramId
   const navigate = useNavigate()
+  const goBack = onClose ?? (() => void navigate('/recipes'))
 
   const [record, setRecord] = useState<RecipeRecord | null>(null)
   const [items, setItems] = useState<ItemRecord[]>([])
@@ -270,7 +277,7 @@ export default function RecipeEditorPage(): React.JSX.Element {
     return (
       <Box sx={{ p: 4 }}>
         <Alert severity="error">{error ?? 'Recipe not found.'}</Alert>
-        <Button sx={{ mt: 2 }} onClick={() => void navigate('/recipes')}>
+        <Button sx={{ mt: 2 }} onClick={goBack}>
           Back to Recipes
         </Button>
       </Box>
@@ -287,7 +294,7 @@ export default function RecipeEditorPage(): React.JSX.Element {
     <Box>
       <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
         <Tooltip title="Back to Recipes">
-          <IconButton size="small" onClick={() => void navigate('/recipes')}>
+          <IconButton size="small" onClick={goBack}>
             <BackIcon fontSize="small" />
           </IconButton>
         </Tooltip>

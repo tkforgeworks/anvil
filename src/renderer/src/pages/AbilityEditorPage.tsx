@@ -58,9 +58,16 @@ interface FormSnapshot {
   statModifiers: Record<string, string>
 }
 
-export default function AbilityEditorPage(): React.JSX.Element {
-  const { id } = useParams<{ id: string }>()
+interface AbilityEditorPageProps {
+  recordId?: string
+  onClose?: () => void
+}
+
+export default function AbilityEditorPage({ recordId, onClose }: AbilityEditorPageProps = {}): React.JSX.Element {
+  const { id: paramId } = useParams<{ id: string }>()
+  const id = recordId ?? paramId
   const navigate = useNavigate()
+  const goBack = onClose ?? (() => void navigate('/abilities'))
 
   const [record, setRecord] = useState<AbilityRecord | null>(null)
   const [displayName, setDisplayName] = useState('')
@@ -220,7 +227,7 @@ export default function AbilityEditorPage(): React.JSX.Element {
     return (
       <Box sx={{ p: 4 }}>
         <Alert severity="error">{error ?? 'Ability not found.'}</Alert>
-        <Button sx={{ mt: 2 }} onClick={() => void navigate('/abilities')}>
+        <Button sx={{ mt: 2 }} onClick={goBack}>
           Back to Abilities
         </Button>
       </Box>
@@ -232,7 +239,7 @@ export default function AbilityEditorPage(): React.JSX.Element {
       {/* Breadcrumb */}
       <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
         <Tooltip title="Back to Abilities">
-          <IconButton size="small" onClick={() => void navigate('/abilities')}>
+          <IconButton size="small" onClick={goBack}>
             <BackIcon fontSize="small" />
           </IconButton>
         </Tooltip>

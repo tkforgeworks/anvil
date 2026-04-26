@@ -38,7 +38,10 @@ import { npcsApi } from '../../api/npcs.api'
 import type { MetaNpcType, NpcRecord } from '../../../shared/domain-types'
 import { ArchiveToggle, ArchiveTable, type ViewMode } from '../components/ArchiveView'
 import { BulkActionToolbar, BulkDeleteDialog } from '../components/BulkActions'
+import EditorModal from '../components/EditorModal'
 import { useMultiSelect } from '../hooks/useMultiSelect'
+import { useUiStore } from '../stores/ui.store'
+import NpcEditorPage from './NpcEditorPage'
 
 function slugify(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
@@ -174,6 +177,7 @@ function DeleteDialog({ record, onClose, onDeleted }: DeleteDialogProps): React.
 
 export default function NpcsPage(): React.JSX.Element {
   const navigate = useNavigate()
+  const editingMode = useUiStore((s) => s.editingMode)
   const [npcs, setNpcs] = useState<NpcRecord[]>([])
   const [archivedNPCs, setArchivedNPCs] = useState<NpcRecord[]>([])
   const [viewMode, setViewMode] = useState<ViewMode>('active')
@@ -185,7 +189,13 @@ export default function NpcsPage(): React.JSX.Element {
   const [deleteTarget, setDeleteTarget] = useState<NpcRecord | null>(null)
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [modalRecordId, setModalRecordId] = useState<string | null>(null)
   const multiSelect = useMultiSelect()
+
+  const openEditor = (id: string): void => {
+    if (editingMode === 'modal') setModalRecordId(id)
+    else void navigate(`/npcs/${id}`)
+  }
 
   const typeById = useMemo(() => new Map(npcTypes.map((type) => [type.id, type])), [npcTypes])
 
@@ -220,7 +230,7 @@ export default function NpcsPage(): React.JSX.Element {
 
   const handleCreated = (record: NpcRecord): void => {
     setCreateOpen(false)
-    void navigate(`/npcs/${record.id}`)
+    openEditor(record.id)
   }
 
   const handleDeleted = (id: string): void => {
@@ -357,7 +367,7 @@ export default function NpcsPage(): React.JSX.Element {
           </TableHead>
           <TableBody>
             {filtered.map((npc) => (
-              <TableRow key={npc.id} hover sx={{ cursor: 'pointer' }} onClick={() => void navigate(`/npcs/${npc.id}`)}>
+              <TableRow key={npc.id} hover sx={{ cursor: 'pointer' }} onClick={() => openEditor(npc.id)}>
                 <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}>
                   <Checkbox
                     size="small"
@@ -370,7 +380,7 @@ export default function NpcsPage(): React.JSX.Element {
                 <TableCell><Typography variant="body2" color="text.secondary">{typeById.get(npc.npcTypeId)?.displayName ?? npc.npcTypeId}</Typography></TableCell>
                 <TableCell><Typography variant="body2" color="text.secondary">{new Date(npc.updatedAt).toLocaleString()}</Typography></TableCell>
                 <TableCell align="right" onClick={(e) => e.stopPropagation()}>
-                  <Tooltip title="Edit"><IconButton size="small" onClick={() => void navigate(`/npcs/${npc.id}`)}><EditIcon fontSize="small" /></IconButton></Tooltip>
+                  <Tooltip title="Edit"><IconButton size="small" onClick={() => openEditor(npc.id)}><EditIcon fontSize="small" /></IconButton></Tooltip>
                   <Tooltip title="Duplicate"><IconButton size="small" onClick={() => void handleDuplicate(npc)}><DuplicateIcon fontSize="small" /></IconButton></Tooltip>
                   <Tooltip title="Delete"><IconButton size="small" color="error" onClick={() => setDeleteTarget(npc)}><DeleteIcon fontSize="small" /></IconButton></Tooltip>
                 </TableCell>
@@ -392,6 +402,19 @@ export default function NpcsPage(): React.JSX.Element {
         onClose={() => setBulkDeleteOpen(false)}
         onConfirm={() => void handleBulkDelete()}
       />
+
+      <EditorModal
+        open={modalRecordId !== null}
+        title="Edit NPC"
+        onClose={() => { setModalRecordId(null); void load() }}
+      >
+        {modalRecordId && (
+          <NpcEditorPage
+            recordId={modalRecordId}
+            onClose={() => { setModalRecordId(null); void load() }}
+          />
+        )}
+      </EditorModal>
     </Box>
   )
 }

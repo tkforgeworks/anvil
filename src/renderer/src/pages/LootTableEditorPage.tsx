@@ -77,9 +77,16 @@ function formatPercent(value: number): string {
   return `${value.toFixed(value >= 10 ? 1 : 2)}%`
 }
 
-export default function LootTableEditorPage(): React.JSX.Element {
-  const { id } = useParams<{ id: string }>()
+interface LootTableEditorPageProps {
+  recordId?: string
+  onClose?: () => void
+}
+
+export default function LootTableEditorPage({ recordId, onClose }: LootTableEditorPageProps = {}): React.JSX.Element {
+  const { id: paramId } = useParams<{ id: string }>()
+  const id = recordId ?? paramId
   const navigate = useNavigate()
+  const goBack = onClose ?? (() => void navigate('/loot-tables'))
 
   const [record, setRecord] = useState<LootTableRecord | null>(null)
   const [items, setItems] = useState<ItemRecord[]>([])
@@ -275,7 +282,7 @@ export default function LootTableEditorPage(): React.JSX.Element {
     return (
       <Box sx={{ p: 4 }}>
         <Alert severity="error">{error ?? 'Loot table not found.'}</Alert>
-        <Button sx={{ mt: 2 }} onClick={() => void navigate('/loot-tables')}>
+        <Button sx={{ mt: 2 }} onClick={goBack}>
           Back to Loot Tables
         </Button>
       </Box>
@@ -286,7 +293,7 @@ export default function LootTableEditorPage(): React.JSX.Element {
     <Box>
       <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
         <Tooltip title="Back to Loot Tables">
-          <IconButton size="small" onClick={() => void navigate('/loot-tables')}>
+          <IconButton size="small" onClick={goBack}>
             <BackIcon fontSize="small" />
           </IconButton>
         </Tooltip>

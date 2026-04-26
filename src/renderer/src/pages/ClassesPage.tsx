@@ -37,7 +37,10 @@ import { lifecycleApi } from '../../api/lifecycle.api'
 import type { ClassRecord } from '../../../shared/domain-types'
 import { ArchiveToggle, ArchiveTable, type ViewMode } from '../components/ArchiveView'
 import { BulkActionToolbar, BulkDeleteDialog } from '../components/BulkActions'
+import EditorModal from '../components/EditorModal'
 import { useMultiSelect } from '../hooks/useMultiSelect'
+import { useUiStore } from '../stores/ui.store'
+import ClassEditorPage from './ClassEditorPage'
 
 function slugify(value: string): string {
   return value
@@ -206,6 +209,7 @@ type SortKey = 'name' | 'updated'
 
 export default function ClassesPage(): React.JSX.Element {
   const navigate = useNavigate()
+  const editingMode = useUiStore((s) => s.editingMode)
   const [classes, setClasses] = useState<ClassRecord[]>([])
   const [archivedClasses, setArchivedClasses] = useState<ClassRecord[]>([])
   const [viewMode, setViewMode] = useState<ViewMode>('active')
@@ -215,7 +219,13 @@ export default function ClassesPage(): React.JSX.Element {
   const [deleteTarget, setDeleteTarget] = useState<ClassRecord | null>(null)
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [modalRecordId, setModalRecordId] = useState<string | null>(null)
   const multiSelect = useMultiSelect()
+
+  const openEditor = (id: string): void => {
+    if (editingMode === 'modal') setModalRecordId(id)
+    else void navigate(`/classes/${id}`)
+  }
 
   const load = useCallback(async () => {
     try {
@@ -243,7 +253,7 @@ export default function ClassesPage(): React.JSX.Element {
 
   const handleCreated = (record: ClassRecord): void => {
     setCreateOpen(false)
-    void navigate(`/classes/${record.id}`)
+    openEditor(record.id)
   }
 
   const handleDeleted = (id: string): void => {
@@ -397,7 +407,7 @@ export default function ClassesPage(): React.JSX.Element {
                     key={cls.id}
                     hover
                     sx={{ cursor: 'pointer' }}
-                    onClick={() => void navigate(`/classes/${cls.id}`)}
+                    onClick={() => openEditor(cls.id)}
                   >
                     <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}>
                       <Checkbox
@@ -432,7 +442,7 @@ export default function ClassesPage(): React.JSX.Element {
                     </TableCell>
                     <TableCell align="right" onClick={(e) => e.stopPropagation()}>
                       <Tooltip title="Edit">
-                        <IconButton size="small" onClick={() => void navigate(`/classes/${cls.id}`)}>
+                        <IconButton size="small" onClick={() => openEditor(cls.id)}>
                           <EditIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
@@ -478,6 +488,19 @@ export default function ClassesPage(): React.JSX.Element {
         onClose={() => setBulkDeleteOpen(false)}
         onConfirm={() => void handleBulkDelete()}
       />
+
+      <EditorModal
+        open={modalRecordId !== null}
+        title="Edit Class"
+        onClose={() => { setModalRecordId(null); void load() }}
+      >
+        {modalRecordId && (
+          <ClassEditorPage
+            recordId={modalRecordId}
+            onClose={() => { setModalRecordId(null); void load() }}
+          />
+        )}
+      </EditorModal>
     </Box>
   )
 }

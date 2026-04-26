@@ -49,9 +49,16 @@ interface FormSnapshot {
   rarityId: string
 }
 
-export default function ItemEditorPage(): React.JSX.Element {
-  const { id } = useParams<{ id: string }>()
+interface ItemEditorPageProps {
+  recordId?: string
+  onClose?: () => void
+}
+
+export default function ItemEditorPage({ recordId, onClose }: ItemEditorPageProps = {}): React.JSX.Element {
+  const { id: paramId } = useParams<{ id: string }>()
+  const id = recordId ?? paramId
   const navigate = useNavigate()
+  const goBack = onClose ?? (() => void navigate('/items'))
 
   const [record, setRecord] = useState<ItemRecord | null>(null)
   const [categories, setCategories] = useState<MetaItemCategory[]>([])
@@ -165,7 +172,7 @@ export default function ItemEditorPage(): React.JSX.Element {
     return (
       <Box sx={{ p: 4 }}>
         <Alert severity="error">{error ?? 'Item not found.'}</Alert>
-        <Button sx={{ mt: 2 }} onClick={() => void navigate('/items')}>
+        <Button sx={{ mt: 2 }} onClick={goBack}>
           Back to Items
         </Button>
       </Box>
@@ -176,7 +183,7 @@ export default function ItemEditorPage(): React.JSX.Element {
     <Box>
       <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
         <Tooltip title="Back to Items">
-          <IconButton size="small" onClick={() => void navigate('/items')}>
+          <IconButton size="small" onClick={goBack}>
             <BackIcon fontSize="small" />
           </IconButton>
         </Tooltip>

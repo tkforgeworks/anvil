@@ -107,6 +107,8 @@ export const IPC_CHANNELS = {
   SETTINGS_SET_APP: 'settings:set-app',
   SETTINGS_GET_PROJECT: 'settings:get-project',
   SETTINGS_SET_PROJECT: 'settings:set-project',
+  SETTINGS_SELECT_FOLDER: 'settings:select-folder',
+  SETTINGS_SELECT_THEME_FILE: 'settings:select-theme-file',
 
   // Meta-layer reference data (read-only lookups for UI)
   META_LIST_ITEM_CATEGORIES: 'meta:list-item-categories',

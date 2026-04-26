@@ -38,7 +38,10 @@ import { npcsApi } from '../../api/npcs.api'
 import type { LootTableEntry, LootTableRecord, NpcRecord } from '../../../shared/domain-types'
 import { ArchiveToggle, ArchiveTable, type ViewMode } from '../components/ArchiveView'
 import { BulkActionToolbar, BulkDeleteDialog } from '../components/BulkActions'
+import EditorModal from '../components/EditorModal'
 import { useMultiSelect } from '../hooks/useMultiSelect'
+import { useUiStore } from '../stores/ui.store'
+import LootTableEditorPage from './LootTableEditorPage'
 
 function slugify(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
@@ -163,6 +166,7 @@ function DeleteDialog({ record, onClose, onDeleted }: DeleteDialogProps): React.
 
 export default function LootTablesPage(): React.JSX.Element {
   const navigate = useNavigate()
+  const editingMode = useUiStore((s) => s.editingMode)
   const [lootTables, setLootTables] = useState<LootTableRecord[]>([])
   const [archivedLootTables, setArchivedLootTables] = useState<LootTableRecord[]>([])
   const [viewMode, setViewMode] = useState<ViewMode>('active')
@@ -174,7 +178,13 @@ export default function LootTablesPage(): React.JSX.Element {
   const [deleteTarget, setDeleteTarget] = useState<LootTableRecord | null>(null)
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [modalRecordId, setModalRecordId] = useState<string | null>(null)
   const multiSelect = useMultiSelect()
+
+  const openEditor = (id: string): void => {
+    if (editingMode === 'modal') setModalRecordId(id)
+    else void navigate(`/loot-tables/${id}`)
+  }
 
   const assignmentCounts = useMemo(() => {
     const counts = new Map<string, number>()
@@ -217,7 +227,7 @@ export default function LootTablesPage(): React.JSX.Element {
 
   const handleCreated = (record: LootTableRecord): void => {
     setCreateOpen(false)
-    void navigate(`/loot-tables/${record.id}`)
+    openEditor(record.id)
   }
 
   const handleDeleted = (id: string): void => {
@@ -350,7 +360,7 @@ export default function LootTablesPage(): React.JSX.Element {
           </TableHead>
           <TableBody>
             {filtered.map((table) => (
-              <TableRow key={table.id} hover sx={{ cursor: 'pointer' }} onClick={() => void navigate(`/loot-tables/${table.id}`)}>
+              <TableRow key={table.id} hover sx={{ cursor: 'pointer' }} onClick={() => openEditor(table.id)}>
                 <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}>
                   <Checkbox
                     size="small"
@@ -364,7 +374,7 @@ export default function LootTablesPage(): React.JSX.Element {
                 <TableCell><Typography variant="body2" color="text.secondary">Used by {assignmentCounts.get(table.id) ?? 0} NPCs</Typography></TableCell>
                 <TableCell><Typography variant="body2" color="text.secondary">{new Date(table.updatedAt).toLocaleString()}</Typography></TableCell>
                 <TableCell align="right" onClick={(e) => e.stopPropagation()}>
-                  <Tooltip title="Edit"><IconButton size="small" onClick={() => void navigate(`/loot-tables/${table.id}`)}><EditIcon fontSize="small" /></IconButton></Tooltip>
+                  <Tooltip title="Edit"><IconButton size="small" onClick={() => openEditor(table.id)}><EditIcon fontSize="small" /></IconButton></Tooltip>
                   <Tooltip title="Duplicate"><IconButton size="small" onClick={() => void handleDuplicate(table)}><DuplicateIcon fontSize="small" /></IconButton></Tooltip>
                   <Tooltip title="Delete"><IconButton size="small" color="error" onClick={() => setDeleteTarget(table)}><DeleteIcon fontSize="small" /></IconButton></Tooltip>
                 </TableCell>
@@ -386,6 +396,19 @@ export default function LootTablesPage(): React.JSX.Element {
         onClose={() => setBulkDeleteOpen(false)}
         onConfirm={() => void handleBulkDelete()}
       />
+
+      <EditorModal
+        open={modalRecordId !== null}
+        title="Edit Loot Table"
+        onClose={() => { setModalRecordId(null); void load() }}
+      >
+        {modalRecordId && (
+          <LootTableEditorPage
+            recordId={modalRecordId}
+            onClose={() => { setModalRecordId(null); void load() }}
+          />
+        )}
+      </EditorModal>
     </Box>
   )
 }

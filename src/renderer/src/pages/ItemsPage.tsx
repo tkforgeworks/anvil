@@ -39,7 +39,10 @@ import { metaApi } from '../../api/meta.api'
 import type { ItemRecord, MetaItemCategory, MetaRarity } from '../../../shared/domain-types'
 import { ArchiveToggle, ArchiveTable, type ViewMode } from '../components/ArchiveView'
 import { BulkActionToolbar, BulkDeleteDialog } from '../components/BulkActions'
+import EditorModal from '../components/EditorModal'
 import { useMultiSelect } from '../hooks/useMultiSelect'
+import { useUiStore } from '../stores/ui.store'
+import ItemEditorPage from './ItemEditorPage'
 
 function slugify(value: string): string {
   return value
@@ -262,6 +265,7 @@ type SortKey = 'name' | 'updated'
 
 export default function ItemsPage(): React.JSX.Element {
   const navigate = useNavigate()
+  const editingMode = useUiStore((s) => s.editingMode)
   const [items, setItems] = useState<ItemRecord[]>([])
   const [archivedItems, setArchivedItems] = useState<ItemRecord[]>([])
   const [viewMode, setViewMode] = useState<ViewMode>('active')
@@ -275,7 +279,13 @@ export default function ItemsPage(): React.JSX.Element {
   const [deleteTarget, setDeleteTarget] = useState<ItemRecord | null>(null)
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [modalRecordId, setModalRecordId] = useState<string | null>(null)
   const multiSelect = useMultiSelect()
+
+  const openEditor = (id: string): void => {
+    if (editingMode === 'modal') setModalRecordId(id)
+    else void navigate(`/items/${id}`)
+  }
 
   const categoryById = useMemo(
     () => new Map(categories.map((category) => [category.id, category])),
@@ -319,7 +329,7 @@ export default function ItemsPage(): React.JSX.Element {
 
   const handleCreated = (record: ItemRecord): void => {
     setCreateOpen(false)
-    void navigate(`/items/${record.id}`)
+    openEditor(record.id)
   }
 
   const handleDeleted = (id: string): void => {
@@ -509,7 +519,7 @@ export default function ItemsPage(): React.JSX.Element {
                   key={item.id}
                   hover
                   sx={{ cursor: 'pointer' }}
-                  onClick={() => void navigate(`/items/${item.id}`)}
+                  onClick={() => openEditor(item.id)}
                 >
                   <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}>
                     <Checkbox
@@ -563,7 +573,7 @@ export default function ItemsPage(): React.JSX.Element {
                   </TableCell>
                   <TableCell align="right" onClick={(e) => e.stopPropagation()}>
                     <Tooltip title="Edit">
-                      <IconButton size="small" onClick={() => void navigate(`/items/${item.id}`)}>
+                      <IconButton size="small" onClick={() => openEditor(item.id)}>
                         <EditIcon fontSize="small" />
                       </IconButton>
                     </Tooltip>
@@ -608,6 +618,19 @@ export default function ItemsPage(): React.JSX.Element {
         onClose={() => setBulkDeleteOpen(false)}
         onConfirm={() => void handleBulkDelete()}
       />
+
+      <EditorModal
+        open={modalRecordId !== null}
+        title="Edit Item"
+        onClose={() => { setModalRecordId(null); void load() }}
+      >
+        {modalRecordId && (
+          <ItemEditorPage
+            recordId={modalRecordId}
+            onClose={() => { setModalRecordId(null); void load() }}
+          />
+        )}
+      </EditorModal>
     </Box>
   )
 }

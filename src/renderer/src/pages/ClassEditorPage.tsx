@@ -53,9 +53,16 @@ function TabPanel({ index, value, children }: TabPanelProps): React.JSX.Element 
 
 // ─── Editor ───────────────────────────────────────────────────────────────────
 
-export default function ClassEditorPage(): React.JSX.Element {
-  const { id } = useParams<{ id: string }>()
+interface ClassEditorPageProps {
+  recordId?: string
+  onClose?: () => void
+}
+
+export default function ClassEditorPage({ recordId, onClose }: ClassEditorPageProps = {}): React.JSX.Element {
+  const { id: paramId } = useParams<{ id: string }>()
+  const id = recordId ?? paramId
   const navigate = useNavigate()
+  const goBack = onClose ?? (() => void navigate('/classes'))
 
   const [record, setRecord] = useState<ClassRecord | null>(null)
   const [displayName, setDisplayName] = useState('')
@@ -175,7 +182,7 @@ export default function ClassEditorPage(): React.JSX.Element {
     return (
       <Box sx={{ p: 4 }}>
         <Alert severity="error">{error ?? 'Class not found.'}</Alert>
-        <Button sx={{ mt: 2 }} onClick={() => void navigate('/classes')}>
+        <Button sx={{ mt: 2 }} onClick={goBack}>
           Back to Classes
         </Button>
       </Box>
@@ -187,7 +194,7 @@ export default function ClassEditorPage(): React.JSX.Element {
       {/* Header */}
       <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
         <Tooltip title="Back to Classes">
-          <IconButton size="small" onClick={() => void navigate('/classes')}>
+          <IconButton size="small" onClick={goBack}>
             <BackIcon fontSize="small" />
           </IconButton>
         </Tooltip>

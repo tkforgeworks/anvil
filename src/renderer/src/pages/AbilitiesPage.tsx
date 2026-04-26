@@ -37,7 +37,10 @@ import { lifecycleApi } from '../../api/lifecycle.api'
 import type { AbilityRecord } from '../../../shared/domain-types'
 import { ArchiveToggle, ArchiveTable, type ViewMode } from '../components/ArchiveView'
 import { BulkActionToolbar, BulkDeleteDialog } from '../components/BulkActions'
+import EditorModal from '../components/EditorModal'
 import { useMultiSelect } from '../hooks/useMultiSelect'
+import { useUiStore } from '../stores/ui.store'
+import AbilityEditorPage from './AbilityEditorPage'
 
 function slugify(value: string): string {
   return value
@@ -206,6 +209,7 @@ type SortKey = 'name' | 'updated'
 
 export default function AbilitiesPage(): React.JSX.Element {
   const navigate = useNavigate()
+  const editingMode = useUiStore((s) => s.editingMode)
   const [abilities, setAbilities] = useState<AbilityRecord[]>([])
   const [archivedAbilitys, setArchivedAbilitys] = useState<AbilityRecord[]>([])
   const [viewMode, setViewMode] = useState<ViewMode>('active')
@@ -215,7 +219,13 @@ export default function AbilitiesPage(): React.JSX.Element {
   const [deleteTarget, setDeleteTarget] = useState<AbilityRecord | null>(null)
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [modalRecordId, setModalRecordId] = useState<string | null>(null)
   const multiSelect = useMultiSelect()
+
+  const openEditor = (id: string): void => {
+    if (editingMode === 'modal') setModalRecordId(id)
+    else void navigate(`/abilities/${id}`)
+  }
 
   const load = useCallback(async () => {
     try {
@@ -243,7 +253,7 @@ export default function AbilitiesPage(): React.JSX.Element {
 
   const handleCreated = (record: AbilityRecord): void => {
     setCreateOpen(false)
-    void navigate(`/abilities/${record.id}`)
+    openEditor(record.id)
   }
 
   const handleDeleted = (id: string): void => {
@@ -398,7 +408,7 @@ export default function AbilitiesPage(): React.JSX.Element {
                     key={ability.id}
                     hover
                     sx={{ cursor: 'pointer' }}
-                    onClick={() => void navigate(`/abilities/${ability.id}`)}
+                    onClick={() => openEditor(ability.id)}
                   >
                     <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}>
                       <Checkbox
@@ -440,7 +450,7 @@ export default function AbilitiesPage(): React.JSX.Element {
                       <Tooltip title="Edit">
                         <IconButton
                           size="small"
-                          onClick={() => void navigate(`/abilities/${ability.id}`)}
+                          onClick={() => openEditor(ability.id)}
                         >
                           <EditIcon fontSize="small" />
                         </IconButton>
@@ -487,6 +497,19 @@ export default function AbilitiesPage(): React.JSX.Element {
         onClose={() => setBulkDeleteOpen(false)}
         onConfirm={() => void handleBulkDelete()}
       />
+
+      <EditorModal
+        open={modalRecordId !== null}
+        title="Edit Ability"
+        onClose={() => { setModalRecordId(null); void load() }}
+      >
+        {modalRecordId && (
+          <AbilityEditorPage
+            recordId={modalRecordId}
+            onClose={() => { setModalRecordId(null); void load() }}
+          />
+        )}
+      </EditorModal>
     </Box>
   )
 }
