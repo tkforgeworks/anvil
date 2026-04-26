@@ -1,3 +1,4 @@
+import { Settings as SettingsIcon } from '@mui/icons-material'
 import {
   Box,
   Button,
@@ -6,6 +7,7 @@ import {
   DialogContent,
   DialogTitle,
   FormControl,
+  IconButton,
   InputLabel,
   List,
   ListItem,
@@ -14,6 +16,7 @@ import {
   Select,
   Stack,
   TextField,
+  Tooltip,
   Typography,
 } from '@mui/material'
 import { useState } from 'react'
@@ -21,6 +24,7 @@ import { useNavigate } from 'react-router-dom'
 import { projectApi } from '../../api/project.api'
 import type { ProjectTemplateId, RecentProject } from '../../../shared/project-types'
 import { useProjectStore } from '../stores/project.store'
+import AppSettingsDialog from '../components/AppSettingsDialog'
 
 const TEMPLATE_OPTIONS: { value: ProjectTemplateId; label: string }[] = [
   { value: 'blank', label: 'Blank' },
@@ -57,6 +61,7 @@ export default function WelcomePage(): React.JSX.Element {
   const [templateId, setTemplateId] = useState<ProjectTemplateId>('blank')
   const [error, setError] = useState<string | null>(null)
   const [isBusy, setBusy] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
   const openProject = async (filePath?: string): Promise<void> => {
     setBusy(true)
@@ -107,14 +112,21 @@ export default function WelcomePage(): React.JSX.Element {
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', p: 4 }}>
       <Stack spacing={4} sx={{ maxWidth: 920, mx: 'auto' }}>
-        <Box>
-          <Typography variant="h3" component="h1" sx={{ fontWeight: 700 }}>
-            Anvil
-          </Typography>
-          <Typography color="text.secondary" sx={{ mt: 1 }}>
-            Open a project or create a new RPG data workspace.
-          </Typography>
-        </Box>
+        <Stack direction="row" alignItems="flex-start" justifyContent="space-between">
+          <Box>
+            <Typography variant="h3" component="h1" sx={{ fontWeight: 700 }}>
+              Anvil
+            </Typography>
+            <Typography color="text.secondary" sx={{ mt: 1 }}>
+              Open a project or create a new RPG data workspace.
+            </Typography>
+          </Box>
+          <Tooltip title="Application Settings">
+            <IconButton onClick={() => setSettingsOpen(true)} sx={{ mt: 1 }}>
+              <SettingsIcon />
+            </IconButton>
+          </Tooltip>
+        </Stack>
 
         {error && (
           <Typography color="error" role="alert">
@@ -219,6 +231,8 @@ export default function WelcomePage(): React.JSX.Element {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <AppSettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </Box>
   )
 }
