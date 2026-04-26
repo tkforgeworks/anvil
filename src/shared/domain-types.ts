@@ -38,6 +38,16 @@ export interface StatGrowthEntry {
   value: number
 }
 
+export interface StatGrowthFormula {
+  statId: string
+  formula: string
+}
+
+export interface StatGrowthData {
+  entries: StatGrowthEntry[]
+  formulas: StatGrowthFormula[]
+}
+
 export interface ClassAbilityAssignment {
   abilityId: string
   sortOrder: number

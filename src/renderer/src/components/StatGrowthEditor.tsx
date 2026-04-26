@@ -2,6 +2,11 @@ import {
   Alert,
   Box,
   Button,
+  Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Divider,
   FormControl,
   InputLabel,
@@ -24,8 +29,9 @@ import {
   YAxis,
 } from 'recharts'
 import { classesApi } from '../../api/classes.api'
+import { formulasApi } from '../../api/formulas.api'
 import { metaApi } from '../../api/meta.api'
-import type { MetaStat, StatGrowthEntry } from '../../../shared/domain-types'
+import type { MetaStat, StatGrowthEntry, StatGrowthFormula } from '../../../shared/domain-types'
 
 // One color per stat slot — Nord-ish palette
 const STAT_COLORS = [
@@ -77,9 +83,10 @@ function buildInitialGrid(stats: MetaStat[], maxLevel: number, entries: StatGrow
   return grid
 }
 
-function gridToEntries(gridValues: GridValues): StatGrowthEntry[] {
+function gridToEntries(gridValues: GridValues, excludeStatIds?: Set<string>): StatGrowthEntry[] {
   const entries: StatGrowthEntry[] = []
   for (const [statId, levels] of Object.entries(gridValues)) {
+    if (excludeStatIds?.has(statId)) continue
     for (const [levelStr, valueStr] of Object.entries(levels)) {
       if (valueStr !== '') {
         const value = parseFloat(valueStr)
@@ -96,11 +103,13 @@ function gridToEntries(gridValues: GridValues): StatGrowthEntry[] {
 
 interface FillColumnHelperProps {
   stats: MetaStat[]
+  formulaStatIds: Set<string>
   onApply: (statId: string, value: number) => void
 }
 
-function FillColumnHelper({ stats, onApply }: FillColumnHelperProps): React.JSX.Element {
-  const [statId, setStatId] = useState(stats[0]?.id ?? '')
+function FillColumnHelper({ stats, formulaStatIds, onApply }: FillColumnHelperProps): React.JSX.Element {
+  const manualStats = stats.filter((s) => !formulaStatIds.has(s.id))
+  const [statId, setStatId] = useState(manualStats[0]?.id ?? '')
   const [value, setValue] = useState('')
 
   return (
@@ -116,7 +125,7 @@ function FillColumnHelper({ stats, onApply }: FillColumnHelperProps): React.JSX.
           value={statId}
           onChange={(e) => setStatId(e.target.value)}
         >
-          {stats.map((s) => (
+          {manualStats.map((s) => (
             <MenuItem key={s.id} value={s.id}>
               {s.displayName}
             </MenuItem>
@@ -134,7 +143,7 @@ function FillColumnHelper({ stats, onApply }: FillColumnHelperProps): React.JSX.
       <Button
         size="small"
         variant="outlined"
-        disabled={value === '' || isNaN(parseFloat(value))}
+        disabled={value === '' || isNaN(parseFloat(value)) || manualStats.length === 0}
         onClick={() => {
           onApply(statId, parseFloat(value))
           setValue('')
@@ -148,12 +157,14 @@ function FillColumnHelper({ stats, onApply }: FillColumnHelperProps): React.JSX.
 
 interface InterpolateHelperProps {
   stats: MetaStat[]
+  formulaStatIds: Set<string>
   maxLevel: number
   onApply: (statId: string, fromLevel: number, fromValue: number, toLevel: number, toValue: number) => void
 }
 
-function InterpolateHelper({ stats, maxLevel, onApply }: InterpolateHelperProps): React.JSX.Element {
-  const [statId, setStatId] = useState(stats[0]?.id ?? '')
+function InterpolateHelper({ stats, formulaStatIds, maxLevel, onApply }: InterpolateHelperProps): React.JSX.Element {
+  const manualStats = stats.filter((s) => !formulaStatIds.has(s.id))
+  const [statId, setStatId] = useState(manualStats[0]?.id ?? '')
   const [fromLevel, setFromLevel] = useState('1')
   const [fromValue, setFromValue] = useState('')
   const [toLevel, setToLevel] = useState(String(maxLevel))
@@ -179,7 +190,7 @@ function InterpolateHelper({ stats, maxLevel, onApply }: InterpolateHelperProps)
           value={statId}
           onChange={(e) => setStatId(e.target.value)}
         >
-          {stats.map((s) => (
+          {manualStats.map((s) => (
             <MenuItem key={s.id} value={s.id}>
               {s.displayName}
             </MenuItem>
@@ -229,23 +240,41 @@ export default function StatGrowthEditor({ classId }: StatGrowthEditorProps): Re
   const [error, setError] = useState<string | null>(null)
   const [savedAt, setSavedAt] = useState<Date | null>(null)
 
+  // Formula mode state
+  const [formulaMap, setFormulaMap] = useState<Record<string, string>>({})
+  const [formulaErrors, setFormulaErrors] = useState<Record<string, string | null>>({})
+  const [switchToManualStatId, setSwitchToManualStatId] = useState<string | null>(null)
+
+  const formulaStatIds = useMemo(
+    () => new Set(Object.keys(formulaMap)),
+    [formulaMap],
+  )
+
   // Debounce chart updates so the chart doesn't re-render on every keystroke
   const chartDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const formulaDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
-      const [loadedStats, settings, entries] = await Promise.all([
+      const [loadedStats, settings, statGrowthData] = await Promise.all([
         metaApi.listStats(),
         metaApi.getProjectSettings(),
         classesApi.getStatGrowth(classId),
       ])
       setStats(loadedStats)
       setMaxLevel(settings.maxLevel)
-      const grid = buildInitialGrid(loadedStats, settings.maxLevel, entries)
+      const grid = buildInitialGrid(loadedStats, settings.maxLevel, statGrowthData.entries)
       setGridValues(grid)
       setChartData(buildChartData(grid, loadedStats, settings.maxLevel))
+
+      const fMap: Record<string, string> = {}
+      for (const f of statGrowthData.formulas) {
+        fMap[f.statId] = f.formula
+      }
+      setFormulaMap(fMap)
+      setFormulaErrors({})
       setDirty(false)
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Failed to load stat growth data.')
@@ -261,6 +290,7 @@ export default function StatGrowthEditor({ classId }: StatGrowthEditorProps): Re
   useEffect(() => {
     return () => {
       if (chartDebounceRef.current) clearTimeout(chartDebounceRef.current)
+      if (formulaDebounceRef.current) clearTimeout(formulaDebounceRef.current)
     }
   }, [])
 
@@ -317,11 +347,95 @@ export default function StatGrowthEditor({ classId }: StatGrowthEditorProps): Re
     [stats, maxLevel],
   )
 
+  const handleFormulaChange = useCallback(
+    (statId: string, formula: string) => {
+      setFormulaMap((prev) => ({ ...prev, [statId]: formula }))
+      setDirty(true)
+      setSavedAt(null)
+
+      if (formulaDebounceRef.current) clearTimeout(formulaDebounceRef.current)
+      formulaDebounceRef.current = setTimeout(async () => {
+        if (!formula.trim()) {
+          setFormulaErrors((prev) => ({ ...prev, [statId]: 'Formula is empty' }))
+          return
+        }
+        const result = await formulasApi.evaluate(formula, { level: 1, max_level: maxLevel })
+        if (result.error) {
+          setFormulaErrors((prev) => ({ ...prev, [statId]: result.error }))
+          return
+        }
+        setFormulaErrors((prev) => ({ ...prev, [statId]: null }))
+
+        const requests = Array.from({ length: maxLevel }, (_, i) => ({
+          formula,
+          bindings: { level: i + 1, max_level: maxLevel },
+        }))
+        const results = await formulasApi.evaluateBatch(requests)
+        setGridValues((prev) => {
+          const levels: Record<number, string> = {}
+          for (let i = 0; i < results.length; i++) {
+            levels[i + 1] = String(results[i].value ?? 0)
+          }
+          const next = { ...prev, [statId]: levels }
+          setChartData(buildChartData(next, stats, maxLevel))
+          return next
+        })
+      }, 300)
+    },
+    [maxLevel, stats],
+  )
+
+  const handleSwitchToFormula = useCallback(
+    (statId: string) => {
+      setFormulaMap((prev) => ({ ...prev, [statId]: '' }))
+      setDirty(true)
+      setSavedAt(null)
+    },
+    [],
+  )
+
+  const handleSwitchToManual = useCallback(
+    (statId: string, bakeValues: boolean) => {
+      setFormulaMap((prev) => {
+        const next = { ...prev }
+        delete next[statId]
+        return next
+      })
+      setFormulaErrors((prev) => {
+        const next = { ...prev }
+        delete next[statId]
+        return next
+      })
+      if (!bakeValues) {
+        setGridValues((prev) => {
+          const levels: Record<number, string> = {}
+          for (let level = 1; level <= maxLevel; level++) {
+            levels[level] = ''
+          }
+          const next = { ...prev, [statId]: levels }
+          setChartData(buildChartData(next, stats, maxLevel))
+          return next
+        })
+      }
+      setDirty(true)
+      setSavedAt(null)
+      setSwitchToManualStatId(null)
+    },
+    [maxLevel, stats],
+  )
+
   const handleSave = async (): Promise<void> => {
     setSaving(true)
     setError(null)
     try {
-      await classesApi.setStatGrowth(classId, gridToEntries(gridValues))
+      const formulas: StatGrowthFormula[] = Object.entries(formulaMap).map(
+        ([statId, formula]) => ({ statId, formula }),
+      )
+      const fIds = new Set(formulas.map((f) => f.statId))
+      await Promise.all([
+        classesApi.setStatGrowth(classId, gridToEntries(gridValues, fIds)),
+        classesApi.setStatGrowthFormulas(classId, formulas),
+      ])
       setDirty(false)
       setSavedAt(new Date())
     } catch (cause) {
@@ -428,12 +542,56 @@ export default function StatGrowthEditor({ classId }: StatGrowthEditorProps): Re
         </ResponsiveContainer>
       </Paper>
 
+      {/* Formula inputs for formula-mode stats */}
+      {formulaStatIds.size > 0 && (
+        <Paper variant="outlined" sx={{ p: 1.5, mb: 2 }}>
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+            Formula-driven stats — use <code>level</code> and <code>max_level</code> as variables.
+            Functions: <code>min()</code>, <code>max()</code>, <code>floor()</code>, <code>ceil()</code>
+          </Typography>
+          <Stack spacing={1.5}>
+            {stats.filter((s) => formulaStatIds.has(s.id)).map((stat) => (
+              <Stack key={stat.id} direction="row" spacing={1} alignItems="flex-start">
+                <Typography
+                  variant="body2"
+                  sx={{ fontWeight: 600, minWidth: 100, pt: 1 }}
+                >
+                  {stat.displayName}
+                </Typography>
+                <TextField
+                  size="small"
+                  fullWidth
+                  placeholder="e.g. min(level, 30) + max(level - 30, 0) * 2"
+                  value={formulaMap[stat.id] ?? ''}
+                  onChange={(e) => handleFormulaChange(stat.id, e.target.value)}
+                  error={!!formulaErrors[stat.id]}
+                  helperText={formulaErrors[stat.id] ?? undefined}
+                  slotProps={{
+                    input: {
+                      sx: { fontFamily: 'monospace', fontSize: '0.85rem' },
+                    },
+                  }}
+                />
+                <Button
+                  size="small"
+                  color="secondary"
+                  onClick={() => setSwitchToManualStatId(stat.id)}
+                  sx={{ whiteSpace: 'nowrap', mt: 0.25 }}
+                >
+                  Manual
+                </Button>
+              </Stack>
+            ))}
+          </Stack>
+        </Paper>
+      )}
+
       {/* Entry helpers */}
       <Paper variant="outlined" sx={{ p: 1.5, mb: 2 }}>
         <Stack spacing={1}>
-          <FillColumnHelper stats={stats} onApply={handleFillColumn} />
+          <FillColumnHelper stats={stats} formulaStatIds={formulaStatIds} onApply={handleFillColumn} />
           <Divider />
-          <InterpolateHelper stats={stats} maxLevel={maxLevel} onApply={handleInterpolate} />
+          <InterpolateHelper stats={stats} formulaStatIds={formulaStatIds} maxLevel={maxLevel} onApply={handleInterpolate} />
         </Stack>
       </Paper>
 
@@ -480,28 +638,45 @@ export default function StatGrowthEditor({ classId }: StatGrowthEditorProps): Re
               >
                 Lvl
               </th>
-              {stats.map((stat, i) => (
-                <th
-                  key={stat.id}
-                  title={stat.displayName}
-                  style={{
-                    position: 'sticky',
-                    top: 0,
-                    zIndex: 2,
-                    background: 'var(--table-header-bg, #2e3440)',
-                    padding: '6px 8px',
-                    textAlign: 'center',
-                    fontSize: 11,
-                    fontWeight: 600,
-                    color: STAT_COLORS[i % STAT_COLORS.length],
-                    borderBottom: '1px solid rgba(255,255,255,0.12)',
-                    borderRight: '1px solid rgba(255,255,255,0.06)',
-                    cursor: 'default',
-                  }}
-                >
-                  {stat.exportKey.toUpperCase()}
-                </th>
-              ))}
+              {stats.map((stat, i) => {
+                const isFormula = formulaStatIds.has(stat.id)
+                return (
+                  <th
+                    key={stat.id}
+                    title={stat.displayName}
+                    style={{
+                      position: 'sticky',
+                      top: 0,
+                      zIndex: 2,
+                      background: 'var(--table-header-bg, #2e3440)',
+                      padding: '4px 4px',
+                      textAlign: 'center',
+                      fontSize: 11,
+                      fontWeight: 600,
+                      color: STAT_COLORS[i % STAT_COLORS.length],
+                      borderBottom: '1px solid rgba(255,255,255,0.12)',
+                      borderRight: '1px solid rgba(255,255,255,0.06)',
+                      cursor: 'default',
+                    }}
+                  >
+                    <div>{stat.exportKey.toUpperCase()}</div>
+                    <Chip
+                      label={isFormula ? 'F' : 'M'}
+                      size="small"
+                      variant={isFormula ? 'filled' : 'outlined'}
+                      color={isFormula ? 'info' : 'default'}
+                      onClick={() => {
+                        if (isFormula) {
+                          setSwitchToManualStatId(stat.id)
+                        } else {
+                          handleSwitchToFormula(stat.id)
+                        }
+                      }}
+                      sx={{ height: 18, fontSize: 9, mt: 0.25, cursor: 'pointer' }}
+                    />
+                  </th>
+                )
+              })}
             </tr>
           </thead>
           <tbody>
@@ -513,6 +688,7 @@ export default function StatGrowthEditor({ classId }: StatGrowthEditorProps): Re
                   level={level}
                   stats={stats}
                   gridValues={gridValues}
+                  formulaStatIds={formulaStatIds}
                   onCellChange={handleCellChange}
                 />
               )
@@ -520,6 +696,35 @@ export default function StatGrowthEditor({ classId }: StatGrowthEditorProps): Re
           </tbody>
         </table>
       </Box>
+
+      {/* Switch-to-manual confirmation dialog */}
+      <Dialog
+        open={switchToManualStatId !== null}
+        onClose={() => setSwitchToManualStatId(null)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Switch to Manual Mode</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2">
+            How would you like to handle the computed values for this stat?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setSwitchToManualStatId(null)}>Cancel</Button>
+          <Button
+            onClick={() => handleSwitchToManual(switchToManualStatId!, false)}
+          >
+            Clear Values
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => handleSwitchToManual(switchToManualStatId!, true)}
+          >
+            Keep Values
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   )
 }
@@ -533,6 +738,7 @@ interface GridRowProps {
   level: number
   stats: MetaStat[]
   gridValues: GridValues
+  formulaStatIds: Set<string>
   onCellChange: (statId: string, level: number, value: string) => void
 }
 
@@ -540,6 +746,7 @@ const GridRow = memo(({
   level,
   stats,
   gridValues,
+  formulaStatIds,
   onCellChange,
 }: GridRowProps): React.JSX.Element => {
   const isEven = level % 2 === 0
@@ -563,44 +770,65 @@ const GridRow = memo(({
       >
         {level}
       </td>
-      {stats.map((stat) => (
-        <td
-          key={stat.id}
-          style={{
-            padding: '2px 4px',
-            borderRight: '1px solid rgba(255,255,255,0.04)',
-          }}
-        >
-          <input
-            type="number"
-            value={gridValues[stat.id]?.[level] ?? ''}
-            onChange={(e) => onCellChange(stat.id, level, e.target.value)}
+      {stats.map((stat) => {
+        const isFormula = formulaStatIds.has(stat.id)
+        const cellValue = gridValues[stat.id]?.[level] ?? ''
+        return (
+          <td
+            key={stat.id}
             style={{
-              width: '100%',
-              background: 'transparent',
-              border: 'none',
-              outline: 'none',
-              color: 'inherit',
-              fontSize: 12,
-              fontFamily: 'monospace',
-              textAlign: 'right',
-              padding: '3px 4px',
-              cursor: 'text',
+              padding: '2px 4px',
+              borderRight: '1px solid rgba(255,255,255,0.04)',
+              background: isFormula ? 'rgba(94, 129, 172, 0.06)' : undefined,
             }}
-            onFocus={(e) => {
-              e.currentTarget.style.background = 'rgba(94, 129, 172, 0.15)'
-              e.currentTarget.style.borderRadius = '3px'
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.background = 'transparent'
-            }}
-          />
-        </td>
-      ))}
+          >
+            {isFormula ? (
+              <div
+                style={{
+                  width: '100%',
+                  fontSize: 12,
+                  fontFamily: 'monospace',
+                  textAlign: 'right',
+                  padding: '3px 4px',
+                  color: 'rgba(255,255,255,0.5)',
+                }}
+              >
+                {cellValue}
+              </div>
+            ) : (
+              <input
+                type="number"
+                value={cellValue}
+                onChange={(e) => onCellChange(stat.id, level, e.target.value)}
+                style={{
+                  width: '100%',
+                  background: 'transparent',
+                  border: 'none',
+                  outline: 'none',
+                  color: 'inherit',
+                  fontSize: 12,
+                  fontFamily: 'monospace',
+                  textAlign: 'right',
+                  padding: '3px 4px',
+                  cursor: 'text',
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.background = 'rgba(94, 129, 172, 0.15)'
+                  e.currentTarget.style.borderRadius = '3px'
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.background = 'transparent'
+                }}
+              />
+            )}
+          </td>
+        )
+      })}
     </tr>
   )
 }, (prev, next) => {
-  if (prev.level !== next.level || prev.stats !== next.stats || prev.onCellChange !== next.onCellChange) {
+  if (prev.level !== next.level || prev.stats !== next.stats
+      || prev.onCellChange !== next.onCellChange || prev.formulaStatIds !== next.formulaStatIds) {
     return false
   }
   for (const stat of prev.stats) {

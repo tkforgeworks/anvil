@@ -6,10 +6,12 @@ import type {
   ClassMetadataField,
   CreateClassInput,
   StatGrowthEntry,
+  StatGrowthFormula,
   UpdateClassInput,
 } from '../../shared/domain-types'
 import { markProjectDirty } from '../project/project-service'
 import { classRepository } from '../repositories'
+import { getDb } from '../db/connection'
 
 export function registerClassesHandlers(): void {
   ipcMain.handle(IPC_CHANNELS.CLASSES_LIST, (_event, options?: { includeDeleted?: boolean; deletedOnly?: boolean }) =>
@@ -51,14 +53,29 @@ export function registerClassesHandlers(): void {
     return record
   })
 
-  ipcMain.handle(IPC_CHANNELS.CLASSES_GET_STAT_GROWTH, (_event, classId: string) =>
-    classRepository.getStatGrowth(classId),
-  )
+  ipcMain.handle(IPC_CHANNELS.CLASSES_GET_STAT_GROWTH, (_event, classId: string) => {
+    const { max_level } = getDb()
+      .prepare('SELECT max_level FROM project_info LIMIT 1')
+      .get() as { max_level: number }
+    return classRepository.getStatGrowthWithFormulas(classId, max_level)
+  })
 
   ipcMain.handle(
     IPC_CHANNELS.CLASSES_SET_STAT_GROWTH,
     (_event, classId: string, entries: StatGrowthEntry[]) => {
       classRepository.setStatGrowth(classId, entries)
+      markProjectDirty()
+    },
+  )
+
+  ipcMain.handle(IPC_CHANNELS.CLASSES_GET_STAT_GROWTH_FORMULAS, (_event, classId: string) =>
+    classRepository.getStatGrowthFormulas(classId),
+  )
+
+  ipcMain.handle(
+    IPC_CHANNELS.CLASSES_SET_STAT_GROWTH_FORMULAS,
+    (_event, classId: string, formulas: StatGrowthFormula[]) => {
+      classRepository.setStatGrowthFormulas(classId, formulas)
       markProjectDirty()
     },
   )

@@ -451,7 +451,7 @@ export default function DerivedStatsEditor({
       setDerivedStats(defs)
       setStats(st)
       setMaxLevel(settings.maxLevel)
-      setStatGrowthEntries(entries)
+      setStatGrowthEntries(entries.entries)
       setBreakpointLevels(defaultBreakpointLevels(settings.maxLevel))
 
       const enabledMap: Record<string, boolean> = {}

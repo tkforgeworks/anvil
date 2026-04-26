@@ -7,9 +7,12 @@ import type {
   ClassMetadataField,
   ClassRecord,
   CreateClassInput,
+  StatGrowthData,
   StatGrowthEntry,
+  StatGrowthFormula,
   UpdateClassInput,
 } from '../../shared/domain-types'
+import { evaluateFormula } from '../formula/engine'
 
 interface ClassDbRow {
   id: string
@@ -91,6 +94,8 @@ export class ClassRepository extends DomainRepository {
       })
     const growthEntries = this.getStatGrowth(id)
     if (growthEntries.length > 0) this.setStatGrowth(newId, growthEntries)
+    const growthFormulas = this.getStatGrowthFormulas(id)
+    if (growthFormulas.length > 0) this.setStatGrowthFormulas(newId, growthFormulas)
     const assignments = this.getAbilityAssignments(id)
     if (assignments.length > 0) this.setAbilityAssignments(newId, assignments)
     const overrides = this.getDerivedStatOverrides(id)
@@ -165,6 +170,57 @@ export class ClassRepository extends DomainRepository {
         ins.run({ classId, statId: e.statId, level: e.level, value: e.value })
       }
     })()
+  }
+
+  getStatGrowthFormulas(classId: string): StatGrowthFormula[] {
+    const rows = this.dbProvider()
+      .prepare(
+        `SELECT stat_id AS statId, formula
+         FROM class_stat_growth_formulas
+         WHERE class_id = ?`,
+      )
+      .all(classId) as StatGrowthFormula[]
+    return rows
+  }
+
+  setStatGrowthFormulas(classId: string, formulas: StatGrowthFormula[]): void {
+    const db = this.dbProvider()
+    const del = db.prepare('DELETE FROM class_stat_growth_formulas WHERE class_id = ?')
+    const ins = db.prepare(
+      `INSERT INTO class_stat_growth_formulas (class_id, stat_id, formula)
+       VALUES (@classId, @statId, @formula)
+       ON CONFLICT (class_id, stat_id)
+       DO UPDATE SET formula = excluded.formula, updated_at = datetime('now')`,
+    )
+    db.transaction(() => {
+      del.run(classId)
+      for (const f of formulas) {
+        ins.run({ classId, statId: f.statId, formula: f.formula })
+      }
+    })()
+  }
+
+  getStatGrowthWithFormulas(classId: string, maxLevel: number): StatGrowthData {
+    const formulas = this.getStatGrowthFormulas(classId)
+    const manualEntries = this.getStatGrowth(classId)
+
+    const formulaStatIds = new Set(formulas.map((f) => f.statId))
+    const entries: StatGrowthEntry[] = manualEntries.filter(
+      (e) => !formulaStatIds.has(e.statId),
+    )
+
+    for (const f of formulas) {
+      for (let level = 1; level <= maxLevel; level++) {
+        const result = evaluateFormula(f.formula, { level, max_level: maxLevel })
+        entries.push({
+          statId: f.statId,
+          level,
+          value: result.value ?? 0,
+        })
+      }
+    }
+
+    return { entries, formulas }
   }
 
   getAbilityAssignments(classId: string): ClassAbilityAssignment[] {

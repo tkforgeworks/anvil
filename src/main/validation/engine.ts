@@ -597,6 +597,50 @@ function findCycle(graph: Map<string, string[]>): string[] | null {
   return null
 }
 
+// ─── Stat growth formula checks ──────────────────────────────────────────────
+
+const ALLOWED_GROWTH_VARS = new Set(['level', 'max_level'])
+
+function checkStatGrowthFormulas(db: DbConnection): ValidationIssue[] {
+  const issues: ValidationIssue[] = []
+  const { max_level: maxLevel } = db.prepare(
+    'SELECT max_level FROM project_info LIMIT 1',
+  ).get() as { max_level: number }
+
+  const rows = db.prepare(
+    `SELECT f.class_id, f.stat_id, f.formula,
+            c.display_name AS class_name, s.display_name AS stat_name
+     FROM class_stat_growth_formulas f
+     JOIN classes c ON c.id = f.class_id AND c.deleted_at IS NULL
+     JOIN stats s ON s.id = f.stat_id`,
+  ).all() as { class_id: string; stat_id: string; formula: string; class_name: string; stat_name: string }[]
+
+  for (const row of rows) {
+    const field = `statGrowthFormula:${row.stat_name}`
+    const syntaxErr = validateFormula(row.formula)
+    if (syntaxErr) {
+      issues.push(issue('classes', row.class_id, row.class_name, field, 'error', `Stat growth formula for ${row.stat_name}: ${syntaxErr}`))
+      continue
+    }
+
+    const vars = extractVariableNames(row.formula)
+    const unknowns = vars.filter((v) => !ALLOWED_GROWTH_VARS.has(v))
+    if (unknowns.length > 0) {
+      issues.push(issue('classes', row.class_id, row.class_name, field, 'warning', `Stat growth formula for ${row.stat_name} references unknown variable(s): ${unknowns.join(', ')}. Only "level" and "max_level" are available.`))
+    }
+
+    for (let level = 1; level <= maxLevel; level++) {
+      const result = evaluateFormula(row.formula, { level, max_level: maxLevel })
+      if (result.error) {
+        issues.push(issue('classes', row.class_id, row.class_name, field, 'error', `Stat growth formula for ${row.stat_name} fails at level ${level}: ${result.error}`))
+        break
+      }
+    }
+  }
+
+  return issues
+}
+
 // ─── Public entry point ──────────────────────────────────────────────────────
 
 /**
@@ -615,6 +659,7 @@ export function validateProject(db: DbConnection): ValidationIssue[] {
       ...syntax.issues,
       ...checkFormulaRuntime(db, syntax.failedBaseIds, syntax.failedOverrideKeys),
       ...checkDerivedStatCycles(db, syntax.failedBaseIds, syntax.failedOverrideKeys),
+      ...checkStatGrowthFormulas(db),
     ]
   })
 

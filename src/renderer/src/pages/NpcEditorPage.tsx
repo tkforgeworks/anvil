@@ -117,7 +117,7 @@ export default function NpcEditorPage({ recordId, onClose }: NpcEditorPageProps 
       const fetched = await Promise.all(
         missing.map(async (classId) => [classId, await classesApi.getStatGrowth(classId)] as const),
       )
-      for (const [classId, entries] of fetched) next.set(classId, entries)
+      for (const [classId, data] of fetched) next.set(classId, data.entries)
       return next
     },
     [],

@@ -5,7 +5,9 @@ import type {
   ClassMetadataField,
   ClassRecord,
   CreateClassInput,
+  StatGrowthData,
   StatGrowthEntry,
+  StatGrowthFormula,
   UpdateClassInput,
 } from '../../shared/domain-types'
 
@@ -35,10 +37,16 @@ export const classesApi = {
     window.anvil.invoke<ClassRecord | null>(IPC_CHANNELS.CLASSES_DUPLICATE, id),
 
   getStatGrowth: (classId: string) =>
-    window.anvil.invoke<StatGrowthEntry[]>(IPC_CHANNELS.CLASSES_GET_STAT_GROWTH, classId),
+    window.anvil.invoke<StatGrowthData>(IPC_CHANNELS.CLASSES_GET_STAT_GROWTH, classId),
 
   setStatGrowth: (classId: string, entries: StatGrowthEntry[]) =>
     window.anvil.invoke<void>(IPC_CHANNELS.CLASSES_SET_STAT_GROWTH, classId, entries),
+
+  getStatGrowthFormulas: (classId: string) =>
+    window.anvil.invoke<StatGrowthFormula[]>(IPC_CHANNELS.CLASSES_GET_STAT_GROWTH_FORMULAS, classId),
+
+  setStatGrowthFormulas: (classId: string, formulas: StatGrowthFormula[]) =>
+    window.anvil.invoke<void>(IPC_CHANNELS.CLASSES_SET_STAT_GROWTH_FORMULAS, classId, formulas),
 
   getDerivedStatOverrides: (classId: string) =>
     window.anvil.invoke<ClassDerivedStatOverride[]>(

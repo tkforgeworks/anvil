@@ -1,4 +1,5 @@
 import type { DbConnection } from '../db/connection'
+import { evaluateFormula } from '../formula/engine'
 
 export interface ExportScope {
   mode: 'full' | 'domain' | 'selection'
@@ -133,10 +134,27 @@ function assembleClasses(db: DbConnection, ids?: string[]): Record<string, unkno
      ORDER BY display_name COLLATE NOCASE`,
   ).all(...params) as { id: string; display_name: string; export_key: string; description: string; resource_multiplier: number }[]
 
+  const { max_level: maxLevel } = db.prepare(
+    'SELECT max_level FROM project_info LIMIT 1',
+  ).get() as { max_level: number }
+
   return rows.map((row) => {
-    const statGrowth = db.prepare(
+    const manualStatGrowth = db.prepare(
       `SELECT stat_id, level, value FROM class_stat_growth WHERE class_id = ? ORDER BY stat_id, level`,
     ).all(row.id) as { stat_id: string; level: number; value: number }[]
+
+    const growthFormulas = db.prepare(
+      `SELECT stat_id, formula FROM class_stat_growth_formulas WHERE class_id = ?`,
+    ).all(row.id) as { stat_id: string; formula: string }[]
+
+    const formulaStatIds = new Set(growthFormulas.map((f) => f.stat_id))
+    const statGrowth = manualStatGrowth.filter((sg) => !formulaStatIds.has(sg.stat_id))
+    for (const f of growthFormulas) {
+      for (let level = 1; level <= maxLevel; level++) {
+        const result = evaluateFormula(f.formula, { level, max_level: maxLevel })
+        statGrowth.push({ stat_id: f.stat_id, level, value: result.value ?? 0 })
+      }
+    }
 
     const abilities = db.prepare(
       `SELECT ability_id, sort_order FROM class_ability_assignments WHERE class_id = ? ORDER BY sort_order`,
