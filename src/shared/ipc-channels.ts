@@ -21,6 +21,8 @@ export const IPC_CHANNELS = {
   CLASSES_DUPLICATE: 'classes:duplicate',
   CLASSES_GET_STAT_GROWTH: 'classes:get-stat-growth',
   CLASSES_SET_STAT_GROWTH: 'classes:set-stat-growth',
+  CLASSES_GET_STAT_GROWTH_FORMULAS: 'classes:get-stat-growth-formulas',
+  CLASSES_SET_STAT_GROWTH_FORMULAS: 'classes:set-stat-growth-formulas',
   CLASSES_GET_DERIVED_STAT_OVERRIDES: 'classes:get-derived-stat-overrides',
   CLASSES_SET_DERIVED_STAT_OVERRIDES: 'classes:set-derived-stat-overrides',
   CLASSES_GET_METADATA_FIELDS: 'classes:get-metadata-fields',
@@ -119,6 +121,11 @@ export const IPC_CHANNELS = {
   META_LIST_STATS: 'meta:list-stats',
   META_GET_PROJECT_SETTINGS: 'meta:get-project-settings',
   META_SET_PROJECT_SETTINGS: 'meta:set-project-settings',
+  META_ADD_NPC_TYPE: 'meta:add-npc-type',
+  META_UPDATE_NPC_TYPE: 'meta:update-npc-type',
+  META_DELETE_NPC_TYPE: 'meta:delete-npc-type',
+  META_REORDER_NPC_TYPES: 'meta:reorder-npc-types',
+
   META_LIST_DERIVED_STATS: 'meta:list-derived-stats',
 
   // Meta-layer CRUD
@@ -156,6 +163,11 @@ export const IPC_CHANNELS = {
   // Custom field values (EAV read/write)
   CUSTOM_FIELDS_GET_VALUES: 'custom-fields:get-values',
   CUSTOM_FIELDS_SET_VALUES: 'custom-fields:set-values',
+
+  // Window controls
+  WINDOW_MINIMIZE: 'window:minimize',
+  WINDOW_MAXIMIZE: 'window:maximize',
+  WINDOW_CLOSE: 'window:close',
 
   // Lifecycle / Bulk Operations
   LIFECYCLE_BULK_SOFT_DELETE: 'lifecycle:bulk-soft-delete',

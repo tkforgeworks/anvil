@@ -77,7 +77,21 @@ export const metaApi = {
   reorderRarities: (items: MetaReorderItem[]) =>
     window.anvil.invoke<void>(IPC_CHANNELS.META_REORDER_RARITIES, items),
 
-  // ─── Crafting Stations CRUD ─────────────────────────────────────────────────
+  // ─── NPC Types CRUD ───��─────────────────────��───────────────────────────────
+
+  addNpcType: (input: MetaItemInput) =>
+    window.anvil.invoke<MetaNpcType>(IPC_CHANNELS.META_ADD_NPC_TYPE, input),
+
+  updateNpcType: (id: string, input: MetaItemInput) =>
+    window.anvil.invoke<MetaNpcType>(IPC_CHANNELS.META_UPDATE_NPC_TYPE, id, input),
+
+  deleteNpcType: (id: string) =>
+    window.anvil.invoke<MetaDeleteResult>(IPC_CHANNELS.META_DELETE_NPC_TYPE, id),
+
+  reorderNpcTypes: (items: MetaReorderItem[]) =>
+    window.anvil.invoke<void>(IPC_CHANNELS.META_REORDER_NPC_TYPES, items),
+
+  // ─── Crafting Stations CRUD ─────────��───────────────────────────────────────
 
   addCraftingStation: (input: MetaItemInput) =>
     window.anvil.invoke<MetaCraftingStation>(IPC_CHANNELS.META_ADD_CRAFTING_STATION, input),

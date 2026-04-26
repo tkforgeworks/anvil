@@ -7,6 +7,9 @@ function createWindow(): void {
   const win = new BrowserWindow({
     width: 1280,
     height: 800,
+    minWidth: 900,
+    minHeight: 600,
+    frame: false,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       nodeIntegration: false,
@@ -21,9 +24,27 @@ function createWindow(): void {
   }
 }
 
+function registerWindowControls(): void {
+  ipcMain.handle('window:minimize', (event) => {
+    BrowserWindow.fromWebContents(event.sender)?.minimize()
+  })
+  ipcMain.handle('window:maximize', (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    if (win?.isMaximized()) {
+      win.unmaximize()
+    } else {
+      win?.maximize()
+    }
+  })
+  ipcMain.handle('window:close', (event) => {
+    BrowserWindow.fromWebContents(event.sender)?.close()
+  })
+}
+
 app.whenReady().then(() => {
   // Register IPC handlers inside whenReady so the app is fully initialised
   registerAllIpcHandlers()
+  registerWindowControls()
   ipcMain.handle('ping', () => 'pong')
 
   createWindow()

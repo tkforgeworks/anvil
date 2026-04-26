@@ -400,6 +400,77 @@ export function registerMetaHandlers(): void {
     },
   )
 
+  // ─── NPC Types CRUD ──────────────────────────────────────────────────────────
+
+  ipcMain.handle(
+    IPC_CHANNELS.META_ADD_NPC_TYPE,
+    (_event, input: MetaItemInput): MetaNpcType => {
+      const db = getDb()
+      const id = randomUUID()
+      const now = new Date().toISOString()
+      const maxOrder = (
+        db.prepare(`SELECT COALESCE(MAX(sort_order), 0) AS m FROM npc_types`).get() as { m: number }
+      ).m
+      db.prepare(
+        `INSERT INTO npc_types (id, display_name, export_key, description, sort_order, created_at, updated_at)
+         VALUES (?, ?, ?, '', ?, ?, ?)`,
+      ).run(id, input.displayName, input.exportKey, maxOrder + 1, now, now)
+      markProjectDirty()
+      const row = db
+        .prepare(`SELECT id, display_name, export_key, description, sort_order FROM npc_types WHERE id = ?`)
+        .get(id) as NpcTypeRow
+      return toMetaNpcType(row)
+    },
+  )
+
+  ipcMain.handle(
+    IPC_CHANNELS.META_UPDATE_NPC_TYPE,
+    (_event, id: string, input: MetaItemInput): MetaNpcType => {
+      const db = getDb()
+      const now = new Date().toISOString()
+      db.prepare(
+        `UPDATE npc_types SET display_name = ?, export_key = ?, updated_at = ? WHERE id = ?`,
+      ).run(input.displayName, input.exportKey, now, id)
+      markProjectDirty()
+      const row = db
+        .prepare(`SELECT id, display_name, export_key, description, sort_order FROM npc_types WHERE id = ?`)
+        .get(id) as NpcTypeRow
+      return toMetaNpcType(row)
+    },
+  )
+
+  ipcMain.handle(
+    IPC_CHANNELS.META_DELETE_NPC_TYPE,
+    (_event, id: string): MetaDeleteResult => {
+      const db = getDb()
+      const { c } = db
+        .prepare(`SELECT COUNT(*) AS c FROM npcs WHERE npc_type_id = ? AND deleted_at IS NULL`)
+        .get(id) as { c: number }
+      if (c > 0) {
+        return { deleted: false, reason: `NPC type is used by ${c} NPC(s).` }
+      }
+      db.prepare(`DELETE FROM npc_types WHERE id = ?`).run(id)
+      markProjectDirty()
+      return { deleted: true, reason: null }
+    },
+  )
+
+  ipcMain.handle(
+    IPC_CHANNELS.META_REORDER_NPC_TYPES,
+    (_event, items: MetaReorderItem[]): void => {
+      const db = getDb()
+      const stmt = db.prepare(`UPDATE npc_types SET sort_order = ?, updated_at = ? WHERE id = ?`)
+      const now = new Date().toISOString()
+      const run = db.transaction(() => {
+        for (const item of items) {
+          stmt.run(item.sortOrder, now, item.id)
+        }
+      })
+      run()
+      markProjectDirty()
+    },
+  )
+
   // ─── Crafting Stations CRUD ──────────────────────────────────────────────────
 
   ipcMain.handle(

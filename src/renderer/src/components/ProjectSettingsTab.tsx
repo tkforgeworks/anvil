@@ -1045,6 +1045,7 @@ export default function ProjectSettingsTab(): React.JSX.Element {
   const refreshRarities = (): void => { void metaApi.listRarities().then(setRarities) }
   const refreshCraftingStations = (): void => { void metaApi.listCraftingStations().then(setCraftingStations) }
   const refreshCraftingSpecializations = (): void => { void metaApi.listCraftingSpecializations().then(setCraftingSpecializations) }
+  const refreshNpcTypes = (): void => { void metaApi.listNpcTypes().then(setNpcTypes) }
   const refreshDerivedStats = (): void => { void metaApi.listDerivedStats().then(setDerivedStats) }
 
   if (!projectSettings) {
@@ -1087,26 +1088,24 @@ export default function ProjectSettingsTab(): React.JSX.Element {
 
       <Box>
         <Typography variant="subtitle2" gutterBottom>Soft-Delete Reference Severity</Typography>
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
+          Controls how the validation engine treats references to soft-deleted (archived) records.
+        </Typography>
         <FormControl>
           <RadioGroup
             value={projectSettings.softDeleteReferenceSeverity}
             onChange={(e) => handleSeverityChange(e.target.value)}
           >
-            <FormControlLabel
-              value="Warning"
-              control={<Radio size="small" />}
-              label="Warning — flag references to archived records, but allow export"
-            />
-            <FormControlLabel
-              value="Error"
-              control={<Radio size="small" />}
-              label="Error — block export when references to archived records exist"
-            />
+            <FormControlLabel value="Warning" control={<Radio size="small" />} label="Warning" />
+            <Typography variant="caption" color="text.secondary" sx={{ pl: 3.75, mt: -0.5, mb: 0.5 }}>
+              Flag references to archived records, but allow export.
+            </Typography>
+            <FormControlLabel value="Error" control={<Radio size="small" />} label="Error" />
+            <Typography variant="caption" color="text.secondary" sx={{ pl: 3.75, mt: -0.5 }}>
+              Block export when references to archived records exist.
+            </Typography>
           </RadioGroup>
         </FormControl>
-        <Typography variant="caption" color="text.secondary">
-          Controls how the validation engine treats references to soft-deleted (archived) records.
-        </Typography>
       </Box>
 
       <Divider />
@@ -1157,6 +1156,21 @@ export default function ProjectSettingsTab(): React.JSX.Element {
         onDelete={metaApi.deleteCraftingSpecialization}
         onReorder={metaApi.reorderCraftingSpecializations}
         onRefresh={refreshCraftingSpecializations}
+      />
+
+      <Divider />
+
+      {/* ── NPC Types ──────────────────────────────────────────────────────────── */}
+      <MetaListSection
+        title="NPC Types"
+        singularName="NPC Type"
+        description="Types used to categorize NPCs. Each NPC type can have its own custom fields."
+        items={npcTypes}
+        onAdd={metaApi.addNpcType}
+        onUpdate={metaApi.updateNpcType}
+        onDelete={metaApi.deleteNpcType}
+        onReorder={metaApi.reorderNpcTypes}
+        onRefresh={refreshNpcTypes}
       />
 
       <Divider />

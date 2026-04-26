@@ -329,18 +329,24 @@ export default function ApplicationSettingsPanel(): React.JSX.Element {
         <Typography variant="subtitle2" gutterBottom>
           Preferred Editing Mode
         </Typography>
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
+          Controls how record editors open when clicking a record in any domain list view.
+        </Typography>
         <FormControl>
           <RadioGroup
             value={appSettings.editingMode}
             onChange={(e) => handleEditingModeChange(e.target.value)}
           >
-            <FormControlLabel value="modal" control={<Radio size="small" />} label="Modal (opens editor in a dialog overlay)" disabled={saving} />
-            <FormControlLabel value="full-page" control={<Radio size="small" />} label="Full Page (navigates to a dedicated editor page)" disabled={saving} />
+            <FormControlLabel value="modal" control={<Radio size="small" />} label="Modal" disabled={saving} />
+            <Typography variant="caption" color="text.secondary" sx={{ pl: 3.75, mt: -0.5, mb: 0.5 }}>
+              Opens the editor in a dialog overlay on top of the list view.
+            </Typography>
+            <FormControlLabel value="full-page" control={<Radio size="small" />} label="Full Page" disabled={saving} />
+            <Typography variant="caption" color="text.secondary" sx={{ pl: 3.75, mt: -0.5 }}>
+              Navigates to a dedicated editor page.
+            </Typography>
           </RadioGroup>
         </FormControl>
-        <Typography variant="caption" color="text.secondary">
-          Controls how record editors open when clicking a record in any domain list view.
-        </Typography>
       </Box>
     </Stack>
   )

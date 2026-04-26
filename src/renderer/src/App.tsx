@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom'
 import { Box, CircularProgress } from '@mui/material'
 import { useEffect, useState } from 'react'
+import TitleBar from './components/TitleBar'
 import AppShell from './components/AppShell'
 import DashboardPage from './pages/DashboardPage'
 import ClassesPage from './pages/ClassesPage'
@@ -47,14 +48,24 @@ export default function App(): React.JSX.Element {
 
   if (isLoading) {
     return (
-      <Box sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}>
-        <CircularProgress aria-label="Loading project state" />
+      <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+        <TitleBar />
+        <Box sx={{ flex: 1, display: 'grid', placeItems: 'center' }}>
+          <CircularProgress aria-label="Loading project state" />
+        </Box>
       </Box>
     )
   }
 
   if (!activeProject) {
-    return <WelcomePage />
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+        <TitleBar />
+        <Box sx={{ flex: 1, overflow: 'auto' }}>
+          <WelcomePage />
+        </Box>
+      </Box>
+    )
   }
 
   return (
