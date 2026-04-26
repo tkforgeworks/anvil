@@ -1,4 +1,4 @@
-import { ArrowBack as BackIcon } from '@mui/icons-material'
+import { ArrowBack as BackIcon, Redo as RedoIcon, Undo as UndoIcon } from '@mui/icons-material'
 import {
   Alert,
   Box,
@@ -21,6 +21,7 @@ import {
   Typography,
 } from '@mui/material'
 import { useCallback, useEffect, useState } from 'react'
+import { useUndoRedo } from '../hooks/useUndoRedo'
 import { useNavigate, useParams } from 'react-router-dom'
 import { abilitiesApi } from '../../api/abilities.api'
 import { metaApi } from '../../api/meta.api'
@@ -46,6 +47,17 @@ function TabPanel({ index, value, children }: TabPanelProps): React.JSX.Element 
 
 // ─── Editor ───────────────────────────────────────────────────────────────────
 
+interface FormSnapshot {
+  displayName: string
+  exportKey: string
+  description: string
+  abilityType: string
+  resourceType: string
+  resourceCost: string
+  cooldown: string
+  statModifiers: Record<string, string>
+}
+
 export default function AbilityEditorPage(): React.JSX.Element {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -70,6 +82,37 @@ export default function AbilityEditorPage(): React.JSX.Element {
   const [usedBy, setUsedBy] = useState<AbilityUsedBy | null>(null)
   const [usedByLoading, setUsedByLoading] = useState(false)
   const { recordIssues, runValidation } = useRecordValidation('abilities', id)
+
+  const applySnapshot = useCallback((snapshot: FormSnapshot) => {
+    setDisplayName(snapshot.displayName)
+    setExportKey(snapshot.exportKey)
+    setDescription(snapshot.description)
+    setAbilityType(snapshot.abilityType)
+    setResourceType(snapshot.resourceType)
+    setResourceCost(snapshot.resourceCost)
+    setCooldown(snapshot.cooldown)
+    setStatModifiers(snapshot.statModifiers)
+    setDirty(true)
+    setSavedAt(null)
+  }, [])
+
+  const undoRedo = useUndoRedo<FormSnapshot>(applySnapshot)
+
+  const pushSnapshot = (overrides: Partial<FormSnapshot> = {}): void => {
+    setDirty(true)
+    setSavedAt(null)
+    undoRedo.pushState({
+      displayName,
+      exportKey,
+      description,
+      abilityType,
+      resourceType,
+      resourceCost,
+      cooldown,
+      statModifiers,
+      ...overrides,
+    })
+  }
 
   const load = useCallback(async () => {
     if (!id) return
@@ -97,6 +140,16 @@ export default function AbilityEditorPage(): React.JSX.Element {
       setStats(statList)
       setUsedBy(null)
       setDirty(false)
+      undoRedo.reset({
+        displayName: data.displayName,
+        exportKey: data.exportKey,
+        description: data.description,
+        abilityType: data.abilityType,
+        resourceType: data.resourceType,
+        resourceCost: String(data.resourceCost),
+        cooldown: String(data.cooldown),
+        statModifiers: modStrings,
+      })
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Failed to load ability.')
     } finally {
@@ -120,11 +173,6 @@ export default function AbilityEditorPage(): React.JSX.Element {
       )
       .finally(() => setUsedByLoading(false))
   }, [activeTab, id, usedBy])
-
-  const markDirty = (): void => {
-    setDirty(true)
-    setSavedAt(null)
-  }
 
   const handleSave = async (): Promise<void> => {
     if (!id) return
@@ -207,7 +255,7 @@ export default function AbilityEditorPage(): React.JSX.Element {
             value={displayName}
             onChange={(e) => {
               setDisplayName(e.target.value)
-              markDirty()
+              pushSnapshot({ displayName: e.target.value })
             }}
             inputProps={{ style: { fontSize: '1.5rem', fontWeight: 600 } }}
             placeholder="Ability Name"
@@ -219,7 +267,7 @@ export default function AbilityEditorPage(): React.JSX.Element {
             value={exportKey}
             onChange={(e) => {
               setExportKey(e.target.value)
-              markDirty()
+              pushSnapshot({ exportKey: e.target.value })
             }}
             inputProps={{ style: { fontFamily: 'monospace', fontSize: '0.8rem' } }}
             placeholder="export-key"
@@ -228,9 +276,23 @@ export default function AbilityEditorPage(): React.JSX.Element {
           />
         </Box>
 
-        <Stack direction="row" alignItems="center" spacing={2} sx={{ pt: 0.5 }}>
+        <Stack direction="row" alignItems="center" spacing={1} sx={{ pt: 0.5 }}>
+          <Tooltip title="Undo (Ctrl+Z)">
+            <span>
+              <IconButton size="small" onClick={undoRedo.triggerUndo} disabled={!undoRedo.canUndo}>
+                <UndoIcon fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>
+          <Tooltip title="Redo (Ctrl+Y)">
+            <span>
+              <IconButton size="small" onClick={undoRedo.triggerRedo} disabled={!undoRedo.canRedo}>
+                <RedoIcon fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>
           {savedAt && (
-            <Typography variant="caption" color="success.main">
+            <Typography variant="caption" color="success.main" sx={{ ml: 1 }}>
               Saved at {savedAt.toLocaleTimeString()}
             </Typography>
           )}
@@ -238,6 +300,7 @@ export default function AbilityEditorPage(): React.JSX.Element {
             variant="contained"
             onClick={() => void handleSave()}
             disabled={!isDirty || isSaving}
+            sx={{ ml: 1 }}
           >
             Save
           </Button>
@@ -267,7 +330,7 @@ export default function AbilityEditorPage(): React.JSX.Element {
             value={description}
             onChange={(e) => {
               setDescription(e.target.value)
-              markDirty()
+              pushSnapshot({ description: e.target.value })
             }}
             multiline
             minRows={3}
@@ -278,7 +341,7 @@ export default function AbilityEditorPage(): React.JSX.Element {
             value={abilityType}
             onChange={(e) => {
               setAbilityType(e.target.value)
-              markDirty()
+              pushSnapshot({ abilityType: e.target.value })
             }}
             fullWidth
             helperText="e.g. active, passive, ultimate"
@@ -288,7 +351,7 @@ export default function AbilityEditorPage(): React.JSX.Element {
             value={resourceType}
             onChange={(e) => {
               setResourceType(e.target.value)
-              markDirty()
+              pushSnapshot({ resourceType: e.target.value })
             }}
             fullWidth
             helperText="e.g. mana, stamina, rage"
@@ -300,7 +363,7 @@ export default function AbilityEditorPage(): React.JSX.Element {
               value={resourceCost}
               onChange={(e) => {
                 setResourceCost(e.target.value)
-                markDirty()
+                pushSnapshot({ resourceCost: e.target.value })
               }}
               inputProps={{ min: 0 }}
               sx={{ flex: 1 }}
@@ -311,7 +374,7 @@ export default function AbilityEditorPage(): React.JSX.Element {
               value={cooldown}
               onChange={(e) => {
                 setCooldown(e.target.value)
-                markDirty()
+                pushSnapshot({ cooldown: e.target.value })
               }}
               inputProps={{ min: 0 }}
               helperText="In turns or seconds"
@@ -351,8 +414,9 @@ export default function AbilityEditorPage(): React.JSX.Element {
                         size="small"
                         value={statModifiers[stat.id] ?? '0'}
                         onChange={(e) => {
-                          setStatModifiers((prev) => ({ ...prev, [stat.id]: e.target.value }))
-                          markDirty()
+                          const nextModifiers = { ...statModifiers, [stat.id]: e.target.value }
+                          setStatModifiers(nextModifiers)
+                          pushSnapshot({ statModifiers: nextModifiers })
                         }}
                         sx={{ width: 120 }}
                         InputProps={{

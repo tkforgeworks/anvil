@@ -4,6 +4,8 @@ import {
   ArrowDownward as MoveDownIcon,
   ArrowUpward as MoveUpIcon,
   Delete as DeleteIcon,
+  Redo as RedoIcon,
+  Undo as UndoIcon,
 } from '@mui/icons-material'
 import {
   Alert,
@@ -29,6 +31,7 @@ import {
   Typography,
 } from '@mui/material'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useUndoRedo } from '../hooks/useUndoRedo'
 import { useNavigate, useParams } from 'react-router-dom'
 import { itemsApi } from '../../api/items.api'
 import { metaApi } from '../../api/meta.api'
@@ -56,6 +59,17 @@ function TabPanel({ index, value, children }: TabPanelProps): React.JSX.Element 
       {value === index && children}
     </Box>
   )
+}
+
+interface FormSnapshot {
+  displayName: string
+  exportKey: string
+  description: string
+  outputItemId: string
+  outputQuantity: string
+  craftingStationId: string
+  craftingSpecializationId: string
+  ingredients: RecipeIngredient[]
 }
 
 function itemLabel(item: ItemRecord | null): string {
@@ -86,6 +100,37 @@ export default function RecipeEditorPage(): React.JSX.Element {
   const [savedAt, setSavedAt] = useState<Date | null>(null)
   const [activeTab, setActiveTab] = useState(0)
   const { recordIssues, issuesForField, runValidation } = useRecordValidation('recipes', id)
+
+  const applySnapshot = useCallback((snapshot: FormSnapshot) => {
+    setDisplayName(snapshot.displayName)
+    setExportKey(snapshot.exportKey)
+    setDescription(snapshot.description)
+    setOutputItemId(snapshot.outputItemId)
+    setOutputQuantity(snapshot.outputQuantity)
+    setCraftingStationId(snapshot.craftingStationId)
+    setCraftingSpecializationId(snapshot.craftingSpecializationId)
+    setIngredients(snapshot.ingredients)
+    setDirty(true)
+    setSavedAt(null)
+  }, [])
+
+  const undoRedo = useUndoRedo<FormSnapshot>(applySnapshot)
+
+  const pushSnapshot = (overrides: Partial<FormSnapshot> = {}): void => {
+    setDirty(true)
+    setSavedAt(null)
+    undoRedo.pushState({
+      displayName,
+      exportKey,
+      description,
+      outputItemId,
+      outputQuantity,
+      craftingStationId,
+      craftingSpecializationId,
+      ingredients,
+      ...overrides,
+    })
+  }
 
   const itemById = useMemo(() => new Map(items.map((item) => [item.id, item])), [items])
   const activeItems = useMemo(() => items.filter((item) => !item.deletedAt), [items])
@@ -119,6 +164,16 @@ export default function RecipeEditorPage(): React.JSX.Element {
       setStations(stationList)
       setSpecializations(specializationList)
       setDirty(false)
+      undoRedo.reset({
+        displayName: data.displayName,
+        exportKey: data.exportKey,
+        description: data.description,
+        outputItemId: data.outputItemId,
+        outputQuantity: String(data.outputQuantity),
+        craftingStationId: data.craftingStationId ?? '',
+        craftingSpecializationId: data.craftingSpecializationId ?? '',
+        ingredients: ingredientList,
+      })
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Failed to load recipe.')
     } finally {
@@ -130,40 +185,36 @@ export default function RecipeEditorPage(): React.JSX.Element {
     void load()
   }, [load])
 
-  const markDirty = (): void => {
-    setDirty(true)
-    setSavedAt(null)
-  }
-
   const setIngredientAt = (index: number, update: Partial<RecipeIngredient>): void => {
-    setIngredients((prev) =>
-      prev.map((ingredient, i) => (i === index ? { ...ingredient, ...update } : ingredient)),
+    const nextIngredients = ingredients.map((ingredient, i) =>
+      i === index ? { ...ingredient, ...update } : ingredient,
     )
-    markDirty()
+    setIngredients(nextIngredients)
+    pushSnapshot({ ingredients: nextIngredients })
   }
 
   const moveIngredient = (index: number, direction: -1 | 1): void => {
     const nextIndex = index + direction
     if (nextIndex < 0 || nextIndex >= ingredients.length) return
-    setIngredients((prev) => {
-      const next = [...prev]
-      const [entry] = next.splice(index, 1)
-      next.splice(nextIndex, 0, entry)
-      return next
-    })
-    markDirty()
+    const next = [...ingredients]
+    const [entry] = next.splice(index, 1)
+    next.splice(nextIndex, 0, entry)
+    setIngredients(next)
+    pushSnapshot({ ingredients: next })
   }
 
   const removeIngredient = (index: number): void => {
-    setIngredients((prev) => prev.filter((_, i) => i !== index))
-    markDirty()
+    const nextIngredients = ingredients.filter((_, i) => i !== index)
+    setIngredients(nextIngredients)
+    pushSnapshot({ ingredients: nextIngredients })
   }
 
   const addIngredient = (): void => {
     const itemId = activeItems[0]?.id
     if (!itemId) return
-    setIngredients((prev) => [...prev, { itemId, quantity: 1, sortOrder: prev.length }])
-    markDirty()
+    const nextIngredients = [...ingredients, { itemId, quantity: 1, sortOrder: ingredients.length }]
+    setIngredients(nextIngredients)
+    pushSnapshot({ ingredients: nextIngredients })
   }
 
   const handleSave = async (): Promise<void> => {
@@ -250,7 +301,7 @@ export default function RecipeEditorPage(): React.JSX.Element {
           <TextField
             variant="standard"
             value={displayName}
-            onChange={(e) => { setDisplayName(e.target.value); markDirty() }}
+            onChange={(e) => { setDisplayName(e.target.value); pushSnapshot({ displayName: e.target.value }) }}
             inputProps={{ style: { fontSize: '1.5rem', fontWeight: 600 } }}
             placeholder="Recipe Name"
             fullWidth
@@ -259,16 +310,30 @@ export default function RecipeEditorPage(): React.JSX.Element {
           <TextField
             variant="standard"
             value={exportKey}
-            onChange={(e) => { setExportKey(e.target.value); markDirty() }}
+            onChange={(e) => { setExportKey(e.target.value); pushSnapshot({ exportKey: e.target.value }) }}
             inputProps={{ style: { fontFamily: 'monospace', fontSize: '0.8rem' } }}
             placeholder="export-key"
             helperText="Export key - used in exported files"
             sx={{ maxWidth: 360 }}
           />
         </Box>
-        <Stack direction="row" alignItems="center" spacing={2} sx={{ pt: 0.5 }}>
-          {savedAt && <Typography variant="caption" color="success.main">Saved at {savedAt.toLocaleTimeString()}</Typography>}
-          <Button variant="contained" onClick={() => void handleSave()} disabled={!isDirty || isSaving || !displayName.trim() || !exportKey.trim() || !outputItemId || hasOutputAsIngredient}>
+        <Stack direction="row" alignItems="center" spacing={1} sx={{ pt: 0.5 }}>
+          <Tooltip title="Undo (Ctrl+Z)">
+            <span>
+              <IconButton size="small" onClick={undoRedo.triggerUndo} disabled={!undoRedo.canUndo}>
+                <UndoIcon fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>
+          <Tooltip title="Redo (Ctrl+Y)">
+            <span>
+              <IconButton size="small" onClick={undoRedo.triggerRedo} disabled={!undoRedo.canRedo}>
+                <RedoIcon fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>
+          {savedAt && <Typography variant="caption" color="success.main" sx={{ ml: 1 }}>Saved at {savedAt.toLocaleTimeString()}</Typography>}
+          <Button variant="contained" onClick={() => void handleSave()} disabled={!isDirty || isSaving || !displayName.trim() || !exportKey.trim() || !outputItemId || hasOutputAsIngredient} sx={{ ml: 1 }}>
             Save
           </Button>
         </Stack>
@@ -294,7 +359,7 @@ export default function RecipeEditorPage(): React.JSX.Element {
               value={outputItem}
               getOptionLabel={itemLabel}
               isOptionEqualToValue={(option, value) => option.id === value.id}
-              onChange={(_, item) => { setOutputItemId(item?.id ?? ''); markDirty() }}
+              onChange={(_, item) => { setOutputItemId(item?.id ?? ''); pushSnapshot({ outputItemId: item?.id ?? '' }) }}
               renderInput={(params) => <TextField {...params} label="Output Item" required {...fieldValidationProps(issuesForField('outputItemId'))} />}
               sx={{ flex: 1 }}
             />
@@ -302,7 +367,7 @@ export default function RecipeEditorPage(): React.JSX.Element {
               label="Output Quantity"
               type="number"
               value={outputQuantity}
-              onChange={(e) => { setOutputQuantity(e.target.value); markDirty() }}
+              onChange={(e) => { setOutputQuantity(e.target.value); pushSnapshot({ outputQuantity: e.target.value }) }}
               inputProps={{ min: 1, step: 1 }}
               sx={{ width: 180 }}
             />
@@ -313,21 +378,21 @@ export default function RecipeEditorPage(): React.JSX.Element {
           <Stack direction="row" spacing={2}>
             <FormControl fullWidth error={issuesForField('craftingStationId').length > 0}>
               <InputLabel id="recipe-station-label">Crafting Station</InputLabel>
-              <Select labelId="recipe-station-label" label="Crafting Station" value={craftingStationId} onChange={(e) => { setCraftingStationId(e.target.value); markDirty() }}>
+              <Select labelId="recipe-station-label" label="Crafting Station" value={craftingStationId} onChange={(e) => { setCraftingStationId(e.target.value); pushSnapshot({ craftingStationId: e.target.value }) }}>
                 <MenuItem value="">None</MenuItem>
                 {stations.map((station) => <MenuItem key={station.id} value={station.id}>{station.displayName}</MenuItem>)}
               </Select>
             </FormControl>
             <FormControl fullWidth error={issuesForField('craftingSpecializationId').length > 0}>
               <InputLabel id="recipe-specialization-label">Specialization</InputLabel>
-              <Select labelId="recipe-specialization-label" label="Specialization" value={craftingSpecializationId} onChange={(e) => { setCraftingSpecializationId(e.target.value); markDirty() }}>
+              <Select labelId="recipe-specialization-label" label="Specialization" value={craftingSpecializationId} onChange={(e) => { setCraftingSpecializationId(e.target.value); pushSnapshot({ craftingSpecializationId: e.target.value }) }}>
                 <MenuItem value="">None</MenuItem>
                 {specializations.map((specialization) => <MenuItem key={specialization.id} value={specialization.id}>{specialization.displayName}</MenuItem>)}
               </Select>
             </FormControl>
           </Stack>
 
-          <TextField label="Description" value={description} onChange={(e) => { setDescription(e.target.value); markDirty() }} multiline minRows={4} fullWidth />
+          <TextField label="Description" value={description} onChange={(e) => { setDescription(e.target.value); pushSnapshot({ description: e.target.value }) }} multiline minRows={4} fullWidth />
         </Stack>
       </TabPanel>
 

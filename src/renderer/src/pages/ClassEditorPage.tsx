@@ -1,4 +1,4 @@
-import { ArrowBack as BackIcon } from '@mui/icons-material'
+import { ArrowBack as BackIcon, Redo as RedoIcon, Undo as UndoIcon } from '@mui/icons-material'
 import {
   Alert,
   Box,
@@ -26,6 +26,14 @@ import DerivedStatsEditor from '../components/DerivedStatsEditor'
 import StatGrowthEditor from '../components/StatGrowthEditor'
 import ValidationBanner from '../components/ValidationBanner'
 import { useRecordValidation } from '../hooks/useRecordValidation'
+import { useUndoRedo } from '../hooks/useUndoRedo'
+
+interface FormSnapshot {
+  displayName: string
+  exportKey: string
+  description: string
+  resourceMultiplier: string
+}
 
 // ─── Tab panels ───────────────────────────────────────────────────────────────
 
@@ -64,6 +72,23 @@ export default function ClassEditorPage(): React.JSX.Element {
   const [allAbilities, setAllAbilities] = useState<AbilityRecord[]>([])
   const { recordIssues, runValidation } = useRecordValidation('classes', id)
 
+  const applySnapshot = useCallback((snapshot: FormSnapshot) => {
+    setDisplayName(snapshot.displayName)
+    setExportKey(snapshot.exportKey)
+    setDescription(snapshot.description)
+    setResourceMultiplier(snapshot.resourceMultiplier)
+    setDirty(true)
+    setSavedAt(null)
+  }, [])
+
+  const undoRedo = useUndoRedo<FormSnapshot>(applySnapshot)
+
+  const pushSnapshot = (overrides: Partial<FormSnapshot> = {}): void => {
+    setDirty(true)
+    setSavedAt(null)
+    undoRedo.pushState({ displayName, exportKey, description, resourceMultiplier, ...overrides })
+  }
+
   const load = useCallback(async () => {
     if (!id) return
     setLoading(true)
@@ -86,6 +111,12 @@ export default function ClassEditorPage(): React.JSX.Element {
       setAbilityAssignments(assignments)
       setAllAbilities(abilities)
       setDirty(false)
+      undoRedo.reset({
+        displayName: data.displayName,
+        exportKey: data.exportKey,
+        description: data.description,
+        resourceMultiplier: String(data.resourceMultiplier),
+      })
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Failed to load class.')
     } finally {
@@ -107,11 +138,6 @@ export default function ClassEditorPage(): React.JSX.Element {
   useEffect(() => {
     void load()
   }, [load])
-
-  const markDirty = (): void => {
-    setDirty(true)
-    setSavedAt(null)
-  }
 
   const handleSave = async (): Promise<void> => {
     if (!id) return
@@ -183,7 +209,7 @@ export default function ClassEditorPage(): React.JSX.Element {
             value={displayName}
             onChange={(e) => {
               setDisplayName(e.target.value)
-              markDirty()
+              pushSnapshot({ displayName: e.target.value })
             }}
             inputProps={{ style: { fontSize: '1.5rem', fontWeight: 600 } }}
             placeholder="Class Name"
@@ -195,7 +221,7 @@ export default function ClassEditorPage(): React.JSX.Element {
             value={exportKey}
             onChange={(e) => {
               setExportKey(e.target.value)
-              markDirty()
+              pushSnapshot({ exportKey: e.target.value })
             }}
             inputProps={{ style: { fontFamily: 'monospace', fontSize: '0.8rem' } }}
             placeholder="export-key"
@@ -204,9 +230,23 @@ export default function ClassEditorPage(): React.JSX.Element {
           />
         </Box>
 
-        <Stack direction="row" alignItems="center" spacing={2} sx={{ pt: 0.5 }}>
+        <Stack direction="row" alignItems="center" spacing={1} sx={{ pt: 0.5 }}>
+          <Tooltip title="Undo (Ctrl+Z)">
+            <span>
+              <IconButton size="small" onClick={undoRedo.triggerUndo} disabled={!undoRedo.canUndo}>
+                <UndoIcon fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>
+          <Tooltip title="Redo (Ctrl+Y)">
+            <span>
+              <IconButton size="small" onClick={undoRedo.triggerRedo} disabled={!undoRedo.canRedo}>
+                <RedoIcon fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>
           {savedAt && (
-            <Typography variant="caption" color="success.main">
+            <Typography variant="caption" color="success.main" sx={{ ml: 1 }}>
               Saved at {savedAt.toLocaleTimeString()}
             </Typography>
           )}
@@ -214,6 +254,7 @@ export default function ClassEditorPage(): React.JSX.Element {
             variant="contained"
             onClick={() => void handleSave()}
             disabled={!isDirty || isSaving}
+            sx={{ ml: 1 }}
           >
             Save
           </Button>
@@ -248,7 +289,7 @@ export default function ClassEditorPage(): React.JSX.Element {
             value={description}
             onChange={(e) => {
               setDescription(e.target.value)
-              markDirty()
+              pushSnapshot({ description: e.target.value })
             }}
             multiline
             minRows={3}
@@ -259,7 +300,7 @@ export default function ClassEditorPage(): React.JSX.Element {
             value={resourceMultiplier}
             onChange={(e) => {
               setResourceMultiplier(e.target.value)
-              markDirty()
+              pushSnapshot({ resourceMultiplier: e.target.value })
             }}
             type="number"
             inputProps={{ step: 0.1, min: 0 }}

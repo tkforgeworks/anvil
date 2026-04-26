@@ -4,6 +4,8 @@ import {
   ArrowDownward as MoveDownIcon,
   ArrowUpward as MoveUpIcon,
   Delete as DeleteIcon,
+  Redo as RedoIcon,
+  Undo as UndoIcon,
 } from '@mui/icons-material'
 import {
   Alert,
@@ -24,6 +26,7 @@ import {
   Typography,
 } from '@mui/material'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useUndoRedo } from '../hooks/useUndoRedo'
 import { useNavigate, useParams } from 'react-router-dom'
 import { itemsApi } from '../../api/items.api'
 import { lootTablesApi } from '../../api/loot-tables.api'
@@ -39,6 +42,13 @@ import type {
   MetaRarity,
   NpcRecord,
 } from '../../../shared/domain-types'
+
+interface FormSnapshot {
+  displayName: string
+  exportKey: string
+  description: string
+  entries: EntryDraft[]
+}
 
 interface EntryDraft {
   itemId: string
@@ -86,6 +96,23 @@ export default function LootTableEditorPage(): React.JSX.Element {
   const [savedAt, setSavedAt] = useState<Date | null>(null)
   const { recordIssues, runValidation } = useRecordValidation('loot-tables', id)
 
+  const applySnapshot = useCallback((snapshot: FormSnapshot) => {
+    setDisplayName(snapshot.displayName)
+    setExportKey(snapshot.exportKey)
+    setDescription(snapshot.description)
+    setEntries(snapshot.entries)
+    setDirty(true)
+    setSavedAt(null)
+  }, [])
+
+  const undoRedo = useUndoRedo<FormSnapshot>(applySnapshot)
+
+  const pushSnapshot = (overrides: Partial<FormSnapshot> = {}): void => {
+    setDirty(true)
+    setSavedAt(null)
+    undoRedo.pushState({ displayName, exportKey, description, entries, ...overrides })
+  }
+
   const itemById = useMemo(() => new Map(items.map((item) => [item.id, item])), [items])
   const rarityById = useMemo(() => new Map(rarities.map((rarity) => [rarity.id, rarity])), [rarities])
   const activeItems = useMemo(() => items.filter((item) => !item.deletedAt), [items])
@@ -124,6 +151,12 @@ export default function LootTableEditorPage(): React.JSX.Element {
       setRarities(rarityList)
       setNpcs(npcList)
       setDirty(false)
+      undoRedo.reset({
+        displayName: data.displayName,
+        exportKey: data.exportKey,
+        description: data.description,
+        entries: entryList.map(toDraft),
+      })
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Failed to load loot table.')
     } finally {
@@ -135,47 +168,43 @@ export default function LootTableEditorPage(): React.JSX.Element {
     void load()
   }, [load])
 
-  const markDirty = (): void => {
-    setDirty(true)
-    setSavedAt(null)
-  }
-
   const setEntryAt = (index: number, update: Partial<EntryDraft>): void => {
-    setEntries((prev) => prev.map((entry, i) => (i === index ? { ...entry, ...update } : entry)))
-    markDirty()
+    const nextEntries = entries.map((entry, i) => (i === index ? { ...entry, ...update } : entry))
+    setEntries(nextEntries)
+    pushSnapshot({ entries: nextEntries })
   }
 
   const moveEntry = (index: number, direction: -1 | 1): void => {
     const nextIndex = index + direction
     if (nextIndex < 0 || nextIndex >= entries.length) return
-    setEntries((prev) => {
-      const next = [...prev]
-      const [entry] = next.splice(index, 1)
-      next.splice(nextIndex, 0, entry)
-      return next
-    })
-    markDirty()
+    const next = [...entries]
+    const [entry] = next.splice(index, 1)
+    next.splice(nextIndex, 0, entry)
+    setEntries(next)
+    pushSnapshot({ entries: next })
   }
 
   const removeEntry = (index: number): void => {
-    setEntries((prev) => prev.filter((_, i) => i !== index))
-    markDirty()
+    const nextEntries = entries.filter((_, i) => i !== index)
+    setEntries(nextEntries)
+    pushSnapshot({ entries: nextEntries })
   }
 
   const addEntry = (): void => {
     const itemId = activeItems[0]?.id
     if (!itemId) return
-    setEntries((prev) => [
-      ...prev,
+    const nextEntries = [
+      ...entries,
       {
         itemId,
         weight: 1,
         quantityMin: 1,
         quantityMax: 1,
-        sortOrder: prev.length,
+        sortOrder: entries.length,
       },
-    ])
-    markDirty()
+    ]
+    setEntries(nextEntries)
+    pushSnapshot({ entries: nextEntries })
   }
 
   const handleSave = async (): Promise<void> => {
@@ -271,7 +300,7 @@ export default function LootTableEditorPage(): React.JSX.Element {
           <TextField
             variant="standard"
             value={displayName}
-            onChange={(e) => { setDisplayName(e.target.value); markDirty() }}
+            onChange={(e) => { setDisplayName(e.target.value); pushSnapshot({ displayName: e.target.value }) }}
             inputProps={{ style: { fontSize: '1.5rem', fontWeight: 600 } }}
             placeholder="Loot Table Name"
             fullWidth
@@ -280,16 +309,30 @@ export default function LootTableEditorPage(): React.JSX.Element {
           <TextField
             variant="standard"
             value={exportKey}
-            onChange={(e) => { setExportKey(e.target.value); markDirty() }}
+            onChange={(e) => { setExportKey(e.target.value); pushSnapshot({ exportKey: e.target.value }) }}
             inputProps={{ style: { fontFamily: 'monospace', fontSize: '0.8rem' } }}
             placeholder="export-key"
             helperText="Export key - used in exported files"
             sx={{ maxWidth: 360 }}
           />
         </Box>
-        <Stack direction="row" alignItems="center" spacing={2} sx={{ pt: 0.5 }}>
-          {savedAt && <Typography variant="caption" color="success.main">Saved at {savedAt.toLocaleTimeString()}</Typography>}
-          <Button variant="contained" onClick={() => void handleSave()} disabled={!isDirty || isSaving || !displayName.trim() || !exportKey.trim()}>
+        <Stack direction="row" alignItems="center" spacing={1} sx={{ pt: 0.5 }}>
+          <Tooltip title="Undo (Ctrl+Z)">
+            <span>
+              <IconButton size="small" onClick={undoRedo.triggerUndo} disabled={!undoRedo.canUndo}>
+                <UndoIcon fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>
+          <Tooltip title="Redo (Ctrl+Y)">
+            <span>
+              <IconButton size="small" onClick={undoRedo.triggerRedo} disabled={!undoRedo.canRedo}>
+                <RedoIcon fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>
+          {savedAt && <Typography variant="caption" color="success.main" sx={{ ml: 1 }}>Saved at {savedAt.toLocaleTimeString()}</Typography>}
+          <Button variant="contained" onClick={() => void handleSave()} disabled={!isDirty || isSaving || !displayName.trim() || !exportKey.trim()} sx={{ ml: 1 }}>
             Save
           </Button>
         </Stack>
@@ -300,7 +343,7 @@ export default function LootTableEditorPage(): React.JSX.Element {
       {hasDeletedReferences && <Alert severity="warning" sx={{ mb: 2 }}>This loot table references a soft-deleted item. Validation will flag this loot table.</Alert>}
 
       <Stack spacing={3}>
-        <TextField label="Description" value={description} onChange={(e) => { setDescription(e.target.value); markDirty() }} multiline minRows={3} fullWidth sx={{ maxWidth: 760 }} />
+        <TextField label="Description" value={description} onChange={(e) => { setDescription(e.target.value); pushSnapshot({ description: e.target.value }) }} multiline minRows={3} fullWidth sx={{ maxWidth: 760 }} />
 
         <Divider />
 

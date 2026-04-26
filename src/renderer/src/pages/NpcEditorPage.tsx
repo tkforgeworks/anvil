@@ -1,4 +1,4 @@
-import { ArrowBack as BackIcon } from '@mui/icons-material'
+import { ArrowBack as BackIcon, Redo as RedoIcon, Undo as UndoIcon } from '@mui/icons-material'
 import {
   Alert,
   Box,
@@ -15,6 +15,7 @@ import {
   Typography,
 } from '@mui/material'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useUndoRedo } from '../hooks/useUndoRedo'
 import { useNavigate, useParams } from 'react-router-dom'
 import { abilitiesApi } from '../../api/abilities.api'
 import { classesApi } from '../../api/classes.api'
@@ -44,6 +45,14 @@ import type {
 
 const DEFAULT_MAX_LEVEL = 20
 
+interface FormSnapshot {
+  displayName: string
+  exportKey: string
+  description: string
+  npcTypeId: string
+  lootTableId: string | null
+}
+
 export default function NpcEditorPage(): React.JSX.Element {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -72,6 +81,24 @@ export default function NpcEditorPage(): React.JSX.Element {
   const [error, setError] = useState<string | null>(null)
   const [savedAt, setSavedAt] = useState<Date | null>(null)
   const { recordIssues, issuesForField, runValidation } = useRecordValidation('npcs', id)
+
+  const applySnapshot = useCallback((snapshot: FormSnapshot) => {
+    setDisplayName(snapshot.displayName)
+    setExportKey(snapshot.exportKey)
+    setDescription(snapshot.description)
+    setNpcTypeId(snapshot.npcTypeId)
+    setLootTableId(snapshot.lootTableId)
+    setDirty(true)
+    setSavedAt(null)
+  }, [])
+
+  const undoRedo = useUndoRedo<FormSnapshot>(applySnapshot)
+
+  const pushSnapshot = (overrides: Partial<FormSnapshot> = {}): void => {
+    setDirty(true)
+    setSavedAt(null)
+    undoRedo.pushState({ displayName, exportKey, description, npcTypeId, lootTableId, ...overrides })
+  }
 
   const typeById = useMemo(() => new Map(npcTypes.map((type) => [type.id, type])), [npcTypes])
 
@@ -144,6 +171,13 @@ export default function NpcEditorPage(): React.JSX.Element {
       )
       setGrowthByClass(growth)
       setDirty(false)
+      undoRedo.reset({
+        displayName: data.displayName,
+        exportKey: data.exportKey,
+        description: data.description,
+        npcTypeId: data.npcTypeId,
+        lootTableId: data.lootTableId,
+      })
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Failed to load NPC.')
     } finally {
@@ -155,11 +189,6 @@ export default function NpcEditorPage(): React.JSX.Element {
     void load()
   }, [load])
 
-  const markDirty = (): void => {
-    setDirty(true)
-    setSavedAt(null)
-  }
-
   const handleTypeChange = (nextNpcTypeId: string): void => {
     if (record && nextNpcTypeId !== record.npcTypeId) {
       const confirmed = window.confirm(
@@ -168,7 +197,7 @@ export default function NpcEditorPage(): React.JSX.Element {
       if (!confirmed) return
     }
     setNpcTypeId(nextNpcTypeId)
-    markDirty()
+    pushSnapshot({ npcTypeId: nextNpcTypeId })
   }
 
   const handleAssignmentsChange = async (next: NpcClassAssignment[]): Promise<void> => {
@@ -200,7 +229,7 @@ export default function NpcEditorPage(): React.JSX.Element {
 
   const handleLootTableChange = (nextId: string | null): void => {
     setLootTableId(nextId)
-    markDirty()
+    pushSnapshot({ lootTableId: nextId })
   }
 
   const handleOverrideChange = (statId: string, value: number | null): void => {
@@ -210,7 +239,7 @@ export default function NpcEditorPage(): React.JSX.Element {
       else next[statId] = value
       return next
     })
-    markDirty()
+    pushSnapshot()
   }
 
   const handleSave = async (): Promise<void> => {
@@ -282,7 +311,7 @@ export default function NpcEditorPage(): React.JSX.Element {
           <TextField
             variant="standard"
             value={displayName}
-            onChange={(e) => { setDisplayName(e.target.value); markDirty() }}
+            onChange={(e) => { setDisplayName(e.target.value); pushSnapshot({ displayName: e.target.value }) }}
             inputProps={{ style: { fontSize: '1.5rem', fontWeight: 600 } }}
             placeholder="NPC Name"
             fullWidth
@@ -291,16 +320,30 @@ export default function NpcEditorPage(): React.JSX.Element {
           <TextField
             variant="standard"
             value={exportKey}
-            onChange={(e) => { setExportKey(e.target.value); markDirty() }}
+            onChange={(e) => { setExportKey(e.target.value); pushSnapshot({ exportKey: e.target.value }) }}
             inputProps={{ style: { fontFamily: 'monospace', fontSize: '0.8rem' } }}
             placeholder="export-key"
             helperText="Export key - used in exported files"
             sx={{ maxWidth: 360 }}
           />
         </Box>
-        <Stack direction="row" alignItems="center" spacing={2} sx={{ pt: 0.5 }}>
-          {savedAt && <Typography variant="caption" color="success.main">Saved at {savedAt.toLocaleTimeString()}</Typography>}
-          <Button variant="contained" onClick={() => void handleSave()} disabled={!isDirty || isSaving || !displayName.trim() || !exportKey.trim() || !npcTypeId}>
+        <Stack direction="row" alignItems="center" spacing={1} sx={{ pt: 0.5 }}>
+          <Tooltip title="Undo (Ctrl+Z)">
+            <span>
+              <IconButton size="small" onClick={undoRedo.triggerUndo} disabled={!undoRedo.canUndo}>
+                <UndoIcon fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>
+          <Tooltip title="Redo (Ctrl+Y)">
+            <span>
+              <IconButton size="small" onClick={undoRedo.triggerRedo} disabled={!undoRedo.canRedo}>
+                <RedoIcon fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>
+          {savedAt && <Typography variant="caption" color="success.main" sx={{ ml: 1 }}>Saved at {savedAt.toLocaleTimeString()}</Typography>}
+          <Button variant="contained" onClick={() => void handleSave()} disabled={!isDirty || isSaving || !displayName.trim() || !exportKey.trim() || !npcTypeId} sx={{ ml: 1 }}>
             Save
           </Button>
         </Stack>
@@ -318,7 +361,7 @@ export default function NpcEditorPage(): React.JSX.Element {
           </Select>
         </FormControl>
 
-        <TextField label="Description" value={description} onChange={(e) => { setDescription(e.target.value); markDirty() }} multiline minRows={4} fullWidth sx={{ maxWidth: 760 }} />
+        <TextField label="Description" value={description} onChange={(e) => { setDescription(e.target.value); pushSnapshot({ description: e.target.value }) }} multiline minRows={4} fullWidth sx={{ maxWidth: 760 }} />
 
         <Divider />
 
