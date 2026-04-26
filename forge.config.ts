@@ -7,6 +7,7 @@ const config: ForgeConfig = {
     },
     name: 'Anvil',
     executableName: 'anvil',
+    icon: './resources/icon',
     ignore: [
       /^\/src/,
       /^\/design_notes/,

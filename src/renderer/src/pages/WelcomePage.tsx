@@ -25,6 +25,7 @@ import { projectApi } from '../../api/project.api'
 import type { ProjectTemplateId, RecentProject } from '../../../shared/project-types'
 import { useProjectStore } from '../stores/project.store'
 import AppSettingsDialog from '../components/AppSettingsDialog'
+import logoSrc from '../assets/logo.png'
 
 const TEMPLATE_OPTIONS: { value: ProjectTemplateId; label: string }[] = [
   { value: 'blank', label: 'Blank' },
@@ -110,43 +111,51 @@ export default function WelcomePage(): React.JSX.Element {
   const canCreate = projectName.trim().length > 0 && gameTitle.trim().length > 0 && !isBusy
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', p: 4 }}>
-      <Stack spacing={4} sx={{ maxWidth: 920, mx: 'auto' }}>
-        <Stack direction="row" alignItems="flex-start" justifyContent="space-between">
-          <Box>
-            <Typography variant="h3" component="h1" sx={{ fontWeight: 700 }}>
-              Anvil
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', bgcolor: 'background.default' }}>
+      <Box sx={{ flexShrink: 0, px: 4, pt: 4, pb: 2, maxWidth: 920, mx: 'auto', width: '100%', boxSizing: 'border-box' }}>
+        <Stack spacing={3}>
+          <Stack direction="row" alignItems="flex-start" justifyContent="space-between">
+            <Stack direction="row" alignItems="center" spacing={2}>
+              <Box
+                component="img"
+                src={logoSrc}
+                alt="Anvil"
+                sx={{ width: 64, height: 64, borderRadius: 1.5 }}
+              />
+              <Typography variant="h3" component="h1" sx={{ fontWeight: 700 }}>
+                Anvil
+              </Typography>
+            </Stack>
+            <Tooltip title="Application Settings">
+              <IconButton onClick={() => setSettingsOpen(true)} sx={{ mt: 1 }}>
+                <SettingsIcon />
+              </IconButton>
+            </Tooltip>
+          </Stack>
+
+          {error && (
+            <Typography color="error" role="alert">
+              {error}
             </Typography>
-            <Typography color="text.secondary" sx={{ mt: 1 }}>
-              Open a project or create a new RPG data workspace.
-            </Typography>
-          </Box>
-          <Tooltip title="Application Settings">
-            <IconButton onClick={() => setSettingsOpen(true)} sx={{ mt: 1 }}>
-              <SettingsIcon />
-            </IconButton>
-          </Tooltip>
-        </Stack>
+          )}
 
-        {error && (
-          <Typography color="error" role="alert">
-            {error}
-          </Typography>
-        )}
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+            <Button variant="contained" onClick={() => setCreateOpen(true)} disabled={isBusy}>
+              Create New Project
+            </Button>
+            <Button variant="outlined" onClick={() => void openProject()} disabled={isBusy}>
+              Open Project
+            </Button>
+          </Stack>
 
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-          <Button variant="contained" onClick={() => setCreateOpen(true)} disabled={isBusy}>
-            Create New Project
-          </Button>
-          <Button variant="outlined" onClick={() => void openProject()} disabled={isBusy}>
-            Open Project
-          </Button>
-        </Stack>
-
-        <Box>
-          <Typography variant="h5" sx={{ mb: 1 }}>
+          <Typography variant="h5">
             Recent Projects
           </Typography>
+        </Stack>
+      </Box>
+
+      <Box sx={{ flex: 1, overflow: 'auto', px: 4, pb: 4 }}>
+        <Box sx={{ maxWidth: 920, mx: 'auto' }}>
           {recentProjects.length === 0 ? (
             <Typography color="text.secondary">No recent projects yet.</Typography>
           ) : (
@@ -186,7 +195,7 @@ export default function WelcomePage(): React.JSX.Element {
             </List>
           )}
         </Box>
-      </Stack>
+      </Box>
 
       <Dialog open={isCreateOpen} onClose={closeCreateDialog} fullWidth maxWidth="sm">
         <DialogTitle>Create New Project</DialogTitle>
