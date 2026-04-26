@@ -110,7 +110,7 @@ export const IPC_CHANNELS = {
   SETTINGS_SELECT_FOLDER: 'settings:select-folder',
   SETTINGS_SELECT_THEME_FILE: 'settings:select-theme-file',
 
-  // Meta-layer reference data (read-only lookups for UI)
+  // Meta-layer reference data
   META_LIST_ITEM_CATEGORIES: 'meta:list-item-categories',
   META_LIST_RARITIES: 'meta:list-rarities',
   META_LIST_NPC_TYPES: 'meta:list-npc-types',
@@ -118,7 +118,34 @@ export const IPC_CHANNELS = {
   META_LIST_CRAFTING_SPECIALIZATIONS: 'meta:list-crafting-specializations',
   META_LIST_STATS: 'meta:list-stats',
   META_GET_PROJECT_SETTINGS: 'meta:get-project-settings',
+  META_SET_PROJECT_SETTINGS: 'meta:set-project-settings',
   META_LIST_DERIVED_STATS: 'meta:list-derived-stats',
+
+  // Meta-layer CRUD
+  META_ADD_STAT: 'meta:add-stat',
+  META_UPDATE_STAT: 'meta:update-stat',
+  META_DELETE_STAT: 'meta:delete-stat',
+  META_REORDER_STATS: 'meta:reorder-stats',
+
+  META_ADD_RARITY: 'meta:add-rarity',
+  META_UPDATE_RARITY: 'meta:update-rarity',
+  META_DELETE_RARITY: 'meta:delete-rarity',
+  META_REORDER_RARITIES: 'meta:reorder-rarities',
+
+  META_ADD_CRAFTING_STATION: 'meta:add-crafting-station',
+  META_UPDATE_CRAFTING_STATION: 'meta:update-crafting-station',
+  META_DELETE_CRAFTING_STATION: 'meta:delete-crafting-station',
+  META_REORDER_CRAFTING_STATIONS: 'meta:reorder-crafting-stations',
+
+  META_ADD_CRAFTING_SPECIALIZATION: 'meta:add-crafting-specialization',
+  META_UPDATE_CRAFTING_SPECIALIZATION: 'meta:update-crafting-specialization',
+  META_DELETE_CRAFTING_SPECIALIZATION: 'meta:delete-crafting-specialization',
+  META_REORDER_CRAFTING_SPECIALIZATIONS: 'meta:reorder-crafting-specializations',
+
+  META_ADD_DERIVED_STAT: 'meta:add-derived-stat',
+  META_UPDATE_DERIVED_STAT: 'meta:update-derived-stat',
+  META_DELETE_DERIVED_STAT: 'meta:delete-derived-stat',
+  META_REORDER_DERIVED_STATS: 'meta:reorder-derived-stats',
 
   // Custom field definitions
   CUSTOM_FIELDS_LIST_DEFINITIONS: 'custom-fields:list-definitions',

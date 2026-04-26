@@ -205,6 +205,7 @@ export interface MetaStat {
 
 export interface ProjectSettings {
   maxLevel: number
+  softDeleteReferenceSeverity: 'Warning' | 'Error'
 }
 
 export interface DerivedStatDefinition {
@@ -214,6 +215,35 @@ export interface DerivedStatDefinition {
   formula: string
   outputType: 'integer' | 'float'
   roundingMode: 'floor' | 'round' | 'none'
+  sortOrder: number
+}
+
+export interface MetaItemInput {
+  displayName: string
+  exportKey: string
+}
+
+export interface MetaRarityInput {
+  displayName: string
+  exportKey: string
+  colorHex: string
+}
+
+export interface DerivedStatInput {
+  displayName: string
+  exportKey: string
+  formula: string
+  outputType: 'integer' | 'float'
+  roundingMode: 'floor' | 'round' | 'none'
+}
+
+export interface MetaDeleteResult {
+  deleted: boolean
+  reason: string | null
+}
+
+export interface MetaReorderItem {
+  id: string
   sortOrder: number
 }
 
