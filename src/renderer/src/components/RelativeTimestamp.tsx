@@ -4,6 +4,7 @@ import { Tooltip, Typography } from '@mui/material'
 interface RelativeTimestampProps {
   timestamp: string
   variant?: 'body2' | 'caption'
+  inline?: boolean
 }
 
 function formatRelative(iso: string): string {
@@ -30,7 +31,7 @@ function formatRelative(iso: string): string {
   return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
-export function RelativeTimestamp({ timestamp, variant = 'body2' }: RelativeTimestampProps) {
+export function RelativeTimestamp({ timestamp, variant = 'body2', inline }: RelativeTimestampProps) {
   const [display, setDisplay] = useState(() => formatRelative(timestamp))
 
   useEffect(() => {
@@ -42,6 +43,14 @@ export function RelativeTimestamp({ timestamp, variant = 'body2' }: RelativeTime
   }, [timestamp])
 
   const fullDate = new Date(timestamp).toLocaleString()
+
+  if (inline) {
+    return (
+      <Tooltip title={fullDate} arrow>
+        <span style={{ fontWeight: 500 }}>{display}</span>
+      </Tooltip>
+    )
+  }
 
   return (
     <Tooltip title={fullDate} arrow>

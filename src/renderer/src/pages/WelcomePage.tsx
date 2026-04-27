@@ -1,4 +1,8 @@
-import { Settings as SettingsIcon } from '@mui/icons-material'
+import {
+  Add as AddIcon,
+  FolderOpen as FolderOpenIcon,
+  Settings as SettingsIcon,
+} from '@mui/icons-material'
 import {
   Box,
   Button,
@@ -7,16 +11,12 @@ import {
   DialogContent,
   DialogTitle,
   FormControl,
-  IconButton,
   InputLabel,
-  List,
-  ListItem,
-  ListItemText,
   MenuItem,
+  Paper,
   Select,
   Stack,
   TextField,
-  Tooltip,
   Typography,
 } from '@mui/material'
 import { useState } from 'react'
@@ -25,7 +25,9 @@ import { projectApi } from '../../api/project.api'
 import type { ProjectTemplateId, RecentProject } from '../../../shared/project-types'
 import { useProjectStore } from '../stores/project.store'
 import AppSettingsDialog from '../components/AppSettingsDialog'
-import logoSrc from '../assets/logo.png'
+import { ProjectInitialsMark } from '../components/ProjectInitialsMark'
+import { RelativeTimestamp } from '../components/RelativeTimestamp'
+import { FileSizeDisplay } from '../components/FileSizeDisplay'
 
 const TEMPLATE_OPTIONS: { value: ProjectTemplateId; label: string }[] = [
   { value: 'blank', label: 'Blank' },
@@ -33,23 +35,16 @@ const TEMPLATE_OPTIONS: { value: ProjectTemplateId; label: string }[] = [
   { value: 'sci-fi-rpg', label: 'Sci-Fi RPG' },
 ]
 
-function formatDate(value: string): string {
-  return new Intl.DateTimeFormat(undefined, {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(new Date(value))
-}
-
 function countSummary(project: RecentProject): string {
-  const counts = project.recordCounts
-  return [
-    `${counts.classes} classes`,
-    `${counts.abilities} abilities`,
-    `${counts.items} items`,
-    `${counts.recipes} recipes`,
-    `${counts.npcs} NPCs`,
-    `${counts.lootTables} loot tables`,
-  ].join(' | ')
+  const c = project.recordCounts
+  const parts: string[] = []
+  if (c.items) parts.push(`${c.items} items`)
+  if (c.abilities) parts.push(`${c.abilities} abilities`)
+  if (c.classes) parts.push(`${c.classes} classes`)
+  if (c.npcs) parts.push(`${c.npcs} NPCs`)
+  if (c.recipes) parts.push(`${c.recipes} recipes`)
+  if (c.lootTables) parts.push(`${c.lootTables} loot tables`)
+  return parts.join(' · ')
 }
 
 export default function WelcomePage(): React.JSX.Element {
@@ -112,91 +107,151 @@ export default function WelcomePage(): React.JSX.Element {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', bgcolor: 'background.default' }}>
-      <Box sx={{ flexShrink: 0, px: 4, pt: 4, pb: 2, maxWidth: 920, mx: 'auto', width: '100%', boxSizing: 'border-box' }}>
-        <Stack spacing={3}>
-          <Stack direction="row" alignItems="flex-start" justifyContent="space-between">
-            <Stack direction="row" alignItems="center" spacing={2}>
-              <Box
-                component="img"
-                src={logoSrc}
-                alt="Anvil"
-                sx={{ width: 64, height: 64, borderRadius: 1.5 }}
-              />
-              <Typography variant="h3" component="h1" sx={{ fontWeight: 700 }}>
-                Anvil
-              </Typography>
-            </Stack>
-            <Tooltip title="Application Settings">
-              <IconButton onClick={() => setSettingsOpen(true)} sx={{ mt: 1 }}>
-                <SettingsIcon />
-              </IconButton>
-            </Tooltip>
-          </Stack>
+      <Box sx={{ flex: 1, overflow: 'auto', px: 6, py: 4 }}>
+        <Box sx={{ maxWidth: 920, mx: 'auto' }}>
+          {/* Hero */}
+          <Typography variant="h4" component="h1" sx={{ fontWeight: 700, mb: 0.5 }}>
+            Welcome to{' '}
+            <Box component="span" sx={{ color: 'primary.main' }}>
+              Anvil
+            </Box>
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            Pick a project, or start a new world.
+          </Typography>
 
           {error && (
-            <Typography color="error" role="alert">
+            <Typography color="error" role="alert" sx={{ mb: 2 }}>
               {error}
             </Typography>
           )}
 
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-            <Button variant="contained" onClick={() => setCreateOpen(true)} disabled={isBusy}>
-              Create New Project
-            </Button>
-            <Button variant="outlined" onClick={() => void openProject()} disabled={isBusy}>
-              Open Project
-            </Button>
+          {/* Quick-action tiles */}
+          <Stack direction="row" spacing={1.5} sx={{ mb: 3.5 }}>
+            <ActionTile
+              icon={<AddIcon sx={{ color: '#fff', fontSize: 22 }} />}
+              iconBg="primary.main"
+              title="New project"
+              subtitle="Blank or from template"
+              variant="brand"
+              onClick={() => setCreateOpen(true)}
+              disabled={isBusy}
+            />
+            <ActionTile
+              icon={<FolderOpenIcon sx={{ fontSize: 18 }} />}
+              iconBg="action.hover"
+              title="Open file..."
+              subtitle=".anvil project file"
+              onClick={() => void openProject()}
+              disabled={isBusy}
+            />
+            <ActionTile
+              icon={<SettingsIcon sx={{ fontSize: 18 }} />}
+              iconBg="action.hover"
+              title="Settings"
+              subtitle="Theme, shortcuts, paths"
+              onClick={() => setSettingsOpen(true)}
+              disabled={isBusy}
+            />
           </Stack>
 
-          <Typography variant="h5">
-            Recent Projects
-          </Typography>
-        </Stack>
-      </Box>
+          {/* Recent projects header */}
+          <Stack direction="row" alignItems="baseline" justifyContent="space-between" sx={{ mb: 1 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+              Recent projects
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Sorted by last save · stored locally
+            </Typography>
+          </Stack>
 
-      <Box sx={{ flex: 1, overflow: 'auto', px: 4, pb: 4 }}>
-        <Box sx={{ maxWidth: 920, mx: 'auto' }}>
+          {/* Recents list */}
           {recentProjects.length === 0 ? (
-            <Typography color="text.secondary">No recent projects yet.</Typography>
+            <Typography color="text.secondary" sx={{ py: 3 }}>
+              No recent projects yet. Create a new project or open an existing .anvil file.
+            </Typography>
           ) : (
-            <List sx={{ border: 1, borderColor: 'divider', borderRadius: 1 }}>
-              {recentProjects.map((project) => (
-                <ListItem
+            <Paper variant="outlined" sx={{ overflow: 'hidden' }}>
+              {recentProjects.map((project, idx) => (
+                <Box
                   key={project.filePath}
-                  divider
-                  secondaryAction={
-                    <Stack direction="row" spacing={1}>
-                      <Button
-                        size="small"
-                        onClick={() => void openProject(project.filePath)}
-                        disabled={isBusy || !project.exists}
-                      >
-                        Open
-                      </Button>
-                      <Button
-                        size="small"
-                        color="inherit"
-                        onClick={() => void removeRecentProject(project.filePath)}
-                        disabled={isBusy}
-                      >
-                        Remove
-                      </Button>
-                    </Stack>
-                  }
+                  onClick={() => !isBusy && project.exists && void openProject(project.filePath)}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: 1.5,
+                    px: 1.5,
+                    py: 1.25,
+                    cursor: project.exists && !isBusy ? 'pointer' : 'default',
+                    opacity: project.exists ? 1 : 0.5,
+                    borderBottom: idx < recentProjects.length - 1 ? 1 : 0,
+                    borderColor: 'divider',
+                    '&:hover': project.exists ? { bgcolor: 'action.hover' } : undefined,
+                  }}
                 >
-                  <ListItemText
-                    primary={`${project.projectName} - ${project.gameTitle}`}
-                    secondary={`${formatDate(project.lastModifiedAt)} - ${countSummary(project)}${
-                      project.exists ? '' : ' - Missing file'
-                    }`}
-                  />
-                </ListItem>
+                  <ProjectInitialsMark name={project.projectName} size={34} />
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Stack direction="row" spacing={1} alignItems="baseline">
+                      <Typography variant="body2" sx={{ fontWeight: 600 }} noWrap>
+                        {project.projectName}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" noWrap>
+                        · {countSummary(project) || 'empty project'}
+                      </Typography>
+                    </Stack>
+                    <Stack direction="row" spacing={0.75} alignItems="center" sx={{ mt: 0.25 }}>
+                      <Box
+                        sx={{
+                          width: 6,
+                          height: 6,
+                          borderRadius: '50%',
+                          bgcolor: 'primary.main',
+                          flexShrink: 0,
+                        }}
+                      />
+                      <Typography variant="caption" color="text.secondary">
+                        Last saved{' '}
+                        <RelativeTimestamp timestamp={project.lastModifiedAt} variant="caption" inline />
+                      </Typography>
+                      {!project.exists && (
+                        <Typography variant="caption" color="error.main" sx={{ ml: 1 }}>
+                          · File missing
+                        </Typography>
+                      )}
+                    </Stack>
+                  </Box>
+                  <Stack alignItems="flex-end" spacing={0.25} sx={{ flexShrink: 0 }}>
+                    <FileSizeDisplay bytes={project.fileSize} />
+                    <Button
+                      size="small"
+                      color="inherit"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        void removeRecentProject(project.filePath)
+                      }}
+                      disabled={isBusy}
+                      sx={{ fontSize: 10, minWidth: 0, px: 0.5, py: 0, textTransform: 'none' }}
+                    >
+                      Remove
+                    </Button>
+                  </Stack>
+                </Box>
               ))}
-            </List>
+            </Paper>
           )}
+
+          {/* Footer */}
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ display: 'block', textAlign: 'center', mt: 3 }}
+          >
+            <strong>Local-first:</strong> all projects live on disk. No accounts, no sync.
+          </Typography>
         </Box>
       </Box>
 
+      {/* Create Project Dialog */}
       <Dialog open={isCreateOpen} onClose={closeCreateDialog} fullWidth maxWidth="sm">
         <DialogTitle>Create New Project</DialogTitle>
         <DialogContent>
@@ -243,5 +298,67 @@ export default function WelcomePage(): React.JSX.Element {
 
       <AppSettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </Box>
+  )
+}
+
+interface ActionTileProps {
+  icon: React.ReactNode
+  iconBg: string
+  title: string
+  subtitle: string
+  variant?: 'brand' | 'default'
+  onClick: () => void
+  disabled?: boolean
+}
+
+function ActionTile({ icon, iconBg, title, subtitle, variant, onClick, disabled }: ActionTileProps) {
+  const isBrand = variant === 'brand'
+  return (
+    <Paper
+      variant="outlined"
+      onClick={disabled ? undefined : onClick}
+      sx={{
+        flex: 1,
+        p: 1.5,
+        cursor: disabled ? 'default' : 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 1.25,
+        borderColor: isBrand ? 'primary.main' : 'divider',
+        bgcolor: isBrand ? 'primary.main' : 'background.paper',
+        '&:hover': disabled
+          ? undefined
+          : { bgcolor: isBrand ? 'primary.dark' : 'action.hover' },
+      }}
+    >
+      <Box
+        sx={{
+          width: 44,
+          height: 44,
+          borderRadius: 1,
+          bgcolor: isBrand ? 'primary.dark' : iconBg,
+          border: isBrand ? 'none' : 1,
+          borderColor: 'divider',
+          display: 'grid',
+          placeItems: 'center',
+        }}
+      >
+        {icon}
+      </Box>
+      <Box>
+        <Typography
+          variant="body2"
+          sx={{ fontWeight: 600, color: isBrand ? '#fff' : 'text.primary' }}
+        >
+          {title}
+        </Typography>
+        <Typography
+          variant="caption"
+          sx={{ color: isBrand ? 'rgba(255,255,255,0.7)' : 'text.secondary' }}
+        >
+          {subtitle}
+        </Typography>
+      </Box>
+    </Paper>
   )
 }
