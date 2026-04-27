@@ -4,11 +4,19 @@ export const lightTheme = createTheme({
   palette: {
     mode: 'light',
     primary: {
-      main: '#5c6bc0',
+      main: '#2563eb',
+      dark: '#1d4ed8',
+    },
+    secondary: {
+      main: '#3b82f6',
     },
     background: {
-      default: '#f5f5f5',
+      default: '#f8fafc',
       paper: '#ffffff',
     },
+  },
+  typography: {
+    fontFamily: "'Poppins', sans-serif",
+    fontFamilyMono: "'JetBrains Mono', monospace",
   },
 })

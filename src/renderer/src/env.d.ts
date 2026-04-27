@@ -12,4 +12,13 @@ declare module '*.png' {
   export default src
 }
 
+declare module '@mui/material/styles' {
+  interface TypographyVariants {
+    fontFamilyMono: string
+  }
+  interface TypographyVariantsOptions {
+    fontFamilyMono?: string
+  }
+}
+
 export {}

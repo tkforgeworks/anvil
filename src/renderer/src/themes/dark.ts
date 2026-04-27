@@ -4,18 +4,26 @@ export const darkTheme = createTheme({
   palette: {
     mode: 'dark',
     primary: {
-      main: '#7c8cff',
+      main: '#3b82f6',
+      dark: '#2563eb',
+    },
+    secondary: {
+      main: '#60a5fa',
     },
     background: {
-      default: '#1a1a2e',
-      paper: '#16213e',
+      default: '#0f172a',
+      paper: '#1e293b',
     },
+  },
+  typography: {
+    fontFamily: "'Poppins', sans-serif",
+    fontFamilyMono: "'JetBrains Mono', monospace",
   },
   components: {
     MuiCssBaseline: {
       styleOverrides: {
         body: {
-          scrollbarColor: '#6b6b6b #1a1a2e',
+          scrollbarColor: '#6b6b6b #0f172a',
         },
       },
     },

@@ -1,3 +1,4 @@
+import './assets/fonts/fonts.css'
 import React, { useEffect, useMemo, useState } from 'react'
 import ReactDOM from 'react-dom/client'
 import { HashRouter } from 'react-router-dom'

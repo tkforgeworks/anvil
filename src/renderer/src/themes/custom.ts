@@ -30,13 +30,17 @@ export function buildCustomTheme(colors: CustomThemeColors): ReturnType<typeof c
       ...(colors.success ? { success: { main: colors.success } } : {}),
       ...(colors.divider ? { divider: colors.divider } : {}),
     },
+    typography: {
+      fontFamily: "'Poppins', sans-serif",
+      fontFamilyMono: "'JetBrains Mono', monospace",
+    },
     components:
       mode === 'dark'
         ? {
             MuiCssBaseline: {
               styleOverrides: {
                 body: {
-                  scrollbarColor: `#6b6b6b ${colors.backgroundDefault ?? '#1a1a2e'}`,
+                  scrollbarColor: `#6b6b6b ${colors.backgroundDefault ?? '#0f172a'}`,
                 },
               },
             },
