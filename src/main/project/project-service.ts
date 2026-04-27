@@ -673,10 +673,10 @@ export function getWeeklyDeltas(): RecordCounts {
 
   const db = getDb()
   const tables: Array<{ key: keyof RecordCounts; table: string }> = [
-    { key: 'classes', table: 'character_classes' },
+    { key: 'classes', table: 'classes' },
     { key: 'abilities', table: 'abilities' },
     { key: 'items', table: 'items' },
-    { key: 'recipes', table: 'crafting_recipes' },
+    { key: 'recipes', table: 'recipes' },
     { key: 'npcs', table: 'npcs' },
     { key: 'lootTables', table: 'loot_tables' },
   ]
