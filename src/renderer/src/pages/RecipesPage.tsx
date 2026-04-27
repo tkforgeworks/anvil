@@ -6,7 +6,6 @@ import {
 } from '@mui/icons-material'
 import {
   Alert,
-  Autocomplete,
   Box,
   Button,
   Checkbox,
@@ -17,7 +16,6 @@ import {
   DialogTitle,
   FormControl,
   IconButton,
-  InputAdornment,
   InputLabel,
   MenuItem,
   Select,
@@ -45,138 +43,11 @@ import type {
 } from '../../../shared/domain-types'
 import { ArchiveToggle, ArchiveTable, type ViewMode } from '../components/ArchiveView'
 import { BulkActionToolbar, BulkDeleteDialog } from '../components/BulkActions'
+import { CreateRecipeDialog } from '../components/create-dialogs'
 import EditorModal from '../components/EditorModal'
 import { useMultiSelect } from '../hooks/useMultiSelect'
 import { useUiStore } from '../stores/ui.store'
 import RecipeEditorPage from './RecipeEditorPage'
-
-function slugify(value: string): string {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
-}
-
-interface CreateDialogProps {
-  open: boolean
-  items: ItemRecord[]
-  stations: MetaCraftingStation[]
-  specializations: MetaCraftingSpecialization[]
-  onClose: () => void
-  onCreated: (record: RecipeRecord) => void
-}
-
-function CreateDialog({
-  open,
-  items,
-  stations,
-  specializations,
-  onClose,
-  onCreated,
-}: CreateDialogProps): React.JSX.Element {
-  const [displayName, setDisplayName] = useState('')
-  const [exportKey, setExportKey] = useState('')
-  const [exportKeyTouched, setExportKeyTouched] = useState(false)
-  const [outputItemId, setOutputItemId] = useState('')
-  const [outputQuantity, setOutputQuantity] = useState('1')
-  const [craftingStationId, setCraftingStationId] = useState('')
-  const [craftingSpecializationId, setCraftingSpecializationId] = useState('')
-  const [isBusy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const outputItem = items.find((item) => item.id === outputItemId) ?? null
-
-  useEffect(() => {
-    if (!open) return
-    setDisplayName('')
-    setExportKey('')
-    setExportKeyTouched(false)
-    setOutputItemId(items[0]?.id ?? '')
-    setOutputQuantity('1')
-    setCraftingStationId('')
-    setCraftingSpecializationId('')
-    setError(null)
-  }, [open, items])
-
-  const handleDisplayNameChange = (value: string): void => {
-    setDisplayName(value)
-    if (!exportKeyTouched) setExportKey(slugify(value))
-  }
-
-  const handleCreate = async (): Promise<void> => {
-    if (!displayName.trim() || !outputItemId) return
-    setBusy(true)
-    setError(null)
-    try {
-      const record = await recipesApi.create({
-        displayName: displayName.trim(),
-        exportKey: exportKey.trim() || slugify(displayName.trim()),
-        outputItemId,
-        outputQuantity: Math.max(1, parseInt(outputQuantity, 10) || 1),
-        craftingStationId: craftingStationId || null,
-        craftingSpecializationId: craftingSpecializationId || null,
-      })
-      onCreated(record)
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Failed to create recipe.')
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>New Recipe</DialogTitle>
-      <DialogContent>
-        <Stack spacing={2} sx={{ pt: 1 }}>
-          {error && <Alert severity="error">{error}</Alert>}
-          {items.length === 0 && <Alert severity="info">Create an item before adding a recipe.</Alert>}
-          <TextField label="Display Name" value={displayName} onChange={(e) => handleDisplayNameChange(e.target.value)} required autoFocus fullWidth />
-          <TextField
-            label="Export Key"
-            value={exportKey}
-            onChange={(e) => { setExportKey(e.target.value); setExportKeyTouched(true) }}
-            fullWidth
-            helperText="Used in exported files. Auto-generated from the display name."
-            InputProps={{
-              startAdornment: exportKey ? undefined : (
-                <InputAdornment position="start"><Typography variant="caption" color="text.disabled">auto</Typography></InputAdornment>
-              ),
-            }}
-          />
-          <Stack direction="row" spacing={2}>
-            <Autocomplete
-              options={items}
-              value={outputItem}
-              getOptionLabel={(item) => item.displayName}
-              isOptionEqualToValue={(option, value) => option.id === value.id}
-              onChange={(_, item) => setOutputItemId(item?.id ?? '')}
-              renderInput={(params) => <TextField {...params} label="Output Item" required />}
-              sx={{ flex: 1 }}
-            />
-            <TextField label="Output Quantity" type="number" value={outputQuantity} onChange={(e) => setOutputQuantity(e.target.value)} inputProps={{ min: 1, step: 1 }} sx={{ width: 180 }} />
-          </Stack>
-          <Stack direction="row" spacing={2}>
-            <FormControl fullWidth>
-              <InputLabel id="create-station-label">Crafting Station</InputLabel>
-              <Select labelId="create-station-label" label="Crafting Station" value={craftingStationId} onChange={(e) => setCraftingStationId(e.target.value)}>
-                <MenuItem value="">None</MenuItem>
-                {stations.map((station) => <MenuItem key={station.id} value={station.id}>{station.displayName}</MenuItem>)}
-              </Select>
-            </FormControl>
-            <FormControl fullWidth>
-              <InputLabel id="create-specialization-label">Specialization</InputLabel>
-              <Select labelId="create-specialization-label" label="Specialization" value={craftingSpecializationId} onChange={(e) => setCraftingSpecializationId(e.target.value)}>
-                <MenuItem value="">None</MenuItem>
-                {specializations.map((specialization) => <MenuItem key={specialization.id} value={specialization.id}>{specialization.displayName}</MenuItem>)}
-              </Select>
-            </FormControl>
-          </Stack>
-        </Stack>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} disabled={isBusy}>Cancel</Button>
-        <Button variant="contained" onClick={() => void handleCreate()} disabled={!displayName.trim() || !outputItemId || isBusy}>Create Recipe</Button>
-      </DialogActions>
-    </Dialog>
-  )
-}
 
 interface DeleteDialogProps {
   record: RecipeRecord | null
@@ -453,7 +324,7 @@ export default function RecipesPage(): React.JSX.Element {
         </>
       )}
 
-      <CreateDialog open={createOpen} items={items} stations={stations} specializations={specializations} onClose={() => setCreateOpen(false)} onCreated={handleCreated} />
+      <CreateRecipeDialog open={createOpen} items={items} stations={stations} specializations={specializations} onClose={() => setCreateOpen(false)} onCreated={handleCreated} />
       <DeleteDialog record={deleteTarget} onClose={() => setDeleteTarget(null)} onDeleted={handleDeleted} />
 
       <BulkDeleteDialog

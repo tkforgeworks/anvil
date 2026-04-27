@@ -16,7 +16,6 @@ import {
   DialogTitle,
   FormControl,
   IconButton,
-  InputAdornment,
   InputLabel,
   MenuItem,
   Select,
@@ -37,115 +36,11 @@ import { lifecycleApi } from '../../api/lifecycle.api'
 import type { ClassRecord } from '../../../shared/domain-types'
 import { ArchiveToggle, ArchiveTable, type ViewMode } from '../components/ArchiveView'
 import { BulkActionToolbar, BulkDeleteDialog } from '../components/BulkActions'
+import { CreateClassDialog } from '../components/create-dialogs'
 import EditorModal from '../components/EditorModal'
 import { useMultiSelect } from '../hooks/useMultiSelect'
 import { useUiStore } from '../stores/ui.store'
 import ClassEditorPage from './ClassEditorPage'
-
-function slugify(value: string): string {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '')
-}
-
-// ─── Create dialog ────────────────────��───────────────────────────────────────
-
-interface CreateDialogProps {
-  open: boolean
-  onClose: () => void
-  onCreated: (record: ClassRecord) => void
-}
-
-function CreateDialog({ open, onClose, onCreated }: CreateDialogProps): React.JSX.Element {
-  const [displayName, setDisplayName] = useState('')
-  const [exportKey, setExportKey] = useState('')
-  const [exportKeyTouched, setExportKeyTouched] = useState(false)
-  const [isBusy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (!open) return
-    setDisplayName('')
-    setExportKey('')
-    setExportKeyTouched(false)
-    setError(null)
-  }, [open])
-
-  const handleDisplayNameChange = (value: string): void => {
-    setDisplayName(value)
-    if (!exportKeyTouched) setExportKey(slugify(value))
-  }
-
-  const handleExportKeyChange = (value: string): void => {
-    setExportKey(value)
-    setExportKeyTouched(true)
-  }
-
-  const handleCreate = async (): Promise<void> => {
-    if (!displayName.trim()) return
-    setBusy(true)
-    setError(null)
-    try {
-      const record = await classesApi.create({
-        displayName: displayName.trim(),
-        exportKey: exportKey.trim() || slugify(displayName.trim()),
-      })
-      onCreated(record)
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Failed to create class.')
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>New Character Class</DialogTitle>
-      <DialogContent>
-        <Stack spacing={2} sx={{ pt: 1 }}>
-          {error && <Alert severity="error">{error}</Alert>}
-          <TextField
-            label="Display Name"
-            value={displayName}
-            onChange={(e) => handleDisplayNameChange(e.target.value)}
-            required
-            autoFocus
-            fullWidth
-          />
-          <TextField
-            label="Export Key"
-            value={exportKey}
-            onChange={(e) => handleExportKeyChange(e.target.value)}
-            fullWidth
-            helperText="Used in exported files. Auto-generated from the display name."
-            InputProps={{
-              startAdornment: exportKey ? undefined : (
-                <InputAdornment position="start">
-                  <Typography variant="caption" color="text.disabled">
-                    auto
-                  </Typography>
-                </InputAdornment>
-              ),
-            }}
-          />
-        </Stack>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} disabled={isBusy}>
-          Cancel
-        </Button>
-        <Button
-          variant="contained"
-          onClick={() => void handleCreate()}
-          disabled={!displayName.trim() || isBusy}
-        >
-          Create Class
-        </Button>
-      </DialogActions>
-    </Dialog>
-  )
-}
 
 // ─── Delete confirm dialog ────────────────────────────────────────────────────
 
@@ -469,7 +364,7 @@ export default function ClassesPage(): React.JSX.Element {
         </>
       )}
 
-      <CreateDialog
+      <CreateClassDialog
         open={createOpen}
         onClose={() => setCreateOpen(false)}
         onCreated={handleCreated}

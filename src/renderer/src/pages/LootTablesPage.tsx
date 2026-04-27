@@ -16,7 +16,6 @@ import {
   DialogTitle,
   FormControl,
   IconButton,
-  InputAdornment,
   InputLabel,
   MenuItem,
   Select,
@@ -38,86 +37,11 @@ import { npcsApi } from '../../api/npcs.api'
 import type { LootTableEntry, LootTableRecord, NpcRecord } from '../../../shared/domain-types'
 import { ArchiveToggle, ArchiveTable, type ViewMode } from '../components/ArchiveView'
 import { BulkActionToolbar, BulkDeleteDialog } from '../components/BulkActions'
+import { CreateLootTableDialog } from '../components/create-dialogs'
 import EditorModal from '../components/EditorModal'
 import { useMultiSelect } from '../hooks/useMultiSelect'
 import { useUiStore } from '../stores/ui.store'
 import LootTableEditorPage from './LootTableEditorPage'
-
-function slugify(value: string): string {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
-}
-
-interface CreateDialogProps {
-  open: boolean
-  onClose: () => void
-  onCreated: (record: LootTableRecord) => void
-}
-
-function CreateDialog({ open, onClose, onCreated }: CreateDialogProps): React.JSX.Element {
-  const [displayName, setDisplayName] = useState('')
-  const [exportKey, setExportKey] = useState('')
-  const [exportKeyTouched, setExportKeyTouched] = useState(false)
-  const [isBusy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (!open) return
-    setDisplayName('')
-    setExportKey('')
-    setExportKeyTouched(false)
-    setError(null)
-  }, [open])
-
-  const handleDisplayNameChange = (value: string): void => {
-    setDisplayName(value)
-    if (!exportKeyTouched) setExportKey(slugify(value))
-  }
-
-  const handleCreate = async (): Promise<void> => {
-    if (!displayName.trim()) return
-    setBusy(true)
-    setError(null)
-    try {
-      const record = await lootTablesApi.create({
-        displayName: displayName.trim(),
-        exportKey: exportKey.trim() || slugify(displayName.trim()),
-      })
-      onCreated(record)
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Failed to create loot table.')
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>New Loot Table</DialogTitle>
-      <DialogContent>
-        <Stack spacing={2} sx={{ pt: 1 }}>
-          {error && <Alert severity="error">{error}</Alert>}
-          <TextField label="Display Name" value={displayName} onChange={(e) => handleDisplayNameChange(e.target.value)} required autoFocus fullWidth />
-          <TextField
-            label="Export Key"
-            value={exportKey}
-            onChange={(e) => { setExportKey(e.target.value); setExportKeyTouched(true) }}
-            fullWidth
-            helperText="Used in exported files. Auto-generated from the display name."
-            InputProps={{
-              startAdornment: exportKey ? undefined : (
-                <InputAdornment position="start"><Typography variant="caption" color="text.disabled">auto</Typography></InputAdornment>
-              ),
-            }}
-          />
-        </Stack>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} disabled={isBusy}>Cancel</Button>
-        <Button variant="contained" onClick={() => void handleCreate()} disabled={!displayName.trim() || isBusy}>Create Loot Table</Button>
-      </DialogActions>
-    </Dialog>
-  )
-}
 
 interface DeleteDialogProps {
   record: LootTableRecord | null
@@ -386,7 +310,7 @@ export default function LootTablesPage(): React.JSX.Element {
         </>
       )}
 
-      <CreateDialog open={createOpen} onClose={() => setCreateOpen(false)} onCreated={handleCreated} />
+      <CreateLootTableDialog open={createOpen} onClose={() => setCreateOpen(false)} onCreated={handleCreated} />
       <DeleteDialog record={deleteTarget} onClose={() => setDeleteTarget(null)} onDeleted={handleDeleted} />
 
       <BulkDeleteDialog

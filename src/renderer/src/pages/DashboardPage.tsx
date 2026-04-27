@@ -24,10 +24,28 @@ import {
 } from '@mui/material'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { itemsApi } from '../../api/items.api'
+import { metaApi } from '../../api/meta.api'
 import { projectApi } from '../../api/project.api'
 import { validationApi } from '../../api/validation.api'
-import type { ValidationIssue } from '../../../shared/domain-types'
+import type {
+  ItemRecord,
+  MetaCraftingSpecialization,
+  MetaCraftingStation,
+  MetaItemCategory,
+  MetaNpcType,
+  MetaRarity,
+  ValidationIssue,
+} from '../../../shared/domain-types'
 import type { RecordCounts, SaveHistoryEntry } from '../../../shared/project-types'
+import {
+  CreateAbilityDialog,
+  CreateClassDialog,
+  CreateItemDialog,
+  CreateLootTableDialog,
+  CreateNpcDialog,
+  CreateRecipeDialog,
+} from '../components/create-dialogs'
 import { useProjectStore } from '../stores/project.store'
 import { useValidationStore } from '../stores/validation.store'
 import { ProjectInitialsMark } from '../components/ProjectInitialsMark'
@@ -44,13 +62,15 @@ const DOMAIN_TILES = [
   { label: 'Loot Tables', key: 'lootTables' as keyof RecordCounts, path: '/loot-tables', Icon: LootIcon },
 ] as const
 
-const QUICK_ADD_DOMAINS = [
-  { label: 'Class', path: '/classes?action=create' },
-  { label: 'Ability', path: '/abilities?action=create' },
-  { label: 'Item', path: '/items?action=create' },
-  { label: 'Recipe', path: '/recipes?action=create' },
-  { label: 'NPC', path: '/npcs?action=create' },
-  { label: 'Loot Table', path: '/loot-tables?action=create' },
+type QuickAddDomain = 'classes' | 'abilities' | 'items' | 'recipes' | 'npcs' | 'lootTables'
+
+const QUICK_ADD_DOMAINS: { label: string; domain: QuickAddDomain }[] = [
+  { label: 'Class', domain: 'classes' },
+  { label: 'Ability', domain: 'abilities' },
+  { label: 'Item', domain: 'items' },
+  { label: 'Recipe', domain: 'recipes' },
+  { label: 'NPC', domain: 'npcs' },
+  { label: 'Loot Table', domain: 'lootTables' },
 ]
 
 export default function DashboardPage(): React.JSX.Element {
@@ -66,6 +86,13 @@ export default function DashboardPage(): React.JSX.Element {
   const [autoSaveInfo, setAutoSaveInfo] = useState<{ intervalMs: number; nextSaveAt: string | null } | null>(null)
   const [countdown, setCountdown] = useState<string | null>(null)
   const [quickAddAnchor, setQuickAddAnchor] = useState<null | HTMLElement>(null)
+  const [quickAddDomain, setQuickAddDomain] = useState<QuickAddDomain | null>(null)
+  const [categories, setCategories] = useState<MetaItemCategory[]>([])
+  const [rarities, setRarities] = useState<MetaRarity[]>([])
+  const [npcTypes, setNpcTypes] = useState<MetaNpcType[]>([])
+  const [stations, setStations] = useState<MetaCraftingStation[]>([])
+  const [specializations, setSpecializations] = useState<MetaCraftingSpecialization[]>([])
+  const [allItems, setAllItems] = useState<ItemRecord[]>([])
 
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -89,6 +116,33 @@ export default function DashboardPage(): React.JSX.Element {
       setRefreshError(cause instanceof Error ? cause.message : 'Unable to refresh dashboard.')
     }
   }, [hydrate, setGlobalIssues])
+
+  const loadMetaData = useCallback(async () => {
+    const [cats, rars, types, sts, specs, items] = await Promise.all([
+      metaApi.listItemCategories(),
+      metaApi.listRarities(),
+      metaApi.listNpcTypes(),
+      metaApi.listCraftingStations(),
+      metaApi.listCraftingSpecializations(),
+      itemsApi.list(),
+    ])
+    setCategories(cats)
+    setRarities(rars)
+    setNpcTypes(types)
+    setStations(sts)
+    setSpecializations(specs)
+    setAllItems(items)
+  }, [])
+
+  const openQuickAdd = (domain: QuickAddDomain): void => {
+    setQuickAddAnchor(null)
+    void loadMetaData().then(() => setQuickAddDomain(domain))
+  }
+
+  const handleQuickAddCreated = (): void => {
+    setQuickAddDomain(null)
+    void refreshProjectState()
+  }
 
   useEffect(() => {
     void refreshProjectState()
@@ -201,7 +255,7 @@ export default function DashboardPage(): React.JSX.Element {
             {QUICK_ADD_DOMAINS.map((d) => (
               <MenuItem
                 key={d.label}
-                onClick={() => { setQuickAddAnchor(null); navigate(d.path) }}
+                onClick={() => openQuickAdd(d.domain)}
               >
                 {d.label}
               </MenuItem>
@@ -326,7 +380,7 @@ export default function DashboardPage(): React.JSX.Element {
                   key={d.label}
                   label={d.label}
                   size="small"
-                  onClick={() => navigate(d.path)}
+                  onClick={() => openQuickAdd(d.domain)}
                   clickable
                 />
               ))}
@@ -346,6 +400,14 @@ export default function DashboardPage(): React.JSX.Element {
           </Paper>
         </Stack>
       </Box>
+
+      {/* Quick Add dialogs */}
+      <CreateClassDialog open={quickAddDomain === 'classes'} onClose={() => setQuickAddDomain(null)} onCreated={handleQuickAddCreated} />
+      <CreateAbilityDialog open={quickAddDomain === 'abilities'} onClose={() => setQuickAddDomain(null)} onCreated={handleQuickAddCreated} />
+      <CreateItemDialog open={quickAddDomain === 'items'} categories={categories} rarities={rarities} onClose={() => setQuickAddDomain(null)} onCreated={handleQuickAddCreated} />
+      <CreateRecipeDialog open={quickAddDomain === 'recipes'} items={allItems} stations={stations} specializations={specializations} onClose={() => setQuickAddDomain(null)} onCreated={handleQuickAddCreated} />
+      <CreateNpcDialog open={quickAddDomain === 'npcs'} npcTypes={npcTypes} onClose={() => setQuickAddDomain(null)} onCreated={handleQuickAddCreated} />
+      <CreateLootTableDialog open={quickAddDomain === 'lootTables'} onClose={() => setQuickAddDomain(null)} onCreated={handleQuickAddCreated} />
     </Stack>
   )
 }

@@ -16,7 +16,6 @@ import {
   DialogTitle,
   FormControl,
   IconButton,
-  InputAdornment,
   InputLabel,
   MenuItem,
   Select,
@@ -38,97 +37,11 @@ import { npcsApi } from '../../api/npcs.api'
 import type { MetaNpcType, NpcRecord } from '../../../shared/domain-types'
 import { ArchiveToggle, ArchiveTable, type ViewMode } from '../components/ArchiveView'
 import { BulkActionToolbar, BulkDeleteDialog } from '../components/BulkActions'
+import { CreateNpcDialog } from '../components/create-dialogs'
 import EditorModal from '../components/EditorModal'
 import { useMultiSelect } from '../hooks/useMultiSelect'
 import { useUiStore } from '../stores/ui.store'
 import NpcEditorPage from './NpcEditorPage'
-
-function slugify(value: string): string {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
-}
-
-interface CreateDialogProps {
-  open: boolean
-  npcTypes: MetaNpcType[]
-  onClose: () => void
-  onCreated: (record: NpcRecord) => void
-}
-
-function CreateDialog({ open, npcTypes, onClose, onCreated }: CreateDialogProps): React.JSX.Element {
-  const [displayName, setDisplayName] = useState('')
-  const [exportKey, setExportKey] = useState('')
-  const [exportKeyTouched, setExportKeyTouched] = useState(false)
-  const [npcTypeId, setNpcTypeId] = useState('')
-  const [isBusy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (!open) return
-    setDisplayName('')
-    setExportKey('')
-    setExportKeyTouched(false)
-    setNpcTypeId(npcTypes[0]?.id ?? '')
-    setError(null)
-  }, [open, npcTypes])
-
-  const handleDisplayNameChange = (value: string): void => {
-    setDisplayName(value)
-    if (!exportKeyTouched) setExportKey(slugify(value))
-  }
-
-  const handleCreate = async (): Promise<void> => {
-    if (!displayName.trim() || !npcTypeId) return
-    setBusy(true)
-    setError(null)
-    try {
-      const record = await npcsApi.create({
-        displayName: displayName.trim(),
-        exportKey: exportKey.trim() || slugify(displayName.trim()),
-        npcTypeId,
-      })
-      onCreated(record)
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Failed to create NPC.')
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>New NPC</DialogTitle>
-      <DialogContent>
-        <Stack spacing={2} sx={{ pt: 1 }}>
-          {error && <Alert severity="error">{error}</Alert>}
-          {npcTypes.length === 0 && <Alert severity="info">Create an NPC type before adding NPCs.</Alert>}
-          <TextField label="Display Name" value={displayName} onChange={(e) => handleDisplayNameChange(e.target.value)} required autoFocus fullWidth />
-          <TextField
-            label="Export Key"
-            value={exportKey}
-            onChange={(e) => { setExportKey(e.target.value); setExportKeyTouched(true) }}
-            fullWidth
-            helperText="Used in exported files. Auto-generated from the display name."
-            InputProps={{
-              startAdornment: exportKey ? undefined : (
-                <InputAdornment position="start"><Typography variant="caption" color="text.disabled">auto</Typography></InputAdornment>
-              ),
-            }}
-          />
-          <FormControl fullWidth required>
-            <InputLabel id="create-npc-type-label">NPC Type</InputLabel>
-            <Select labelId="create-npc-type-label" label="NPC Type" value={npcTypeId} onChange={(e) => setNpcTypeId(e.target.value)}>
-              {npcTypes.map((type) => <MenuItem key={type.id} value={type.id}>{type.displayName}</MenuItem>)}
-            </Select>
-          </FormControl>
-        </Stack>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} disabled={isBusy}>Cancel</Button>
-        <Button variant="contained" onClick={() => void handleCreate()} disabled={!displayName.trim() || !npcTypeId || isBusy}>Create NPC</Button>
-      </DialogActions>
-    </Dialog>
-  )
-}
 
 interface DeleteDialogProps {
   record: NpcRecord | null
@@ -392,7 +305,7 @@ export default function NpcsPage(): React.JSX.Element {
         </>
       )}
 
-      <CreateDialog open={createOpen} npcTypes={npcTypes} onClose={() => setCreateOpen(false)} onCreated={handleCreated} />
+      <CreateNpcDialog open={createOpen} npcTypes={npcTypes} onClose={() => setCreateOpen(false)} onCreated={handleCreated} />
       <DeleteDialog record={deleteTarget} onClose={() => setDeleteTarget(null)} onDeleted={handleDeleted} />
 
       <BulkDeleteDialog
