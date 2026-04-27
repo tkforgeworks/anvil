@@ -9,6 +9,10 @@ export const IPC_CHANNELS = {
   PROJECT_CLOSE: 'project:close',
   PROJECT_GET_STATE: 'project:get-state',
   PROJECT_REMOVE_RECENT: 'project:remove-recent',
+  PROJECT_GET_SAVE_HISTORY: 'project:get-save-history',
+  PROJECT_GET_AUTO_SAVE_INFO: 'project:get-auto-save-info',
+  PROJECT_BACKUP: 'project:backup',
+  PROJECT_GET_WEEKLY_DELTAS: 'project:get-weekly-deltas',
 
   // Character Classes
   CLASSES_LIST: 'classes:list',

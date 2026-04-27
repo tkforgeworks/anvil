@@ -5,6 +5,7 @@ import * as migration003 from './003_class_overrides_and_metadata'
 import * as migration004 from './004_ability_resource_type'
 import * as migration005 from './005_custom_templates'
 import * as migration006 from './006_stat_growth_formulas'
+import * as migration007 from './007_save_history'
 
 interface Migration {
   filename: string
@@ -22,6 +23,7 @@ const MIGRATIONS: Migration[] = [
   { filename: '004_ability_resource_type', up: migration004.up },
   { filename: '005_custom_templates', up: migration005.up },
   { filename: '006_stat_growth_formulas', up: migration006.up },
+  { filename: '007_save_history', up: migration007.up },
 ]
 
 export const CURRENT_SCHEMA_VERSION = MIGRATIONS.length

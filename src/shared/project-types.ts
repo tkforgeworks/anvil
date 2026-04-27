@@ -19,6 +19,7 @@ export interface ProjectMetadata {
   filePath: string
   schemaVersion: number
   lastModifiedAt: string
+  fileSize: number
   recordCounts: RecordCounts
 }
 
@@ -41,4 +42,11 @@ export interface CreateProjectInput {
   gameTitle: string
   templateId: ProjectTemplateId
   filePath?: string
+}
+
+export interface SaveHistoryEntry {
+  id: number
+  savedAt: string
+  description: string
+  isAutoSave: boolean
 }

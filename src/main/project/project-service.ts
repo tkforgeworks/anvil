@@ -1,5 +1,5 @@
 import Database from 'better-sqlite3'
-import { app, dialog, type BrowserWindow } from 'electron'
+import { app, BrowserWindow, dialog } from 'electron'
 import {
   copyFileSync,
   existsSync,
@@ -15,6 +15,7 @@ import { basename, dirname, extname, join, parse } from 'path'
 import { closeDatabase, getDb, openDatabase, type DbConnection } from '../db/connection'
 import { CURRENT_SCHEMA_VERSION, runMigrations } from '../db/migrations/runner'
 import { getAppSettings } from '../settings/app-settings-service'
+import { recordSave } from './save-history-service'
 import type {
   CreateProjectInput,
   ProjectMetadata,
@@ -79,6 +80,7 @@ function readRecentProjects(): RecentProject[] {
           ...project,
           exists,
           lastModifiedAt: exists ? getLastModifiedAt(project.filePath) : project.lastModifiedAt,
+          fileSize: exists ? statSync(project.filePath).size : (project.fileSize ?? 0),
           recordCounts: { ...EMPTY_RECORD_COUNTS, ...project.recordCounts },
         }
       })
@@ -303,6 +305,7 @@ function buildProjectMetadata(db: DbConnection, filePath: string): ProjectMetada
     filePath,
     schemaVersion: meta.schema_version,
     lastModifiedAt: getLastModifiedAt(filePath),
+    fileSize: statSync(filePath).size,
     recordCounts: getRecordCounts(db),
   }
 }
@@ -352,6 +355,7 @@ function setRecoveryState(filePath: string, error: unknown): ProjectStateSnapsho
     filePath,
     schemaVersion: 0,
     lastModifiedAt: (() => { try { return getLastModifiedAt(filePath) } catch { return new Date().toISOString() } })(),
+    fileSize: (() => { try { return statSync(filePath).size } catch { return 0 } })(),
     recordCounts: EMPTY_RECORD_COUNTS,
   }
   isDirty = false
@@ -381,7 +385,7 @@ function startAutoSaveTimer(): void {
     if (!activeProject || !isDirty || saveStatus === 'saving' || isRecoveryMode) return
 
     try {
-      saveProject()
+      saveProject(true)
     } catch {
       // saveProject updates saveStatus/saveError before rethrowing.
     }
@@ -525,7 +529,7 @@ export async function openProject(
   }
 }
 
-export function saveProject(): ProjectStateSnapshot {
+export function saveProject(isAutoSave = false): ProjectStateSnapshot {
   if (!activeProject || isRecoveryMode) return getProjectState()
 
   saveStatus = 'saving'
@@ -534,6 +538,7 @@ export function saveProject(): ProjectStateSnapshot {
   try {
     const db = getDb()
     db.pragma('wal_checkpoint(TRUNCATE)')
+    recordSave(isAutoSave)
     setCleanState(buildProjectMetadata(db, activeProject.filePath))
     updateRecentProjects(activeProject)
     return getProjectState()
@@ -630,4 +635,61 @@ export function getProjectState(): ProjectStateSnapshot {
     saveStatus,
     saveError,
   }
+}
+
+export function getAutoSaveInfo(): { intervalMs: number; nextSaveAt: string | null } {
+  const intervalMs = getAppSettings().autoSaveIntervalMs
+  if (!autoSaveTimer || !activeProject) {
+    return { intervalMs, nextSaveAt: null }
+  }
+  return { intervalMs, nextSaveAt: new Date(Date.now() + intervalMs).toISOString() }
+}
+
+export async function backupProject(owner: BrowserWindow | null): Promise<{ success: boolean }> {
+  if (!activeProject) return { success: false }
+
+  const projectName = activeProject.projectName.replace(/[^a-zA-Z0-9_-]/g, '_')
+  const dateStr = new Date().toISOString().split('T')[0]
+  const defaultPath = join(
+    dirname(activeProject.filePath),
+    `${projectName}-backup-${dateStr}.anvil`,
+  )
+
+  const result = await dialog.showSaveDialog(owner ?? BrowserWindow.getFocusedWindow()!, {
+    defaultPath,
+    filters: [{ name: 'Anvil Project', extensions: ['anvil'] }],
+  })
+
+  if (result.canceled || !result.filePath) return { success: false }
+
+  copyFileSync(activeProject.filePath, result.filePath)
+  return { success: true }
+}
+
+export function getWeeklyDeltas(): RecordCounts {
+  if (!activeProject || isRecoveryMode) {
+    return { classes: 0, abilities: 0, items: 0, recipes: 0, npcs: 0, lootTables: 0 }
+  }
+
+  const db = getDb()
+  const tables: Array<{ key: keyof RecordCounts; table: string }> = [
+    { key: 'classes', table: 'character_classes' },
+    { key: 'abilities', table: 'abilities' },
+    { key: 'items', table: 'items' },
+    { key: 'recipes', table: 'crafting_recipes' },
+    { key: 'npcs', table: 'npcs' },
+    { key: 'lootTables', table: 'loot_tables' },
+  ]
+
+  const deltas = { classes: 0, abilities: 0, items: 0, recipes: 0, npcs: 0, lootTables: 0 }
+  for (const { key, table } of tables) {
+    const created = (db.prepare(
+      `SELECT COUNT(*) as cnt FROM ${table} WHERE created_at >= datetime('now', '-7 days') AND deleted_at IS NULL`
+    ).get() as { cnt: number }).cnt
+    const deleted = (db.prepare(
+      `SELECT COUNT(*) as cnt FROM ${table} WHERE deleted_at >= datetime('now', '-7 days')`
+    ).get() as { cnt: number }).cnt
+    deltas[key] = created - deleted
+  }
+  return deltas
 }
