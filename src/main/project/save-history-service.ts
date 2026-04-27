@@ -27,7 +27,7 @@ export function getRecentSaves(limit: number = 50): SaveHistoryEntry[] {
 
   return rows.map((row) => ({
     id: row.id,
-    savedAt: row.saved_at,
+    savedAt: row.saved_at.replace(' ', 'T') + 'Z',
     description: row.description,
     isAutoSave: row.is_auto_save === 1,
   }))
