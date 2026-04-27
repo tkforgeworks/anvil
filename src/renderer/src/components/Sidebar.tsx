@@ -23,7 +23,9 @@ import {
   Settings as SettingsIcon,
 } from '@mui/icons-material'
 import { NavLink } from 'react-router-dom'
+import type { RecordCounts } from '../../../shared/project-types'
 import { useLifecycleStore } from '../stores/lifecycle.store'
+import { useProjectStore } from '../stores/project.store'
 import { useValidationStore } from '../stores/validation.store'
 
 const DRAWER_WIDTH = 220
@@ -34,18 +36,19 @@ interface NavItem {
   icon: React.ReactNode
   badge?: number
   badgeColor?: string
+  countKey?: keyof RecordCounts
 }
 
 const DOMAIN_NAV: NavItem[] = [
-  { label: 'Classes', to: '/classes', icon: <ClassesIcon fontSize="small" /> },
-  { label: 'Abilities', to: '/abilities', icon: <AbilitiesIcon fontSize="small" /> },
-  { label: 'Items', to: '/items', icon: <ItemsIcon fontSize="small" /> },
-  { label: 'Recipes', to: '/recipes', icon: <RecipesIcon fontSize="small" /> },
-  { label: 'NPCs', to: '/npcs', icon: <NpcsIcon fontSize="small" /> },
-  { label: 'Loot Tables', to: '/loot-tables', icon: <LootIcon fontSize="small" /> },
+  { label: 'Classes', to: '/classes', icon: <ClassesIcon fontSize="small" />, countKey: 'classes' },
+  { label: 'Abilities', to: '/abilities', icon: <AbilitiesIcon fontSize="small" />, countKey: 'abilities' },
+  { label: 'Items', to: '/items', icon: <ItemsIcon fontSize="small" />, countKey: 'items' },
+  { label: 'Recipes', to: '/recipes', icon: <RecipesIcon fontSize="small" />, countKey: 'recipes' },
+  { label: 'NPCs', to: '/npcs', icon: <NpcsIcon fontSize="small" />, countKey: 'npcs' },
+  { label: 'Loot Tables', to: '/loot-tables', icon: <LootIcon fontSize="small" />, countKey: 'lootTables' },
 ]
 
-function NavListItem({ item }: { item: NavItem }): React.JSX.Element {
+function NavListItem({ item, count }: { item: NavItem; count?: number }): React.JSX.Element {
   return (
     <ListItem disablePadding>
       <ListItemButton
@@ -66,6 +69,13 @@ function NavListItem({ item }: { item: NavItem }): React.JSX.Element {
           primary={item.label}
           primaryTypographyProps={{ fontSize: '0.875rem' }}
         />
+        {count != null && (
+          <Typography
+            sx={{ fontSize: '0.7rem', fontWeight: 500, color: 'text.secondary', ml: 1 }}
+          >
+            {count}
+          </Typography>
+        )}
         {item.badge != null && item.badge > 0 && (
           <Box
             sx={{
@@ -92,6 +102,7 @@ function NavListItem({ item }: { item: NavItem }): React.JSX.Element {
 }
 
 export default function Sidebar(): React.JSX.Element {
+  const recordCounts = useProjectStore((s) => s.activeProject?.recordCounts)
   const issueCount = useValidationStore((s) => s.issues.filter((i) => i.severity === 'error' || i.severity === 'warning').length)
   const hasErrors = useValidationStore((s) => s.issues.some((i) => i.severity === 'error'))
   const trashCount = useLifecycleStore((s) => s.trashCount)
@@ -150,7 +161,11 @@ export default function Sidebar(): React.JSX.Element {
 
       <List dense>
         {DOMAIN_NAV.map((item) => (
-          <NavListItem key={item.to} item={item} />
+          <NavListItem
+            key={item.to}
+            item={item}
+            count={item.countKey && recordCounts ? recordCounts[item.countKey] : undefined}
+          />
         ))}
       </List>
 
