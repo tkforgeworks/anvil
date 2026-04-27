@@ -25,6 +25,7 @@ export interface ProjectMetadata {
 
 export interface RecentProject extends ProjectMetadata {
   exists: boolean
+  isArchived?: boolean
 }
 
 export interface ProjectStateSnapshot {

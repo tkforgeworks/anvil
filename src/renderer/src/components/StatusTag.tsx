@@ -22,6 +22,7 @@ export function StatusTag({ status }: StatusTagProps) {
       size="small"
       variant="outlined"
       icon={status === 'saving' ? <CircularProgress size={12} color="inherit" /> : undefined}
+      sx={{ transition: 'all 200ms ease' }}
     />
   )
 }

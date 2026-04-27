@@ -6,6 +6,7 @@ import {
 import {
   Box,
   Button,
+  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -183,7 +184,7 @@ export default function WelcomePage(): React.JSX.Element {
                     px: 1.5,
                     py: 1.25,
                     cursor: project.exists && !isBusy ? 'pointer' : 'default',
-                    opacity: project.exists ? 1 : 0.5,
+                    opacity: !project.exists ? 0.5 : project.isArchived ? 0.7 : 1,
                     borderBottom: idx < recentProjects.length - 1 ? 1 : 0,
                     borderColor: 'divider',
                     '&:hover': project.exists ? { bgcolor: 'action.hover' } : undefined,
@@ -195,6 +196,9 @@ export default function WelcomePage(): React.JSX.Element {
                       <Typography variant="body2" sx={{ fontWeight: 600 }} noWrap>
                         {project.projectName}
                       </Typography>
+                      {project.isArchived && (
+                        <Chip label="archived" size="small" variant="outlined" sx={{ height: 18, fontSize: '0.65rem' }} />
+                      )}
                       <Typography variant="caption" color="text.secondary" noWrap>
                         · {countSummary(project) || 'empty project'}
                       </Typography>
