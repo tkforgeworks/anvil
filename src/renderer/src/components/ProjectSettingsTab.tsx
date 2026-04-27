@@ -41,6 +41,7 @@ import {
 import { useCallback, useEffect, useState } from 'react'
 import { customFieldsApi } from '../../api/custom-fields.api'
 import { metaApi } from '../../api/meta.api'
+import { projectApi } from '../../api/project.api'
 import type {
   CreateCustomFieldDefinitionInput,
   CustomFieldDefinition,
@@ -1007,7 +1008,10 @@ function CustomFieldsSection({ itemCategories, npcTypes }: CustomFieldsSectionPr
 export default function ProjectSettingsTab(): React.JSX.Element {
   const projectFilePath = useProjectStore((state) => state.activeProject?.filePath ?? null)
 
+  const hydrate = useProjectStore((state) => state.hydrate)
+
   const [projectSettings, setProjectSettings] = useState<ProjectSettings | null>(null)
+  const [gameTitleStr, setGameTitleStr] = useState('')
   const [maxLevelStr, setMaxLevelStr] = useState('100')
   const [stats, setStats] = useState<MetaStat[]>([])
   const [rarities, setRarities] = useState<MetaRarity[]>([])
@@ -1030,6 +1034,7 @@ export default function ProjectSettingsTab(): React.JSX.Element {
       metaApi.listNpcTypes(),
     ]).then(([settings, s, r, cs, csp, ds, cats, types]) => {
       setProjectSettings(settings)
+      setGameTitleStr(settings.gameTitle)
       setMaxLevelStr(String(settings.maxLevel))
       setStats(s)
       setRarities(r)
@@ -1052,6 +1057,20 @@ export default function ProjectSettingsTab(): React.JSX.Element {
     return <Typography color="text.secondary">Loading project settings...</Typography>
   }
 
+  const handleGameTitleBlur = (): void => {
+    const trimmed = gameTitleStr.trim()
+    if (!trimmed) {
+      setGameTitleStr(projectSettings!.gameTitle)
+      return
+    }
+    if (trimmed === projectSettings!.gameTitle) return
+    void metaApi.setProjectSettings({ gameTitle: trimmed }).then((updated) => {
+      setProjectSettings(updated)
+      setGameTitleStr(updated.gameTitle)
+      void projectApi.getState().then(hydrate)
+    })
+  }
+
   const handleMaxLevelBlur = (): void => {
     const value = Math.max(1, parseInt(maxLevelStr, 10) || 100)
     setMaxLevelStr(String(value))
@@ -1067,6 +1086,21 @@ export default function ProjectSettingsTab(): React.JSX.Element {
   return (
     <Stack spacing={4} sx={{ maxWidth: 900 }}>
       {/* ── General ────────────────────────────────────────────────────────────── */}
+      <Box>
+        <Typography variant="subtitle2" gutterBottom>Game Title</Typography>
+        <TextField
+          size="small"
+          value={gameTitleStr}
+          onChange={(e) => setGameTitleStr(e.target.value)}
+          onBlur={handleGameTitleBlur}
+          onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }}
+          sx={{ width: 360 }}
+        />
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+          The title of your game. Appears in exports and project metadata.
+        </Typography>
+      </Box>
+
       <Box>
         <Typography variant="subtitle2" gutterBottom>Max Level</Typography>
         <Stack direction="row" alignItems="center" spacing={1}>

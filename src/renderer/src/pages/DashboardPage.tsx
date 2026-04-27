@@ -225,7 +225,7 @@ export default function DashboardPage(): React.JSX.Element {
             variant="caption"
             sx={{ color: 'rgba(255,255,255,0.6)', fontFamily: (t) => (t.typography as any).fontFamilyMono }}
           >
-            {activeProject.filePath} · <FileSizeDisplay bytes={activeProject.fileSize} />
+            {activeProject.projectFolder?.root ?? activeProject.filePath} · <FileSizeDisplay bytes={activeProject.fileSize} />
           </Typography>
         </Box>
         <Stack direction="row" spacing={1}>

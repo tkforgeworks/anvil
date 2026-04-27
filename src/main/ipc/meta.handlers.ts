@@ -67,6 +67,7 @@ interface StatRow {
 }
 
 interface ProjectSettingsRow {
+  game_title: string
   max_level: number
   soft_delete_reference_severity: 'Warning' | 'Error'
 }
@@ -224,9 +225,10 @@ export function registerMetaHandlers(): void {
 
   ipcMain.handle(IPC_CHANNELS.META_GET_PROJECT_SETTINGS, (): ProjectSettings => {
     const row = getDb()
-      .prepare(`SELECT max_level, soft_delete_reference_severity FROM project_info LIMIT 1`)
+      .prepare(`SELECT game_title, max_level, soft_delete_reference_severity FROM project_info LIMIT 1`)
       .get() as ProjectSettingsRow
     return {
+      gameTitle: row.game_title,
       maxLevel: row.max_level,
       softDeleteReferenceSeverity: row.soft_delete_reference_severity,
     }
@@ -238,6 +240,9 @@ export function registerMetaHandlers(): void {
     IPC_CHANNELS.META_SET_PROJECT_SETTINGS,
     (_event, input: Partial<ProjectSettings>): ProjectSettings => {
       const db = getDb()
+      if (input.gameTitle !== undefined) {
+        db.prepare(`UPDATE project_info SET game_title = ?`).run(input.gameTitle)
+      }
       if (input.maxLevel !== undefined) {
         db.prepare(`UPDATE project_info SET max_level = ?`).run(input.maxLevel)
       }
@@ -248,9 +253,10 @@ export function registerMetaHandlers(): void {
       }
       markProjectDirty()
       const row = db
-        .prepare(`SELECT max_level, soft_delete_reference_severity FROM project_info LIMIT 1`)
+        .prepare(`SELECT game_title, max_level, soft_delete_reference_severity FROM project_info LIMIT 1`)
         .get() as ProjectSettingsRow
       return {
+        gameTitle: row.game_title,
         maxLevel: row.max_level,
         softDeleteReferenceSeverity: row.soft_delete_reference_severity,
       }

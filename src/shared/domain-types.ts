@@ -214,6 +214,7 @@ export interface MetaStat {
 }
 
 export interface ProjectSettings {
+  gameTitle: string
   maxLevel: number
   softDeleteReferenceSeverity: 'Warning' | 'Error'
 }

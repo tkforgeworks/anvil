@@ -13,10 +13,19 @@ export interface RecordCounts {
   lootTables: number
 }
 
+export interface ProjectFolderPaths {
+  root: string
+  database: string
+  exports: string
+  temp: string
+  logs: string
+}
+
 export interface ProjectMetadata {
   projectName: string
   gameTitle: string
   filePath: string
+  projectFolder: ProjectFolderPaths | null
   schemaVersion: number
   lastModifiedAt: string
   fileSize: number

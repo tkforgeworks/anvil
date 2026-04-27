@@ -7,6 +7,7 @@ import {
   mkdirSync,
   openSync,
   readFileSync,
+  rmSync,
   statSync,
   unlinkSync,
   writeFileSync,
@@ -15,6 +16,7 @@ import { basename, dirname, extname, join, parse } from 'path'
 import { closeDatabase, getDb, openDatabase, type DbConnection } from '../db/connection'
 import { CURRENT_SCHEMA_VERSION, runMigrations } from '../db/migrations/runner'
 import { getAppSettings } from '../settings/app-settings-service'
+import { createProjectFolder, detectProjectFolder, sanitizeFolderName } from './project-folder'
 import { recordSave } from './save-history-service'
 import type {
   CreateProjectInput,
@@ -79,6 +81,7 @@ function readRecentProjects(): RecentProject[] {
         return {
           ...project,
           exists,
+          projectFolder: exists ? detectProjectFolder(project.filePath) : (project.projectFolder ?? null),
           lastModifiedAt: exists ? getLastModifiedAt(project.filePath) : project.lastModifiedAt,
           fileSize: exists ? statSync(project.filePath).size : (project.fileSize ?? 0),
           recordCounts: { ...EMPTY_RECORD_COUNTS, ...project.recordCounts },
@@ -303,6 +306,7 @@ function buildProjectMetadata(db: DbConnection, filePath: string): ProjectMetada
     projectName: meta.project_name || fallbackName,
     gameTitle: meta.game_title || fallbackName,
     filePath,
+    projectFolder: detectProjectFolder(filePath),
     schemaVersion: meta.schema_version,
     lastModifiedAt: getLastModifiedAt(filePath),
     fileSize: statSync(filePath).size,
@@ -353,6 +357,7 @@ function setRecoveryState(filePath: string, error: unknown): ProjectStateSnapsho
     projectName: fallbackName,
     gameTitle: fallbackName,
     filePath,
+    projectFolder: null,
     schemaVersion: 0,
     lastModifiedAt: (() => { try { return getLastModifiedAt(filePath) } catch { return new Date().toISOString() } })(),
     fileSize: (() => { try { return statSync(filePath).size } catch { return 0 } })(),
@@ -400,17 +405,24 @@ function closeExistingDatabase(): void {
   }
 }
 
-async function promptForCreatePath(owner: BrowserWindow | null, projectName: string): Promise<string | null> {
+async function promptForProjectFolder(
+  owner: BrowserWindow | null,
+  projectName: string,
+): Promise<string | null> {
+  const defaultDir = getAppSettings().defaultSaveLocation || app.getPath('documents')
   const options = {
-    title: 'Create Anvil Project',
-    defaultPath: `${sanitizeFilename(projectName)}.anvil`,
-    filters: [{ name: 'Anvil Projects', extensions: ['anvil'] }],
-    properties: ['createDirectory'],
-  } satisfies Electron.SaveDialogOptions
-  const result = owner ? await dialog.showSaveDialog(owner, options) : await dialog.showSaveDialog(options)
+    title: 'Choose folder for new Anvil project',
+    defaultPath: defaultDir,
+    properties: ['openDirectory', 'createDirectory'],
+  } satisfies Electron.OpenDialogOptions
+  const result = owner ? await dialog.showOpenDialog(owner, options) : await dialog.showOpenDialog(options)
 
-  if (result.canceled || !result.filePath) return null
-  return normalizeAnvilPath(result.filePath)
+  if (result.canceled || result.filePaths.length === 0) return null
+
+  const parentDir = result.filePaths[0]
+  const folder = createProjectFolder(parentDir, projectName)
+  const fileName = `${sanitizeFolderName(projectName) || sanitizeFilename(projectName)}.anvil`
+  return join(folder.database, fileName)
 }
 
 async function promptForOpenPath(owner: BrowserWindow | null): Promise<string | null> {
@@ -450,7 +462,7 @@ export async function createProject(
 
   const filePath = input.filePath
     ? normalizeAnvilPath(input.filePath)
-    : await promptForCreatePath(owner, projectName)
+    : await promptForProjectFolder(owner, projectName)
 
   if (!filePath) return getProjectState()
   if (existsSync(filePath)) throw new Error('A project file already exists at that path.')
@@ -483,7 +495,12 @@ export async function createProject(
   } catch (error) {
     closeExistingDatabase()
     releaseProjectLock()
-    if (existsSync(filePath)) unlinkSync(filePath)
+    const folder = detectProjectFolder(filePath)
+    if (folder) {
+      rmSync(folder.root, { recursive: true, force: true })
+    } else if (existsSync(filePath)) {
+      unlinkSync(filePath)
+    }
     throw error
   }
 }

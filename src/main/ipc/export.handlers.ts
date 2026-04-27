@@ -1,6 +1,8 @@
 import { ipcMain, dialog, BrowserWindow } from 'electron'
+import { mkdirSync, existsSync } from 'fs'
 import { writeFile, mkdir } from 'fs/promises'
 import { join } from 'path'
+import { getProjectState } from '../project/project-service'
 import { randomUUID } from 'crypto'
 import { IPC_CHANNELS } from '../../shared/ipc-channels'
 import { getDb } from '../db/connection'
@@ -67,6 +69,14 @@ function renderForPresetOrTemplate(
   }
 
   return renderCustomTemplate(template.template_source, context)
+}
+
+function getDefaultExportDir(): string | undefined {
+  const state = getProjectState()
+  const folder = state.activeProject?.projectFolder
+  if (!folder) return undefined
+  if (!existsSync(folder.exports)) mkdirSync(folder.exports, { recursive: true })
+  return folder.exports
 }
 
 export function registerExportHandlers(): void {
@@ -168,9 +178,15 @@ export function registerExportHandlers(): void {
         const win = BrowserWindow.getFocusedWindow()
 
         if (result.files && result.files.length > 1) {
+          const exportDir = getDefaultExportDir()
+          const openOpts: Electron.OpenDialogOptions = {
+            title: 'Select Export Folder',
+            properties: ['openDirectory', 'createDirectory'],
+            ...(exportDir ? { defaultPath: exportDir } : {}),
+          }
           const dialogResult = win
-            ? await dialog.showOpenDialog(win, { title: 'Select Export Folder', properties: ['openDirectory', 'createDirectory'] })
-            : await dialog.showOpenDialog({ title: 'Select Export Folder', properties: ['openDirectory', 'createDirectory'] })
+            ? await dialog.showOpenDialog(win, openOpts)
+            : await dialog.showOpenDialog(openOpts)
 
           if (dialogResult.canceled || !dialogResult.filePaths[0]) {
             return { success: false, error: 'Export canceled.' }
@@ -185,25 +201,20 @@ export function registerExportHandlers(): void {
 
         const preset = BUILT_IN_PRESETS.find((p) => p.id === presetId)
         const defaultExt = preset?.format === 'json' ? 'json' : 'txt'
+        const exportDir = getDefaultExportDir()
+        const defaultPath = exportDir ? join(exportDir, `export.${defaultExt}`) : `export.${defaultExt}`
+        const saveOpts: Electron.SaveDialogOptions = {
+          title: 'Export Project Data',
+          defaultPath,
+          filters: [
+            { name: 'JSON Files', extensions: ['json'] },
+            { name: 'Text Files', extensions: ['txt'] },
+            { name: 'All Files', extensions: ['*'] },
+          ],
+        }
         const dialogResult = win
-          ? await dialog.showSaveDialog(win, {
-              title: 'Export Project Data',
-              defaultPath: `export.${defaultExt}`,
-              filters: [
-                { name: 'JSON Files', extensions: ['json'] },
-                { name: 'Text Files', extensions: ['txt'] },
-                { name: 'All Files', extensions: ['*'] },
-              ],
-            })
-          : await dialog.showSaveDialog({
-              title: 'Export Project Data',
-              defaultPath: `export.${defaultExt}`,
-              filters: [
-                { name: 'JSON Files', extensions: ['json'] },
-                { name: 'Text Files', extensions: ['txt'] },
-                { name: 'All Files', extensions: ['*'] },
-              ],
-            })
+          ? await dialog.showSaveDialog(win, saveOpts)
+          : await dialog.showSaveDialog(saveOpts)
 
         if (dialogResult.canceled || !dialogResult.filePath) {
           return { success: false, error: 'Export canceled.' }
