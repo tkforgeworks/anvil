@@ -43,18 +43,6 @@ export default function TitleBar(): React.JSX.Element {
     }
   }
 
-  const saveProjectAs = async (): Promise<void> => {
-    if (isRecoveryMode) return
-    setSaveStatus('saving')
-    setSaveError(null)
-    try {
-      const snapshot = await projectApi.saveAs()
-      hydrate(snapshot)
-    } catch (cause) {
-      setSaveError(cause instanceof Error ? cause.message : 'Unable to save project copy.')
-    }
-  }
-
   const closeProject = async (): Promise<void> => {
     const snapshot = await projectApi.close()
     hydrate(snapshot)
@@ -88,17 +76,9 @@ export default function TitleBar(): React.JSX.Element {
             color="inherit"
             size="small"
             onClick={() => void saveProject()}
-            disabled={!activeProject || isRecoveryMode}
+            disabled={!activeProject || isRecoveryMode || !isDirty}
           >
             Save
-          </Button>
-          <Button
-            color="inherit"
-            size="small"
-            onClick={() => void saveProjectAs()}
-            disabled={!activeProject || isRecoveryMode}
-          >
-            Save As
           </Button>
           <Button color="inherit" size="small" onClick={() => void closeProject()}>
             Close

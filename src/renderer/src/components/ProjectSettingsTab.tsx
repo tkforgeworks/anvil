@@ -4,6 +4,7 @@ import {
   ArrowUpward as UpIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
+  SaveAs as SaveAsIcon,
 } from '@mui/icons-material'
 import {
   Alert,
@@ -1006,9 +1007,13 @@ function CustomFieldsSection({ itemCategories, npcTypes }: CustomFieldsSectionPr
 // ─── Project Settings Tab ────────────────────────────────────────────────────
 
 export default function ProjectSettingsTab(): React.JSX.Element {
-  const projectFilePath = useProjectStore((state) => state.activeProject?.filePath ?? null)
+  const activeProject = useProjectStore((state) => state.activeProject)
+  const projectFilePath = activeProject?.filePath ?? null
+  const isRecoveryMode = useProjectStore((state) => state.isRecoveryMode)
 
   const hydrate = useProjectStore((state) => state.hydrate)
+  const setSaveStatus = useProjectStore((state) => state.setSaveStatus)
+  const setSaveError = useProjectStore((state) => state.setSaveError)
 
   const [projectSettings, setProjectSettings] = useState<ProjectSettings | null>(null)
   const [gameTitleStr, setGameTitleStr] = useState('')
@@ -1053,6 +1058,18 @@ export default function ProjectSettingsTab(): React.JSX.Element {
   const refreshNpcTypes = (): void => { void metaApi.listNpcTypes().then(setNpcTypes) }
   const refreshDerivedStats = (): void => { void metaApi.listDerivedStats().then(setDerivedStats) }
 
+  const saveProjectAs = async (): Promise<void> => {
+    if (isRecoveryMode) return
+    setSaveStatus('saving')
+    setSaveError(null)
+    try {
+      const snapshot = await projectApi.saveAs()
+      hydrate(snapshot)
+    } catch (cause) {
+      setSaveError(cause instanceof Error ? cause.message : 'Unable to save project copy.')
+    }
+  }
+
   if (!projectSettings) {
     return <Typography color="text.secondary">Loading project settings...</Typography>
   }
@@ -1085,6 +1102,32 @@ export default function ProjectSettingsTab(): React.JSX.Element {
 
   return (
     <Stack spacing={4} sx={{ maxWidth: 900 }}>
+      {/* ── Project File ───────────────────────────────────────────────────────── */}
+      <Box>
+        <Typography variant="subtitle2" gutterBottom>Project File</Typography>
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{ fontFamily: (t) => (t.typography as any).fontFamilyMono, fontSize: '0.8rem', mb: 1 }}
+        >
+          {activeProject?.projectFolder?.root ?? activeProject?.filePath ?? '—'}
+        </Typography>
+        <Button
+          variant="outlined"
+          size="small"
+          startIcon={<SaveAsIcon />}
+          onClick={() => void saveProjectAs()}
+          disabled={isRecoveryMode}
+        >
+          Save As
+        </Button>
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+          Save a copy of this project to a new location.
+        </Typography>
+      </Box>
+
+      <Divider />
+
       {/* ── General ────────────────────────────────────────────────────────────── */}
       <Box>
         <Typography variant="subtitle2" gutterBottom>Game Title</Typography>
