@@ -83,7 +83,7 @@ export default function DashboardPage(): React.JSX.Element {
   const [validationIssues, setValidationIssues] = useState<ValidationIssue[]>([])
   const [weeklyDeltas, setWeeklyDeltas] = useState<RecordCounts | null>(null)
   const [saveHistory, setSaveHistory] = useState<SaveHistoryEntry[]>([])
-  const [autoSaveInfo, setAutoSaveInfo] = useState<{ intervalMs: number; nextSaveAt: string | null } | null>(null)
+  const [autoSaveInfo, setAutoSaveInfo] = useState<{ enabled: boolean; intervalMs: number; nextSaveAt: string | null } | null>(null)
   const [countdown, setCountdown] = useState<string | null>(null)
   const [quickAddAnchor, setQuickAddAnchor] = useState<null | HTMLElement>(null)
   const [quickAddDomain, setQuickAddDomain] = useState<QuickAddDomain | null>(null)
@@ -393,14 +393,27 @@ export default function DashboardPage(): React.JSX.Element {
           </Paper>
 
           {/* Auto-save */}
-          <Paper variant="outlined" sx={{ p: 1.5, bgcolor: 'action.hover' }}>
+          <Paper
+            variant="outlined"
+            sx={{
+              p: 1.5,
+              bgcolor: autoSaveInfo?.enabled === false ? undefined : 'action.hover',
+              borderColor: autoSaveInfo?.enabled === false ? 'warning.main' : undefined,
+            }}
+          >
             <Stack direction="row" spacing={0.75} alignItems="center">
-              <ScheduleIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
-              <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Auto-save</Typography>
+              <ScheduleIcon sx={{ fontSize: 16, color: autoSaveInfo?.enabled === false ? 'warning.main' : 'text.secondary' }} />
+              <Typography
+                variant="subtitle2"
+                sx={{ fontWeight: 600, color: autoSaveInfo?.enabled === false ? 'warning.main' : undefined }}
+              >
+                Auto-save {autoSaveInfo?.enabled === false ? 'disabled' : ''}
+              </Typography>
             </Stack>
             <Typography variant="caption" color="text.secondary" sx={{ mt: 0.25, display: 'block' }}>
-              Every {autoSaveInfo ? Math.round(autoSaveInfo.intervalMs / 60000) : '?'} min
-              {countdown && ` · next save in ${countdown}`}
+              {autoSaveInfo?.enabled === false
+                ? 'Remember to save manually. Enable in Settings → Application.'
+                : `Every ${autoSaveInfo ? Math.round(autoSaveInfo.intervalMs / 60000) : '?'} min${countdown ? ` · next save in ${countdown}` : ''}`}
             </Typography>
           </Paper>
         </Stack>

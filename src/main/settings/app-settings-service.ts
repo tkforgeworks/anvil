@@ -7,6 +7,7 @@ const APP_SETTINGS_FILENAME = 'app-settings.json'
 const DEFAULT_APP_SETTINGS: AppSettings = {
   theme: 'dark',
   editingMode: 'modal',
+  autoSaveEnabled: true,
   autoSaveIntervalMs: 5000,
   defaultSaveLocation: null,
   customThemePath: null,
@@ -46,6 +47,7 @@ function normalizeSettings(settings: Partial<AppSettings>): AppSettings {
   return {
     theme,
     editingMode: settings.editingMode === 'full-page' ? 'full-page' : DEFAULT_APP_SETTINGS.editingMode,
+    autoSaveEnabled: typeof settings.autoSaveEnabled === 'boolean' ? settings.autoSaveEnabled : DEFAULT_APP_SETTINGS.autoSaveEnabled,
     autoSaveIntervalMs:
       typeof settings.autoSaveIntervalMs === 'number' && Number.isFinite(settings.autoSaveIntervalMs)
         ? Math.max(1000, Math.trunc(settings.autoSaveIntervalMs))

@@ -16,6 +16,7 @@ export interface CustomThemeColors {
 export interface AppSettings {
   theme: 'dark' | 'light' | 'custom'
   editingMode: 'modal' | 'full-page'
+  autoSaveEnabled: boolean
   autoSaveIntervalMs: number
   defaultSaveLocation: string | null
   customThemePath: string | null

@@ -388,7 +388,9 @@ function stopAutoSaveTimer(): void {
 
 function startAutoSaveTimer(): void {
   stopAutoSaveTimer()
-  const intervalMs = getAppSettings().autoSaveIntervalMs
+  const settings = getAppSettings()
+  if (!settings.autoSaveEnabled) return
+  const intervalMs = settings.autoSaveIntervalMs
   autoSaveTimer = setInterval(() => {
     if (!activeProject || !isDirty || saveStatus === 'saving' || isRecoveryMode) return
 
@@ -667,12 +669,12 @@ export function getProjectState(): ProjectStateSnapshot {
   }
 }
 
-export function getAutoSaveInfo(): { intervalMs: number; nextSaveAt: string | null } {
-  const intervalMs = getAppSettings().autoSaveIntervalMs
-  if (!autoSaveTimer || !activeProject) {
-    return { intervalMs, nextSaveAt: null }
+export function getAutoSaveInfo(): { enabled: boolean; intervalMs: number; nextSaveAt: string | null } {
+  const settings = getAppSettings()
+  if (!settings.autoSaveEnabled || !autoSaveTimer || !activeProject) {
+    return { enabled: settings.autoSaveEnabled, intervalMs: settings.autoSaveIntervalMs, nextSaveAt: null }
   }
-  return { intervalMs, nextSaveAt: new Date(Date.now() + intervalMs).toISOString() }
+  return { enabled: true, intervalMs: settings.autoSaveIntervalMs, nextSaveAt: new Date(Date.now() + settings.autoSaveIntervalMs).toISOString() }
 }
 
 export async function backupProject(owner: BrowserWindow | null): Promise<{ success: boolean }> {

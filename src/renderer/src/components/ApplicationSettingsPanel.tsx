@@ -17,6 +17,7 @@ import {
   Radio,
   RadioGroup,
   Stack,
+  Switch,
   TextField,
   Tooltip,
   Typography,
@@ -215,29 +216,46 @@ export default function ApplicationSettingsPanel(): React.JSX.Element {
         These settings apply globally to the Anvil application and affect every project you open.
       </Alert>
 
-      {/* Auto-save interval */}
+      {/* Auto-save */}
       <Box>
         <Typography variant="subtitle2" gutterBottom>
-          Auto-save Interval
+          Auto-save
         </Typography>
-        <Stack direction="row" alignItems="center" spacing={1}>
-          <TextField
-            type="number"
-            size="small"
-            value={autoSaveSeconds}
-            onChange={(e) => setAutoSaveSeconds(e.target.value)}
-            onBlur={handleAutoSaveBlur}
-            onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }}
-            inputProps={{ min: 1, step: 1 }}
-            sx={{ width: 100 }}
-            disabled={saving}
-          />
-          <Typography variant="body2" color="text.secondary">
-            seconds
-          </Typography>
-        </Stack>
-        <Typography variant="caption" color="text.secondary">
-          How often the project is automatically saved. Minimum 1 second.
+        <FormControlLabel
+          control={
+            <Switch
+              checked={appSettings.autoSaveEnabled}
+              onChange={(e) => void updateSetting({ autoSaveEnabled: e.target.checked })}
+              disabled={saving}
+            />
+          }
+          label="Enable auto-save"
+        />
+        {appSettings.autoSaveEnabled && (
+          <Stack direction="row" alignItems="center" spacing={1} sx={{ mt: 1 }}>
+            <Typography variant="body2" color="text.secondary">
+              Save every
+            </Typography>
+            <TextField
+              type="number"
+              size="small"
+              value={autoSaveSeconds}
+              onChange={(e) => setAutoSaveSeconds(e.target.value)}
+              onBlur={handleAutoSaveBlur}
+              onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }}
+              inputProps={{ min: 1, step: 1 }}
+              sx={{ width: 80 }}
+              disabled={saving}
+            />
+            <Typography variant="body2" color="text.secondary">
+              seconds
+            </Typography>
+          </Stack>
+        )}
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+          {appSettings.autoSaveEnabled
+            ? 'How often the project is automatically saved. Minimum 1 second.'
+            : 'Auto-save is disabled. Remember to save manually.'}
         </Typography>
       </Box>
 
