@@ -1,6 +1,7 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { registerAllIpcHandlers } from './ipc'
+import { initLogger } from './logging/app-logger'
 import { closeActiveProject } from './project/project-service'
 
 function createWindow(): void {
@@ -43,7 +44,7 @@ function registerWindowControls(): void {
 }
 
 app.whenReady().then(() => {
-  // Register IPC handlers inside whenReady so the app is fully initialised
+  initLogger()
   registerAllIpcHandlers()
   registerWindowControls()
   ipcMain.handle('ping', () => 'pong')

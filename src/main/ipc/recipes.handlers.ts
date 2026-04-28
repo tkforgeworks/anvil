@@ -2,6 +2,7 @@ import { ipcMain } from 'electron'
 import { IPC_CHANNELS } from '../../shared/ipc-channels'
 import type { CreateRecipeInput, RecipeIngredient, UpdateRecipeInput } from '../../shared/domain-types'
 import { markProjectDirty } from '../project/project-service'
+import type { ChangeEntry } from '../project/change-accumulator'
 import { recipeRepository } from '../repositories'
 
 export function registerRecipesHandlers(): void {
@@ -13,34 +14,36 @@ export function registerRecipesHandlers(): void {
 
   ipcMain.handle(IPC_CHANNELS.RECIPES_CREATE, (_event, data: CreateRecipeInput) => {
     const record = recipeRepository.create(data)
-    markProjectDirty()
+    markProjectDirty({ domain: 'recipes', recordId: record.id, recordName: record.displayName, subArea: 'basic-info', action: 'create' })
     return record
   })
 
   ipcMain.handle(IPC_CHANNELS.RECIPES_UPDATE, (_event, id: string, data: UpdateRecipeInput) => {
     const record = recipeRepository.update(id, data)
-    if (record) markProjectDirty()
+    if (record) markProjectDirty({ domain: 'recipes', recordId: record.id, recordName: record.displayName, subArea: 'basic-info', action: 'update' })
     return record
   })
 
   ipcMain.handle(IPC_CHANNELS.RECIPES_DELETE, (_event, id: string) => {
+    const record = recipeRepository.get(id)
     recipeRepository.softDelete(id)
-    markProjectDirty()
+    markProjectDirty({ domain: 'recipes', recordId: id, recordName: record?.displayName ?? id, subArea: 'basic-info', action: 'delete' })
   })
 
   ipcMain.handle(IPC_CHANNELS.RECIPES_RESTORE, (_event, id: string) => {
     recipeRepository.restore(id)
-    markProjectDirty()
+    const record = recipeRepository.get(id)
+    markProjectDirty({ domain: 'recipes', recordId: id, recordName: record?.displayName ?? id, subArea: 'basic-info', action: 'restore' })
   })
 
   ipcMain.handle(IPC_CHANNELS.RECIPES_HARD_DELETE, (_event, id: string) => {
     recipeRepository.hardDelete(id)
-    markProjectDirty()
+    markProjectDirty({ domain: 'recipes', recordId: id, recordName: id, subArea: 'basic-info', action: 'hard-delete' })
   })
 
   ipcMain.handle(IPC_CHANNELS.RECIPES_DUPLICATE, (_event, id: string) => {
     const record = recipeRepository.duplicate(id)
-    if (record) markProjectDirty()
+    if (record) markProjectDirty({ domain: 'recipes', recordId: record.id, recordName: record.displayName, subArea: 'basic-info', action: 'duplicate' })
     return record
   })
 
@@ -52,7 +55,8 @@ export function registerRecipesHandlers(): void {
     IPC_CHANNELS.RECIPES_SET_INGREDIENTS,
     (_event, id: string, ingredients: RecipeIngredient[]) => {
       recipeRepository.setIngredients(id, ingredients)
-      markProjectDirty()
+      const record = recipeRepository.get(id)
+      markProjectDirty({ domain: 'recipes', recordId: id, recordName: record?.displayName ?? id, subArea: 'ingredients', action: 'update' })
     },
   )
 }

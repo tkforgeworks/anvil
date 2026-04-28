@@ -1,13 +1,15 @@
 import { getDb } from '../db/connection'
 import type { SaveHistoryEntry } from '../../shared/project-types'
+import { drainChanges, generateSaveDescription } from './change-accumulator'
 
 const MAX_ENTRIES = 50
 
 export function recordSave(isAutoSave: boolean): void {
+  const description = generateSaveDescription(drainChanges())
   const db = getDb()
   db.prepare(
-    'INSERT INTO save_history (saved_at, description, is_auto_save) VALUES (datetime(\'now\'), \'\', ?)'
-  ).run(isAutoSave ? 1 : 0)
+    'INSERT INTO save_history (saved_at, description, is_auto_save) VALUES (datetime(\'now\'), ?, ?)'
+  ).run(description, isAutoSave ? 1 : 0)
 
   const count = (db.prepare('SELECT COUNT(*) as cnt FROM save_history').get() as { cnt: number }).cnt
   if (count > MAX_ENTRIES) {

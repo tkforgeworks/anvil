@@ -2,6 +2,7 @@ import { ipcMain, dialog, BrowserWindow } from 'electron'
 import { mkdirSync, existsSync } from 'fs'
 import { writeFile, mkdir } from 'fs/promises'
 import { join } from 'path'
+import { logError, logInfo } from '../logging/app-logger'
 import { getProjectState } from '../project/project-service'
 import { randomUUID } from 'crypto'
 import { IPC_CHANNELS } from '../../shared/ipc-channels'
@@ -196,6 +197,7 @@ export function registerExportHandlers(): void {
           for (const file of result.files) {
             await writeFile(join(folder, file.filename), file.content, 'utf-8')
           }
+          logInfo(`Export completed: ${result.files.length} files to ${folder}`)
           return { success: true, path: folder }
         }
 
@@ -221,8 +223,10 @@ export function registerExportHandlers(): void {
         }
 
         await writeFile(dialogResult.filePath, result.output, 'utf-8')
+        logInfo(`Export completed: ${dialogResult.filePath}`)
         return { success: true, path: dialogResult.filePath }
       } catch (cause) {
+        logError('Export failed', cause)
         return { success: false, error: cause instanceof Error ? cause.message : 'Export failed.' }
       }
     },

@@ -327,8 +327,13 @@ export default function DashboardPage(): React.JSX.Element {
                   </Box>
                   <Box sx={{ flex: 1, minWidth: 0 }}>
                     <Typography variant="body2" noWrap>
-                      {entry.isAutoSave ? 'Auto-save' : 'Manual save'}
+                      {entry.description || (entry.isAutoSave ? 'Auto-save' : 'Manual save')}
                     </Typography>
+                    {entry.description && (
+                      <Typography variant="caption" color="text.secondary" noWrap>
+                        {entry.isAutoSave ? 'Auto-save' : 'Manual save'}
+                      </Typography>
+                    )}
                   </Box>
                   <RelativeTimestamp timestamp={entry.savedAt} variant="caption" />
                 </Stack>

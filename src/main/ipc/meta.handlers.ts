@@ -3,6 +3,7 @@ import { ipcMain } from 'electron'
 import { IPC_CHANNELS } from '../../shared/ipc-channels'
 import { getDb } from '../db/connection'
 import { markProjectDirty } from '../project/project-service'
+import type { ChangeEntry } from '../project/change-accumulator'
 import type {
   DerivedStatDefinition,
   DerivedStatInput,
@@ -251,7 +252,7 @@ export function registerMetaHandlers(): void {
           input.softDeleteReferenceSeverity,
         )
       }
-      markProjectDirty()
+      markProjectDirty({ domain: 'meta', recordId: 'project-settings', recordName: '', subArea: 'basic-info', action: 'update' })
       const row = db
         .prepare(`SELECT game_title, max_level, soft_delete_reference_severity FROM project_info LIMIT 1`)
         .get() as ProjectSettingsRow
@@ -278,7 +279,7 @@ export function registerMetaHandlers(): void {
         `INSERT INTO stats (id, display_name, export_key, description, sort_order, created_at, updated_at)
          VALUES (?, ?, ?, '', ?, ?, ?)`,
       ).run(id, input.displayName, input.exportKey, maxOrder + 1, now, now)
-      markProjectDirty()
+      markProjectDirty({ domain: 'meta', recordId: id, recordName: '', subArea: 'basic-info', action: 'create' })
       const row = db.prepare(`SELECT id, display_name, export_key, sort_order FROM stats WHERE id = ?`).get(id) as StatRow
       return toMetaStat(row)
     },
@@ -292,7 +293,7 @@ export function registerMetaHandlers(): void {
       db.prepare(
         `UPDATE stats SET display_name = ?, export_key = ?, updated_at = ? WHERE id = ?`,
       ).run(input.displayName, input.exportKey, now, id)
-      markProjectDirty()
+      markProjectDirty({ domain: 'meta', recordId: id, recordName: '', subArea: 'basic-info', action: 'update' })
       const row = db.prepare(`SELECT id, display_name, export_key, sort_order FROM stats WHERE id = ?`).get(id) as StatRow
       return toMetaStat(row)
     },
@@ -314,7 +315,7 @@ export function registerMetaHandlers(): void {
         return { deleted: false, reason: `Stat is used by ${c} class(es) in stat growth definitions.` }
       }
       db.prepare(`DELETE FROM stats WHERE id = ?`).run(id)
-      markProjectDirty()
+      markProjectDirty({ domain: 'meta', recordId: id, recordName: '', subArea: 'basic-info', action: 'delete' })
       return { deleted: true, reason: null }
     },
   )
@@ -331,7 +332,7 @@ export function registerMetaHandlers(): void {
         }
       })
       run()
-      markProjectDirty()
+      markProjectDirty({ domain: 'meta', recordId: 'stats', recordName: '', subArea: 'basic-info', action: 'update' })
     },
   )
 
@@ -350,7 +351,7 @@ export function registerMetaHandlers(): void {
         `INSERT INTO rarities (id, display_name, export_key, color_hex, sort_order, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?)`,
       ).run(id, input.displayName, input.exportKey, input.colorHex, maxOrder + 1, now, now)
-      markProjectDirty()
+      markProjectDirty({ domain: 'meta', recordId: id, recordName: '', subArea: 'basic-info', action: 'create' })
       const row = db
         .prepare(`SELECT id, display_name, export_key, color_hex, sort_order FROM rarities WHERE id = ?`)
         .get(id) as RarityRow
@@ -366,7 +367,7 @@ export function registerMetaHandlers(): void {
       db.prepare(
         `UPDATE rarities SET display_name = ?, export_key = ?, color_hex = ?, updated_at = ? WHERE id = ?`,
       ).run(input.displayName, input.exportKey, input.colorHex, now, id)
-      markProjectDirty()
+      markProjectDirty({ domain: 'meta', recordId: id, recordName: '', subArea: 'basic-info', action: 'update' })
       const row = db
         .prepare(`SELECT id, display_name, export_key, color_hex, sort_order FROM rarities WHERE id = ?`)
         .get(id) as RarityRow
@@ -385,7 +386,7 @@ export function registerMetaHandlers(): void {
         return { deleted: false, reason: `Rarity is used by ${c} item(s).` }
       }
       db.prepare(`DELETE FROM rarities WHERE id = ?`).run(id)
-      markProjectDirty()
+      markProjectDirty({ domain: 'meta', recordId: id, recordName: '', subArea: 'basic-info', action: 'delete' })
       return { deleted: true, reason: null }
     },
   )
@@ -402,7 +403,7 @@ export function registerMetaHandlers(): void {
         }
       })
       run()
-      markProjectDirty()
+      markProjectDirty({ domain: 'meta', recordId: 'rarities', recordName: '', subArea: 'basic-info', action: 'update' })
     },
   )
 
@@ -421,7 +422,7 @@ export function registerMetaHandlers(): void {
         `INSERT INTO npc_types (id, display_name, export_key, description, sort_order, created_at, updated_at)
          VALUES (?, ?, ?, '', ?, ?, ?)`,
       ).run(id, input.displayName, input.exportKey, maxOrder + 1, now, now)
-      markProjectDirty()
+      markProjectDirty({ domain: 'meta', recordId: id, recordName: '', subArea: 'basic-info', action: 'create' })
       const row = db
         .prepare(`SELECT id, display_name, export_key, description, sort_order FROM npc_types WHERE id = ?`)
         .get(id) as NpcTypeRow
@@ -437,7 +438,7 @@ export function registerMetaHandlers(): void {
       db.prepare(
         `UPDATE npc_types SET display_name = ?, export_key = ?, updated_at = ? WHERE id = ?`,
       ).run(input.displayName, input.exportKey, now, id)
-      markProjectDirty()
+      markProjectDirty({ domain: 'meta', recordId: id, recordName: '', subArea: 'basic-info', action: 'update' })
       const row = db
         .prepare(`SELECT id, display_name, export_key, description, sort_order FROM npc_types WHERE id = ?`)
         .get(id) as NpcTypeRow
@@ -456,7 +457,7 @@ export function registerMetaHandlers(): void {
         return { deleted: false, reason: `NPC type is used by ${c} NPC(s).` }
       }
       db.prepare(`DELETE FROM npc_types WHERE id = ?`).run(id)
-      markProjectDirty()
+      markProjectDirty({ domain: 'meta', recordId: id, recordName: '', subArea: 'basic-info', action: 'delete' })
       return { deleted: true, reason: null }
     },
   )
@@ -473,7 +474,7 @@ export function registerMetaHandlers(): void {
         }
       })
       run()
-      markProjectDirty()
+      markProjectDirty({ domain: 'meta', recordId: 'npc-types', recordName: '', subArea: 'basic-info', action: 'update' })
     },
   )
 
@@ -492,7 +493,7 @@ export function registerMetaHandlers(): void {
         `INSERT INTO crafting_stations (id, display_name, export_key, description, sort_order, created_at, updated_at)
          VALUES (?, ?, ?, '', ?, ?, ?)`,
       ).run(id, input.displayName, input.exportKey, maxOrder + 1, now, now)
-      markProjectDirty()
+      markProjectDirty({ domain: 'meta', recordId: id, recordName: '', subArea: 'basic-info', action: 'create' })
       const row = db
         .prepare(`SELECT id, display_name, export_key, description, sort_order FROM crafting_stations WHERE id = ?`)
         .get(id) as CraftingStationRow
@@ -508,7 +509,7 @@ export function registerMetaHandlers(): void {
       db.prepare(
         `UPDATE crafting_stations SET display_name = ?, export_key = ?, updated_at = ? WHERE id = ?`,
       ).run(input.displayName, input.exportKey, now, id)
-      markProjectDirty()
+      markProjectDirty({ domain: 'meta', recordId: id, recordName: '', subArea: 'basic-info', action: 'update' })
       const row = db
         .prepare(`SELECT id, display_name, export_key, description, sort_order FROM crafting_stations WHERE id = ?`)
         .get(id) as CraftingStationRow
@@ -527,7 +528,7 @@ export function registerMetaHandlers(): void {
         return { deleted: false, reason: `Station is used by ${c} recipe(s).` }
       }
       db.prepare(`DELETE FROM crafting_stations WHERE id = ?`).run(id)
-      markProjectDirty()
+      markProjectDirty({ domain: 'meta', recordId: id, recordName: '', subArea: 'basic-info', action: 'delete' })
       return { deleted: true, reason: null }
     },
   )
@@ -544,7 +545,7 @@ export function registerMetaHandlers(): void {
         }
       })
       run()
-      markProjectDirty()
+      markProjectDirty({ domain: 'meta', recordId: 'crafting-stations', recordName: '', subArea: 'basic-info', action: 'update' })
     },
   )
 
@@ -563,7 +564,7 @@ export function registerMetaHandlers(): void {
         `INSERT INTO crafting_specializations (id, display_name, export_key, description, sort_order, created_at, updated_at)
          VALUES (?, ?, ?, '', ?, ?, ?)`,
       ).run(id, input.displayName, input.exportKey, maxOrder + 1, now, now)
-      markProjectDirty()
+      markProjectDirty({ domain: 'meta', recordId: id, recordName: '', subArea: 'basic-info', action: 'create' })
       const row = db
         .prepare(`SELECT id, display_name, export_key, description, sort_order FROM crafting_specializations WHERE id = ?`)
         .get(id) as CraftingSpecializationRow
@@ -579,7 +580,7 @@ export function registerMetaHandlers(): void {
       db.prepare(
         `UPDATE crafting_specializations SET display_name = ?, export_key = ?, updated_at = ? WHERE id = ?`,
       ).run(input.displayName, input.exportKey, now, id)
-      markProjectDirty()
+      markProjectDirty({ domain: 'meta', recordId: id, recordName: '', subArea: 'basic-info', action: 'update' })
       const row = db
         .prepare(`SELECT id, display_name, export_key, description, sort_order FROM crafting_specializations WHERE id = ?`)
         .get(id) as CraftingSpecializationRow
@@ -598,7 +599,7 @@ export function registerMetaHandlers(): void {
         return { deleted: false, reason: `Specialization is used by ${c} recipe(s).` }
       }
       db.prepare(`DELETE FROM crafting_specializations WHERE id = ?`).run(id)
-      markProjectDirty()
+      markProjectDirty({ domain: 'meta', recordId: id, recordName: '', subArea: 'basic-info', action: 'delete' })
       return { deleted: true, reason: null }
     },
   )
@@ -615,7 +616,7 @@ export function registerMetaHandlers(): void {
         }
       })
       run()
-      markProjectDirty()
+      markProjectDirty({ domain: 'meta', recordId: 'crafting-specializations', recordName: '', subArea: 'basic-info', action: 'update' })
     },
   )
 
@@ -634,7 +635,7 @@ export function registerMetaHandlers(): void {
         `INSERT INTO derived_stat_definitions (id, display_name, export_key, formula, output_type, rounding_mode, sort_order, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       ).run(id, input.displayName, input.exportKey, input.formula, input.outputType, input.roundingMode, maxOrder + 1, now, now)
-      markProjectDirty()
+      markProjectDirty({ domain: 'meta', recordId: id, recordName: '', subArea: 'basic-info', action: 'create' })
       return {
         id,
         displayName: input.displayName,
@@ -657,7 +658,7 @@ export function registerMetaHandlers(): void {
          SET display_name = ?, export_key = ?, formula = ?, output_type = ?, rounding_mode = ?, updated_at = ?
          WHERE id = ?`,
       ).run(input.displayName, input.exportKey, input.formula, input.outputType, input.roundingMode, now, id)
-      markProjectDirty()
+      markProjectDirty({ domain: 'meta', recordId: id, recordName: '', subArea: 'basic-info', action: 'update' })
       interface DerivedStatRow {
         id: string; display_name: string; export_key: string
         formula: string; output_type: string; rounding_mode: string; sort_order: number
@@ -691,7 +692,7 @@ export function registerMetaHandlers(): void {
         return { deleted: false, reason: `Derived stat has overrides in ${c} class(es).` }
       }
       db.prepare(`DELETE FROM derived_stat_definitions WHERE id = ?`).run(id)
-      markProjectDirty()
+      markProjectDirty({ domain: 'meta', recordId: id, recordName: '', subArea: 'basic-info', action: 'delete' })
       return { deleted: true, reason: null }
     },
   )
@@ -708,7 +709,7 @@ export function registerMetaHandlers(): void {
         }
       })
       run()
-      markProjectDirty()
+      markProjectDirty({ domain: 'meta', recordId: 'derived-stats', recordName: '', subArea: 'basic-info', action: 'update' })
     },
   )
 }

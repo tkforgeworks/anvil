@@ -10,6 +10,7 @@ import type {
   UpdateClassInput,
 } from '../../shared/domain-types'
 import { markProjectDirty } from '../project/project-service'
+import type { ChangeEntry } from '../project/change-accumulator'
 import { classRepository } from '../repositories'
 import { getDb } from '../db/connection'
 
@@ -22,34 +23,36 @@ export function registerClassesHandlers(): void {
 
   ipcMain.handle(IPC_CHANNELS.CLASSES_CREATE, (_event, data: CreateClassInput) => {
     const record = classRepository.create(data)
-    markProjectDirty()
+    markProjectDirty({ domain: 'classes', recordId: record.id, recordName: record.displayName, subArea: 'basic-info', action: 'create' })
     return record
   })
 
   ipcMain.handle(IPC_CHANNELS.CLASSES_UPDATE, (_event, id: string, data: UpdateClassInput) => {
     const record = classRepository.update(id, data)
-    if (record) markProjectDirty()
+    if (record) markProjectDirty({ domain: 'classes', recordId: record.id, recordName: record.displayName, subArea: 'basic-info', action: 'update' })
     return record
   })
 
   ipcMain.handle(IPC_CHANNELS.CLASSES_DELETE, (_event, id: string) => {
+    const record = classRepository.get(id)
     classRepository.softDelete(id)
-    markProjectDirty()
+    markProjectDirty({ domain: 'classes', recordId: id, recordName: record?.displayName ?? id, subArea: 'basic-info', action: 'delete' })
   })
 
   ipcMain.handle(IPC_CHANNELS.CLASSES_RESTORE, (_event, id: string) => {
     classRepository.restore(id)
-    markProjectDirty()
+    const record = classRepository.get(id)
+    markProjectDirty({ domain: 'classes', recordId: id, recordName: record?.displayName ?? id, subArea: 'basic-info', action: 'restore' })
   })
 
   ipcMain.handle(IPC_CHANNELS.CLASSES_HARD_DELETE, (_event, id: string) => {
     classRepository.hardDelete(id)
-    markProjectDirty()
+    markProjectDirty({ domain: 'classes', recordId: id, recordName: id, subArea: 'basic-info', action: 'hard-delete' })
   })
 
   ipcMain.handle(IPC_CHANNELS.CLASSES_DUPLICATE, (_event, id: string) => {
     const record = classRepository.duplicate(id)
-    if (record) markProjectDirty()
+    if (record) markProjectDirty({ domain: 'classes', recordId: record.id, recordName: record.displayName, subArea: 'basic-info', action: 'duplicate' })
     return record
   })
 
@@ -64,7 +67,8 @@ export function registerClassesHandlers(): void {
     IPC_CHANNELS.CLASSES_SET_STAT_GROWTH,
     (_event, classId: string, entries: StatGrowthEntry[]) => {
       classRepository.setStatGrowth(classId, entries)
-      markProjectDirty()
+      const record = classRepository.get(classId)
+      markProjectDirty({ domain: 'classes', recordId: classId, recordName: record?.displayName ?? classId, subArea: 'stat-growth', action: 'update' })
     },
   )
 
@@ -76,7 +80,8 @@ export function registerClassesHandlers(): void {
     IPC_CHANNELS.CLASSES_SET_STAT_GROWTH_FORMULAS,
     (_event, classId: string, formulas: StatGrowthFormula[]) => {
       classRepository.setStatGrowthFormulas(classId, formulas)
-      markProjectDirty()
+      const record = classRepository.get(classId)
+      markProjectDirty({ domain: 'classes', recordId: classId, recordName: record?.displayName ?? classId, subArea: 'stat-growth-formulas', action: 'update' })
     },
   )
 
@@ -88,7 +93,8 @@ export function registerClassesHandlers(): void {
     IPC_CHANNELS.CLASSES_SET_DERIVED_STAT_OVERRIDES,
     (_event, classId: string, overrides: ClassDerivedStatOverride[]) => {
       classRepository.setDerivedStatOverrides(classId, overrides)
-      markProjectDirty()
+      const record = classRepository.get(classId)
+      markProjectDirty({ domain: 'classes', recordId: classId, recordName: record?.displayName ?? classId, subArea: 'derived-stat-overrides', action: 'update' })
     },
   )
 
@@ -100,7 +106,8 @@ export function registerClassesHandlers(): void {
     IPC_CHANNELS.CLASSES_SET_METADATA_FIELDS,
     (_event, classId: string, fields: ClassMetadataField[]) => {
       classRepository.setMetadataFields(classId, fields)
-      markProjectDirty()
+      const record = classRepository.get(classId)
+      markProjectDirty({ domain: 'classes', recordId: classId, recordName: record?.displayName ?? classId, subArea: 'metadata-fields', action: 'update' })
     },
   )
 
@@ -112,7 +119,8 @@ export function registerClassesHandlers(): void {
     IPC_CHANNELS.CLASSES_SET_ABILITY_ASSIGNMENTS,
     (_event, classId: string, assignments: ClassAbilityAssignment[]) => {
       classRepository.setAbilityAssignments(classId, assignments)
-      markProjectDirty()
+      const record = classRepository.get(classId)
+      markProjectDirty({ domain: 'classes', recordId: classId, recordName: record?.displayName ?? classId, subArea: 'ability-assignments', action: 'update' })
     },
   )
 }

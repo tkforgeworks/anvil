@@ -3,6 +3,7 @@ import { IPC_CHANNELS } from '../../shared/ipc-channels'
 import type { BulkOperationInput, LifecycleDomain } from '../../shared/domain-types'
 import { getDb } from '../db/connection'
 import { markProjectDirty } from '../project/project-service'
+import type { ChangeEntry } from '../project/change-accumulator'
 import { computeDeleteImpact } from '../lifecycle/impact'
 
 const DOMAIN_TABLES: Record<LifecycleDomain, string> = {
@@ -34,7 +35,9 @@ export function registerLifecycleHandlers(): void {
              updated_at = datetime('now')
          WHERE id IN (${placeholders}) AND deleted_at IS NULL`,
       ).run(...input.ids)
-      markProjectDirty()
+      for (const id of input.ids) {
+        markProjectDirty({ domain: input.domain, recordId: id, recordName: '', subArea: 'basic-info', action: 'delete' })
+      }
     },
   )
 
@@ -50,7 +53,9 @@ export function registerLifecycleHandlers(): void {
          SET deleted_at = NULL, updated_at = datetime('now')
          WHERE id IN (${placeholders}) AND deleted_at IS NOT NULL`,
       ).run(...input.ids)
-      markProjectDirty()
+      for (const id of input.ids) {
+        markProjectDirty({ domain: input.domain, recordId: id, recordName: '', subArea: 'basic-info', action: 'restore' })
+      }
     },
   )
 
@@ -62,19 +67,24 @@ export function registerLifecycleHandlers(): void {
       const db = getDb()
       const placeholders = input.ids.map(() => '?').join(', ')
       db.prepare(`DELETE FROM ${table} WHERE id IN (${placeholders})`).run(...input.ids)
-      markProjectDirty()
+      for (const id of input.ids) {
+        markProjectDirty({ domain: input.domain, recordId: id, recordName: '', subArea: 'basic-info', action: 'hard-delete' })
+      }
     },
   )
 
   ipcMain.handle(IPC_CHANNELS.LIFECYCLE_EMPTY_TRASH, () => {
     const db = getDb()
+    const domainKeys = Object.keys(DOMAIN_TABLES) as LifecycleDomain[]
     const tx = db.transaction(() => {
       for (const table of ALL_DOMAIN_TABLES) {
         db.prepare(`DELETE FROM ${table} WHERE deleted_at IS NOT NULL`).run()
       }
     })
     tx()
-    markProjectDirty()
+    for (const domain of domainKeys) {
+      markProjectDirty({ domain, recordId: 'all', recordName: '', subArea: 'basic-info', action: 'hard-delete' })
+    }
   })
 
   ipcMain.handle(

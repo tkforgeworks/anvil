@@ -11,6 +11,7 @@ import {
   npcRepository,
 } from '../repositories'
 import { markProjectDirty } from '../project/project-service'
+import type { ChangeEntry } from '../project/change-accumulator'
 
 export function registerCustomFieldsHandlers(): void {
   ipcMain.handle(
@@ -24,7 +25,7 @@ export function registerCustomFieldsHandlers(): void {
     IPC_CHANNELS.CUSTOM_FIELDS_CREATE_DEFINITION,
     (_event, input: CreateCustomFieldDefinitionInput) => {
       const record = customFieldDefinitionRepository.create(input)
-      markProjectDirty()
+      markProjectDirty({ domain: 'custom-fields', recordId: record.id, recordName: record.fieldName, subArea: 'basic-info', action: 'create' })
       return record
     },
   )
@@ -33,14 +34,14 @@ export function registerCustomFieldsHandlers(): void {
     IPC_CHANNELS.CUSTOM_FIELDS_UPDATE_DEFINITION,
     (_event, id: string, input: UpdateCustomFieldDefinitionInput) => {
       const record = customFieldDefinitionRepository.update(id, input)
-      if (record) markProjectDirty()
+      if (record) markProjectDirty({ domain: 'custom-fields', recordId: record.id, recordName: record.fieldName, subArea: 'basic-info', action: 'update' })
       return record
     },
   )
 
   ipcMain.handle(IPC_CHANNELS.CUSTOM_FIELDS_DELETE_DEFINITION, (_event, id: string) => {
     const result = customFieldDefinitionRepository.delete(id)
-    if (result.deleted) markProjectDirty()
+    if (result.deleted) markProjectDirty({ domain: 'custom-fields', recordId: id, recordName: '', subArea: 'basic-info', action: 'delete' })
     return result
   })
 
@@ -67,7 +68,7 @@ export function registerCustomFieldsHandlers(): void {
       } else {
         npcRepository.setCustomFieldValues(recordId, values)
       }
-      markProjectDirty()
+      markProjectDirty({ domain: 'custom-fields', recordId, recordName: '', subArea: 'custom-fields', action: 'update' })
     },
   )
 }

@@ -16,6 +16,8 @@ import { basename, dirname, extname, join, parse } from 'path'
 import { closeDatabase, getDb, openDatabase, type DbConnection } from '../db/connection'
 import { CURRENT_SCHEMA_VERSION, runMigrations } from '../db/migrations/runner'
 import { getAppSettings } from '../settings/app-settings-service'
+import { logError, logInfo, setLogDirectory } from '../logging/app-logger'
+import { clearChanges, recordChange, type ChangeEntry } from './change-accumulator'
 import { createProjectFolder, detectProjectFolder, sanitizeFolderName } from './project-folder'
 import { recordSave } from './save-history-service'
 import type {
@@ -340,6 +342,7 @@ class ProjectLockError extends Error {
 function setCleanState(project: ProjectMetadata | null): void {
   activeProject = project
   isDirty = false
+  clearChanges()
   saveStatus = 'saved'
   saveError = null
   if (project) {
@@ -489,10 +492,13 @@ export async function createProject(
     const project = buildProjectMetadata(db, filePath)
     setCleanState(project)
     isRecoveryMode = false
+    setLogDirectory(project.projectFolder?.logs ?? null)
     startAutoSaveTimer()
     updateRecentProjects(project)
+    logInfo(`Project created: ${projectName} (${filePath})`)
     return getProjectState()
   } catch (error) {
+    logError('Project creation failed', error)
     closeExistingDatabase()
     releaseProjectLock()
     const folder = detectProjectFolder(filePath)
@@ -535,8 +541,10 @@ export async function openProject(
     setCleanState(project)
     isRecoveryMode = false
     recoveryMessage = null
+    setLogDirectory(project.projectFolder?.logs ?? null)
     startAutoSaveTimer()
     updateRecentProjects(project)
+    logInfo(`Project opened: ${project.projectName} (${activePath})`)
     return getProjectState()
   } catch (error) {
     if (error instanceof ProjectLockError) {
@@ -558,8 +566,10 @@ export function saveProject(isAutoSave = false): ProjectStateSnapshot {
     recordSave(isAutoSave)
     setCleanState(buildProjectMetadata(db, activeProject.filePath))
     updateRecentProjects(activeProject)
+    logInfo(`${isAutoSave ? 'Auto-save' : 'Manual save'} completed: ${activeProject.projectName}`)
     return getProjectState()
   } catch (error) {
+    logError('Save failed', error)
     setSaveFailure(error)
     throw error
   }
@@ -607,18 +617,21 @@ export async function saveProjectAs(owner: BrowserWindow | null): Promise<Projec
 }
 
 export function closeActiveProject(): ProjectStateSnapshot {
+  logInfo('Project closed')
   stopAutoSaveTimer()
   closeExistingDatabase()
   releaseProjectLock()
   setCleanState(null)
+  setLogDirectory(null)
   isRecoveryMode = false
   recoveryMessage = null
   return getProjectState()
 }
 
-export function markProjectDirty(): ProjectStateSnapshot {
+export function markProjectDirty(change?: ChangeEntry): ProjectStateSnapshot {
   if (!activeProject || isRecoveryMode) return getProjectState()
 
+  if (change) recordChange(change)
   isDirty = true
   saveStatus = 'unsaved'
   saveError = null
