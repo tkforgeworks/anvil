@@ -27,8 +27,10 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useUndoRedo } from '../hooks/useUndoRedo'
+import { useTabDirtyTracking } from '../hooks/useTabDirtyTracking'
+import DirtyDot from '../components/DirtyDot'
 import { useNavigate, useParams } from 'react-router-dom'
 import { itemsApi } from '../../api/items.api'
 import { metaApi } from '../../api/meta.api'
@@ -107,6 +109,25 @@ export default function RecipeEditorPage({ recordId, onClose }: RecipeEditorPage
   const [activeTab, setActiveTab] = useState(0)
   const { recordIssues, issuesForField, runValidation } = useRecordValidation('recipes', id)
 
+  type TabFields = Omit<FormSnapshot, 'displayName' | 'exportKey'>
+  const baselineRef = useRef<TabFields | null>(null)
+
+  const tabFieldMap: Record<number, (keyof TabFields)[]> = useMemo(() => ({
+    0: ['description', 'outputItemId', 'outputQuantity', 'craftingStationId', 'craftingSpecializationId'],
+    1: ['ingredients'],
+  }), [])
+
+  const currentTabFields: TabFields = useMemo(() => ({
+    description,
+    outputItemId,
+    outputQuantity,
+    craftingStationId,
+    craftingSpecializationId,
+    ingredients,
+  }), [description, outputItemId, outputQuantity, craftingStationId, craftingSpecializationId, ingredients])
+
+  const dirtyTabs = useTabDirtyTracking(currentTabFields, baselineRef.current, tabFieldMap)
+
   const applySnapshot = useCallback((snapshot: FormSnapshot) => {
     setDisplayName(snapshot.displayName)
     setExportKey(snapshot.exportKey)
@@ -170,6 +191,14 @@ export default function RecipeEditorPage({ recordId, onClose }: RecipeEditorPage
       setStations(stationList)
       setSpecializations(specializationList)
       setDirty(false)
+      baselineRef.current = {
+        description: data.description,
+        outputItemId: data.outputItemId,
+        outputQuantity: String(data.outputQuantity),
+        craftingStationId: data.craftingStationId ?? '',
+        craftingSpecializationId: data.craftingSpecializationId ?? '',
+        ingredients: ingredientList,
+      }
       undoRedo.reset({
         displayName: data.displayName,
         exportKey: data.exportKey,
@@ -255,6 +284,14 @@ export default function RecipeEditorPage({ recordId, onClose }: RecipeEditorPage
         setIngredients(normalizedIngredients)
         setDirty(false)
         setSavedAt(new Date())
+        baselineRef.current = {
+          description: description.trim(),
+          outputItemId,
+          outputQuantity: String(updated.outputQuantity),
+          craftingStationId,
+          craftingSpecializationId,
+          ingredients: normalizedIngredients,
+        }
         await runValidation()
       }
     } catch (cause) {
@@ -320,8 +357,8 @@ export default function RecipeEditorPage({ recordId, onClose }: RecipeEditorPage
 
       <Divider sx={{ mb: 0 }} />
       <Tabs value={activeTab} onChange={(_, value: number) => setActiveTab(value)}>
-        <Tab label="Details" />
-        <Tab label="Ingredients" />
+        <Tab label={<span>Details<DirtyDot visible={dirtyTabs.has(0)} /></span>} />
+        <Tab label={<span>Ingredients<DirtyDot visible={dirtyTabs.has(1)} /></span>} />
       </Tabs>
       <Divider />
 

@@ -9,7 +9,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { abilitiesApi } from '../../api/abilities.api'
 import { classesApi } from '../../api/classes.api'
@@ -26,6 +26,8 @@ import StatGrowthEditor from '../components/StatGrowthEditor'
 import ValidationBanner from '../components/ValidationBanner'
 import { useRecordValidation } from '../hooks/useRecordValidation'
 import { useUndoRedo } from '../hooks/useUndoRedo'
+import { useTabDirtyTracking } from '../hooks/useTabDirtyTracking'
+import DirtyDot from '../components/DirtyDot'
 
 interface FormSnapshot {
   displayName: string
@@ -78,6 +80,20 @@ export default function ClassEditorPage({ recordId, onClose }: ClassEditorPagePr
   const [allAbilities, setAllAbilities] = useState<AbilityRecord[]>([])
   const { recordIssues, runValidation } = useRecordValidation('classes', id)
 
+  type TabFields = Omit<FormSnapshot, 'displayName' | 'exportKey'>
+  const baselineRef = useRef<TabFields | null>(null)
+
+  const tabFieldMap: Record<number, (keyof TabFields)[]> = useMemo(() => ({
+    0: ['description', 'resourceMultiplier'],
+  }), [])
+
+  const currentTabFields: TabFields = useMemo(() => ({
+    description,
+    resourceMultiplier,
+  }), [description, resourceMultiplier])
+
+  const dirtyTabs = useTabDirtyTracking(currentTabFields, baselineRef.current, tabFieldMap)
+
   const applySnapshot = useCallback((snapshot: FormSnapshot) => {
     setDisplayName(snapshot.displayName)
     setExportKey(snapshot.exportKey)
@@ -117,6 +133,10 @@ export default function ClassEditorPage({ recordId, onClose }: ClassEditorPagePr
       setAbilityAssignments(assignments)
       setAllAbilities(abilities)
       setDirty(false)
+      baselineRef.current = {
+        description: data.description,
+        resourceMultiplier: String(data.resourceMultiplier),
+      }
       undoRedo.reset({
         displayName: data.displayName,
         exportKey: data.exportKey,
@@ -160,6 +180,10 @@ export default function ClassEditorPage({ recordId, onClose }: ClassEditorPagePr
         setRecord(updated)
         setDirty(false)
         setSavedAt(new Date())
+        baselineRef.current = {
+          description: description.trim(),
+          resourceMultiplier,
+        }
         await runValidation()
       }
     } catch (cause) {
@@ -224,7 +248,7 @@ export default function ClassEditorPage({ recordId, onClose }: ClassEditorPagePr
 
       {/* Tabs */}
       <Tabs value={activeTab} onChange={(_, v: number) => setActiveTab(v)} sx={{ mb: 0 }}>
-        <Tab label="Overview" />
+        <Tab label={<span>Overview<DirtyDot visible={dirtyTabs.has(0)} /></span>} />
         <Tab label="Stat Growth" />
         <Tab label="Derived Stats" />
         <Tab label="Abilities" />

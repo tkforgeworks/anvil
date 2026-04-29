@@ -17,8 +17,10 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useUndoRedo } from '../hooks/useUndoRedo'
+import { useTabDirtyTracking } from '../hooks/useTabDirtyTracking'
+import DirtyDot from '../components/DirtyDot'
 import { useNavigate, useParams } from 'react-router-dom'
 import { abilitiesApi } from '../../api/abilities.api'
 import { metaApi } from '../../api/meta.api'
@@ -89,6 +91,25 @@ export default function AbilityEditorPage({ recordId, onClose }: AbilityEditorPa
   const [usedByLoading, setUsedByLoading] = useState(false)
   const { recordIssues, runValidation } = useRecordValidation('abilities', id)
 
+  type TabFields = Omit<FormSnapshot, 'displayName' | 'exportKey'>
+  const baselineRef = useRef<TabFields | null>(null)
+
+  const tabFieldMap: Record<number, (keyof TabFields)[]> = useMemo(() => ({
+    0: ['description', 'abilityType', 'resourceType', 'resourceCost', 'cooldown'],
+    1: ['statModifiers'],
+  }), [])
+
+  const currentTabFields: TabFields = useMemo(() => ({
+    description,
+    abilityType,
+    resourceType,
+    resourceCost,
+    cooldown,
+    statModifiers,
+  }), [description, abilityType, resourceType, resourceCost, cooldown, statModifiers])
+
+  const dirtyTabs = useTabDirtyTracking(currentTabFields, baselineRef.current, tabFieldMap)
+
   const applySnapshot = useCallback((snapshot: FormSnapshot) => {
     setDisplayName(snapshot.displayName)
     setExportKey(snapshot.exportKey)
@@ -146,6 +167,14 @@ export default function AbilityEditorPage({ recordId, onClose }: AbilityEditorPa
       setStats(statList)
       setUsedBy(null)
       setDirty(false)
+      baselineRef.current = {
+        description: data.description,
+        abilityType: data.abilityType,
+        resourceType: data.resourceType,
+        resourceCost: String(data.resourceCost),
+        cooldown: String(data.cooldown),
+        statModifiers: modStrings,
+      }
       undoRedo.reset({
         displayName: data.displayName,
         exportKey: data.exportKey,
@@ -205,6 +234,14 @@ export default function AbilityEditorPage({ recordId, onClose }: AbilityEditorPa
         setRecord(updated)
         setDirty(false)
         setSavedAt(new Date())
+        baselineRef.current = {
+          description: description.trim(),
+          abilityType: abilityType.trim(),
+          resourceType: resourceType.trim(),
+          resourceCost,
+          cooldown,
+          statModifiers,
+        }
         await runValidation()
       }
     } catch (cause) {
@@ -267,8 +304,8 @@ export default function AbilityEditorPage({ recordId, onClose }: AbilityEditorPa
 
       <Divider sx={{ mb: 0 }} />
       <Tabs value={activeTab} onChange={(_, v: number) => setActiveTab(v)}>
-        <Tab label="Details" />
-        <Tab label="Stat Modifiers" />
+        <Tab label={<span>Details<DirtyDot visible={dirtyTabs.has(0)} /></span>} />
+        <Tab label={<span>Stat Modifiers<DirtyDot visible={dirtyTabs.has(1)} /></span>} />
         <Tab label="Used By" />
       </Tabs>
 

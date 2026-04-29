@@ -13,8 +13,10 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useUndoRedo } from '../hooks/useUndoRedo'
+import { useTabDirtyTracking } from '../hooks/useTabDirtyTracking'
+import DirtyDot from '../components/DirtyDot'
 import { useNavigate, useParams } from 'react-router-dom'
 import { itemsApi } from '../../api/items.api'
 import { metaApi } from '../../api/meta.api'
@@ -75,6 +77,21 @@ export default function ItemEditorPage({ recordId, onClose }: ItemEditorPageProp
   const [activeTab, setActiveTab] = useState(0)
   const { recordIssues, issuesForField, runValidation } = useRecordValidation('items', id)
 
+  type TabFields = Omit<FormSnapshot, 'displayName' | 'exportKey'>
+  const baselineRef = useRef<TabFields | null>(null)
+
+  const tabFieldMap: Record<number, (keyof TabFields)[]> = useMemo(() => ({
+    0: ['description', 'itemCategoryId', 'rarityId'],
+  }), [])
+
+  const currentTabFields: TabFields = useMemo(() => ({
+    description,
+    itemCategoryId,
+    rarityId,
+  }), [description, itemCategoryId, rarityId])
+
+  const dirtyTabs = useTabDirtyTracking(currentTabFields, baselineRef.current, tabFieldMap)
+
   const applySnapshot = useCallback((snapshot: FormSnapshot) => {
     setDisplayName(snapshot.displayName)
     setExportKey(snapshot.exportKey)
@@ -116,6 +133,11 @@ export default function ItemEditorPage({ recordId, onClose }: ItemEditorPageProp
       setCategories(categoryList)
       setRarities(rarityList)
       setDirty(false)
+      baselineRef.current = {
+        description: data.description,
+        itemCategoryId: data.itemCategoryId,
+        rarityId: data.rarityId,
+      }
       undoRedo.reset({
         displayName: data.displayName,
         exportKey: data.exportKey,
@@ -150,6 +172,11 @@ export default function ItemEditorPage({ recordId, onClose }: ItemEditorPageProp
         setRecord(updated)
         setDirty(false)
         setSavedAt(new Date())
+        baselineRef.current = {
+          description: description.trim(),
+          itemCategoryId,
+          rarityId,
+        }
         await runValidation()
       }
     } catch (cause) {
@@ -212,7 +239,7 @@ export default function ItemEditorPage({ recordId, onClose }: ItemEditorPageProp
 
       <Divider sx={{ mb: 0 }} />
       <Tabs value={activeTab} onChange={(_, value: number) => setActiveTab(value)}>
-        <Tab label="Details" />
+        <Tab label={<span>Details<DirtyDot visible={dirtyTabs.has(0)} /></span>} />
         <Tab label="Custom Fields" />
       </Tabs>
       <Divider />
