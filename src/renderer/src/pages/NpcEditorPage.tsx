@@ -1,17 +1,14 @@
-import { ArrowBack as BackIcon, Redo as RedoIcon, Undo as UndoIcon } from '@mui/icons-material'
 import {
   Alert,
   Box,
   Button,
   Divider,
   FormControl,
-  IconButton,
   InputLabel,
   MenuItem,
   Select,
   Stack,
   TextField,
-  Tooltip,
   Typography,
 } from '@mui/material'
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -26,8 +23,10 @@ import { npcsApi } from '../../api/npcs.api'
 import AbilityAssignmentPanel, { type AbilityAssignmentRef } from '../components/AbilityAssignmentPanel'
 import ClassAssignmentPanel from '../components/ClassAssignmentPanel'
 import CustomFieldsPanel from '../components/CustomFieldsPanel'
+import EditHeader from '../components/EditHeader'
 import LootTableAssignmentPanel from '../components/LootTableAssignmentPanel'
 import NpcStatBlockPanel from '../components/NpcStatBlockPanel'
+import SaveBar from '../components/SaveBar'
 import ValidationBanner from '../components/ValidationBanner'
 import { useRecordValidation } from '../hooks/useRecordValidation'
 import type {
@@ -300,67 +299,47 @@ export default function NpcEditorPage({ recordId, onClose }: NpcEditorPageProps 
     .map((a) => classes.find((c) => c.id === a.classId))
     .filter((c): c is ClassRecord => c != null && c.deletedAt != null)
 
+  const handleBack = goBack
+  const handleDiscard = (): void => void load()
+
   return (
     <Box>
-      <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
-        <Tooltip title="Back to NPCs">
-          <IconButton size="small" onClick={goBack}>
-            <BackIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-        <Typography variant="caption" color="text.secondary">
-          NPCs
-        </Typography>
-      </Stack>
-
-      <Stack direction="row" alignItems="flex-start" justifyContent="space-between" sx={{ mb: 3 }} spacing={2}>
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <TextField
-            variant="standard"
-            value={displayName}
-            onChange={(e) => { setDisplayName(e.target.value); pushSnapshot({ displayName: e.target.value }) }}
-            inputProps={{ style: { fontSize: '1.5rem', fontWeight: 600 } }}
-            placeholder="NPC Name"
-            fullWidth
-            sx={{ mb: 0.5 }}
-          />
-          <TextField
-            variant="standard"
-            value={exportKey}
-            onChange={(e) => { setExportKey(e.target.value); pushSnapshot({ exportKey: e.target.value }) }}
-            inputProps={{ style: { fontFamily: 'monospace', fontSize: '0.8rem' } }}
-            placeholder="export-key"
-            helperText="Export key - used in exported files"
-            sx={{ maxWidth: 360 }}
-          />
-        </Box>
-        <Stack direction="row" alignItems="center" spacing={1} sx={{ pt: 0.5 }}>
-          <Tooltip title="Undo (Ctrl+Z)">
-            <span>
-              <IconButton size="small" onClick={undoRedo.triggerUndo} disabled={!undoRedo.canUndo}>
-                <UndoIcon fontSize="small" />
-              </IconButton>
-            </span>
-          </Tooltip>
-          <Tooltip title="Redo (Ctrl+Y)">
-            <span>
-              <IconButton size="small" onClick={undoRedo.triggerRedo} disabled={!undoRedo.canRedo}>
-                <RedoIcon fontSize="small" />
-              </IconButton>
-            </span>
-          </Tooltip>
-          {savedAt && <Typography variant="caption" color="success.main" sx={{ ml: 1 }}>Saved at {savedAt.toLocaleTimeString()}</Typography>}
-          <Button variant="contained" onClick={() => void handleSave()} disabled={!isDirty || isSaving || !displayName.trim() || !exportKey.trim() || !npcTypeId} sx={{ ml: 1 }}>
-            Save
-          </Button>
-        </Stack>
-      </Stack>
+      <EditHeader
+        backLabel="NPCs"
+        onBack={handleBack}
+        displayName={displayName}
+        onDisplayNameChange={(value) => {
+          setDisplayName(value)
+          pushSnapshot({ displayName: value })
+        }}
+        exportKey={exportKey}
+        isDirty={isDirty}
+        isSaving={isSaving}
+        onSave={() => void handleSave()}
+        savedAt={savedAt}
+        canUndo={undoRedo.canUndo}
+        canRedo={undoRedo.canRedo}
+        onUndo={undoRedo.triggerUndo}
+        onRedo={undoRedo.triggerRedo}
+      />
 
       {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>{error}</Alert>}
 
       <ValidationBanner issues={recordIssues} />
 
       <Stack spacing={3} sx={{ maxWidth: 900 }}>
+        <TextField
+          label="Export Key"
+          value={exportKey}
+          onChange={(e) => {
+            setExportKey(e.target.value)
+            pushSnapshot({ exportKey: e.target.value })
+          }}
+          inputProps={{ style: { fontFamily: '"JetBrains Mono", monospace', fontSize: '0.85rem' } }}
+          placeholder="export-key"
+          helperText="Export key — used in exported files"
+          sx={{ maxWidth: 360 }}
+        />
         <FormControl fullWidth required sx={{ maxWidth: 760 }} error={issuesForField('npcTypeId').length > 0}>
           <InputLabel id="npc-type-label">NPC Type</InputLabel>
           <Select labelId="npc-type-label" label="NPC Type" value={npcTypeId} onChange={(e) => handleTypeChange(e.target.value)}>
@@ -466,6 +445,13 @@ export default function NpcEditorPage({ recordId, onClose }: NpcEditorPageProps 
           />
         </Box>
       </Stack>
+
+      <SaveBar
+        isDirty={isDirty}
+        isSaving={isSaving}
+        onSave={() => void handleSave()}
+        onDiscard={handleDiscard}
+      />
     </Box>
   )
 }

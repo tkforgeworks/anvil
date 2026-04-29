@@ -1,15 +1,12 @@
-import { ArrowBack as BackIcon, Redo as RedoIcon, Undo as UndoIcon } from '@mui/icons-material'
 import {
   Alert,
   Box,
   Button,
   Divider,
-  IconButton,
   Stack,
   Tab,
   Tabs,
   TextField,
-  Tooltip,
   Typography,
 } from '@mui/material'
 import { useCallback, useEffect, useState } from 'react'
@@ -23,6 +20,8 @@ import type {
 } from '../../../shared/domain-types'
 import AbilityAssignmentPanel, { type AbilityAssignmentRef } from '../components/AbilityAssignmentPanel'
 import DerivedStatsEditor from '../components/DerivedStatsEditor'
+import EditHeader from '../components/EditHeader'
+import SaveBar from '../components/SaveBar'
 import StatGrowthEditor from '../components/StatGrowthEditor'
 import ValidationBanner from '../components/ValidationBanner'
 import { useRecordValidation } from '../hooks/useRecordValidation'
@@ -189,84 +188,29 @@ export default function ClassEditorPage({ recordId, onClose }: ClassEditorPagePr
     )
   }
 
+  const handleBack = goBack
+  const handleDiscard = (): void => void load()
+
   return (
     <Box>
-      {/* Header */}
-      <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
-        <Tooltip title="Back to Classes">
-          <IconButton size="small" onClick={goBack}>
-            <BackIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-        <Typography variant="caption" color="text.secondary">
-          Character Classes
-        </Typography>
-      </Stack>
-
-      <Stack
-        direction="row"
-        alignItems="flex-start"
-        justifyContent="space-between"
-        sx={{ mb: 3 }}
-        spacing={2}
-      >
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <TextField
-            variant="standard"
-            value={displayName}
-            onChange={(e) => {
-              setDisplayName(e.target.value)
-              pushSnapshot({ displayName: e.target.value })
-            }}
-            inputProps={{ style: { fontSize: '1.5rem', fontWeight: 600 } }}
-            placeholder="Class Name"
-            fullWidth
-            sx={{ mb: 0.5 }}
-          />
-          <TextField
-            variant="standard"
-            value={exportKey}
-            onChange={(e) => {
-              setExportKey(e.target.value)
-              pushSnapshot({ exportKey: e.target.value })
-            }}
-            inputProps={{ style: { fontFamily: 'monospace', fontSize: '0.8rem' } }}
-            placeholder="export-key"
-            helperText="Export key — used in exported files"
-            sx={{ maxWidth: 360 }}
-          />
-        </Box>
-
-        <Stack direction="row" alignItems="center" spacing={1} sx={{ pt: 0.5 }}>
-          <Tooltip title="Undo (Ctrl+Z)">
-            <span>
-              <IconButton size="small" onClick={undoRedo.triggerUndo} disabled={!undoRedo.canUndo}>
-                <UndoIcon fontSize="small" />
-              </IconButton>
-            </span>
-          </Tooltip>
-          <Tooltip title="Redo (Ctrl+Y)">
-            <span>
-              <IconButton size="small" onClick={undoRedo.triggerRedo} disabled={!undoRedo.canRedo}>
-                <RedoIcon fontSize="small" />
-              </IconButton>
-            </span>
-          </Tooltip>
-          {savedAt && (
-            <Typography variant="caption" color="success.main" sx={{ ml: 1 }}>
-              Saved at {savedAt.toLocaleTimeString()}
-            </Typography>
-          )}
-          <Button
-            variant="contained"
-            onClick={() => void handleSave()}
-            disabled={!isDirty || isSaving}
-            sx={{ ml: 1 }}
-          >
-            Save
-          </Button>
-        </Stack>
-      </Stack>
+      <EditHeader
+        backLabel="Character Classes"
+        onBack={handleBack}
+        displayName={displayName}
+        onDisplayNameChange={(value) => {
+          setDisplayName(value)
+          pushSnapshot({ displayName: value })
+        }}
+        exportKey={exportKey}
+        isDirty={isDirty}
+        isSaving={isSaving}
+        onSave={() => void handleSave()}
+        savedAt={savedAt}
+        canUndo={undoRedo.canUndo}
+        canRedo={undoRedo.canRedo}
+        onUndo={undoRedo.triggerUndo}
+        onRedo={undoRedo.triggerRedo}
+      />
 
       {error && (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
@@ -291,6 +235,18 @@ export default function ClassEditorPage({ recordId, onClose }: ClassEditorPagePr
       {/* Overview tab */}
       <TabPanel index={0} value={activeTab}>
         <Stack spacing={3} sx={{ maxWidth: 600 }}>
+          <TextField
+            label="Export Key"
+            value={exportKey}
+            onChange={(e) => {
+              setExportKey(e.target.value)
+              pushSnapshot({ exportKey: e.target.value })
+            }}
+            inputProps={{ style: { fontFamily: '"JetBrains Mono", monospace', fontSize: '0.85rem' } }}
+            placeholder="export-key"
+            helperText="Export key — used in exported files"
+            sx={{ maxWidth: 360 }}
+          />
           <TextField
             label="Description"
             value={description}
@@ -339,6 +295,13 @@ export default function ClassEditorPage({ recordId, onClose }: ClassEditorPagePr
           disabled={isSaving}
         />
       </TabPanel>
+
+      <SaveBar
+        isDirty={isDirty}
+        isSaving={isSaving}
+        onSave={() => void handleSave()}
+        onDiscard={handleDiscard}
+      />
     </Box>
   )
 }
