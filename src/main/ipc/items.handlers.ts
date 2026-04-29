@@ -46,4 +46,8 @@ export function registerItemsHandlers(): void {
     if (record) markProjectDirty({ domain: 'items', recordId: record.id, recordName: record.displayName, subArea: 'basic-info', action: 'duplicate' })
     return record
   })
+
+  ipcMain.handle(IPC_CHANNELS.ITEMS_GET_USED_BY, (_event, id: string) =>
+    itemRepository.getUsedBy(id),
+  )
 }

@@ -123,4 +123,8 @@ export function registerClassesHandlers(): void {
       markProjectDirty({ domain: 'classes', recordId: classId, recordName: record?.displayName ?? classId, subArea: 'ability-assignments', action: 'update' })
     },
   )
+
+  ipcMain.handle(IPC_CHANNELS.CLASSES_GET_USED_BY, (_event, id: string) =>
+    classRepository.getUsedBy(id),
+  )
 }

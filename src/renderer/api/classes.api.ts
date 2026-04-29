@@ -4,6 +4,7 @@ import type {
   ClassDerivedStatOverride,
   ClassMetadataField,
   ClassRecord,
+  ClassUsedBy,
   CreateClassInput,
   StatGrowthData,
   StatGrowthEntry,
@@ -71,4 +72,7 @@ export const classesApi = {
 
   setAbilityAssignments: (classId: string, assignments: ClassAbilityAssignment[]) =>
     window.anvil.invoke<void>(IPC_CHANNELS.CLASSES_SET_ABILITY_ASSIGNMENTS, classId, assignments),
+
+  getUsedBy: (id: string) =>
+    window.anvil.invoke<ClassUsedBy>(IPC_CHANNELS.CLASSES_GET_USED_BY, id),
 }

@@ -6,6 +6,7 @@ import type {
   ClassDerivedStatOverride,
   ClassMetadataField,
   ClassRecord,
+  ClassUsedBy,
   CreateClassInput,
   StatGrowthData,
   StatGrowthEntry,
@@ -290,6 +291,20 @@ export class ClassRepository extends DomainRepository {
         ins.run({ classId, fieldKey: f.fieldKey, value: f.value })
       }
     })()
+  }
+
+  getUsedBy(classId: string): ClassUsedBy {
+    const db = this.dbProvider()
+    const npcs = db
+      .prepare(
+        `SELECT DISTINCT n.id, n.display_name AS displayName
+         FROM npc_class_assignments nca
+         JOIN npcs n ON n.id = nca.npc_id
+         WHERE nca.class_id = ? AND n.deleted_at IS NULL
+         ORDER BY n.display_name COLLATE NOCASE`,
+      )
+      .all(classId) as Array<{ id: string; displayName: string }>
+    return { npcs }
   }
 
   setAbilityAssignments(classId: string, assignments: ClassAbilityAssignment[]): void {

@@ -6,6 +6,7 @@ import type {
   CreateLootTableInput,
   LootTableEntry,
   LootTableRecord,
+  LootTableUsedBy,
   UpdateLootTableInput,
 } from '../../shared/domain-types'
 
@@ -184,6 +185,19 @@ export class LootTableRepository extends DomainRepository {
       )
       .all(lootTableId) as LootTableEntryDbRow[]
     return rows.map(toLootTableEntry)
+  }
+
+  getUsedBy(lootTableId: string): LootTableUsedBy {
+    const db = this.dbProvider()
+    const npcs = db
+      .prepare(
+        `SELECT n.id, n.display_name AS displayName
+         FROM npcs n
+         WHERE n.loot_table_id = ? AND n.deleted_at IS NULL
+         ORDER BY n.display_name COLLATE NOCASE`,
+      )
+      .all(lootTableId) as Array<{ id: string; displayName: string }>
+    return { npcs }
   }
 
   setEntries(lootTableId: string, entries: CreateLootTableEntryInput[]): LootTableEntry[] {

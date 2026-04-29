@@ -5,6 +5,7 @@ import type {
   CreateItemInput,
   CustomFieldValue,
   ItemRecord,
+  ItemUsedBy,
   UpdateItemInput,
 } from '../../shared/domain-types'
 
@@ -230,6 +231,43 @@ export class ItemRepository extends DomainRepository {
       fieldDefinitionId: r.field_definition_id,
       value: r.value,
     }))
+  }
+
+  getUsedBy(itemId: string): ItemUsedBy {
+    const db = this.dbProvider()
+    const asIngredient = db
+      .prepare(
+        `SELECT r.id, r.display_name AS displayName
+         FROM recipe_ingredients ri
+         JOIN recipes r ON r.id = ri.recipe_id
+         WHERE ri.item_id = ? AND r.deleted_at IS NULL
+         ORDER BY r.display_name COLLATE NOCASE`,
+      )
+      .all(itemId) as Array<{ id: string; displayName: string }>
+    const asOutput = db
+      .prepare(
+        `SELECT r.id, r.display_name AS displayName
+         FROM recipes r
+         WHERE r.output_item_id = ? AND r.deleted_at IS NULL
+         ORDER BY r.display_name COLLATE NOCASE`,
+      )
+      .all(itemId) as Array<{ id: string; displayName: string }>
+    // Merge and deduplicate recipes (an item could be both ingredient and output)
+    const recipeMap = new Map<string, { id: string; displayName: string }>()
+    for (const r of [...asIngredient, ...asOutput]) recipeMap.set(r.id, r)
+    const recipes = [...recipeMap.values()].sort((a, b) =>
+      a.displayName.localeCompare(b.displayName, undefined, { sensitivity: 'base' }),
+    )
+    const lootTables = db
+      .prepare(
+        `SELECT lt.id, lt.display_name AS displayName
+         FROM loot_table_entries lte
+         JOIN loot_tables lt ON lt.id = lte.loot_table_id
+         WHERE lte.item_id = ? AND lt.deleted_at IS NULL
+         ORDER BY lt.display_name COLLATE NOCASE`,
+      )
+      .all(itemId) as Array<{ id: string; displayName: string }>
+    return { recipes, lootTables }
   }
 
   setCustomFieldValues(itemId: string, values: CustomFieldValue[]): void {

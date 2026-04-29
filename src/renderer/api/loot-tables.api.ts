@@ -4,6 +4,7 @@ import type {
   CreateLootTableInput,
   LootTableEntry,
   LootTableRecord,
+  LootTableUsedBy,
   UpdateLootTableInput,
 } from '../../shared/domain-types'
 
@@ -37,4 +38,7 @@ export const lootTablesApi = {
 
   setEntries: (id: string, entries: CreateLootTableEntryInput[]) =>
     window.anvil.invoke<LootTableEntry[]>(IPC_CHANNELS.LOOT_TABLES_SET_ENTRIES, id, entries),
+
+  getUsedBy: (id: string) =>
+    window.anvil.invoke<LootTableUsedBy>(IPC_CHANNELS.LOOT_TABLES_GET_USED_BY, id),
 }

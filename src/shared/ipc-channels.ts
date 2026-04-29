@@ -33,6 +33,7 @@ export const IPC_CHANNELS = {
   CLASSES_SET_METADATA_FIELDS: 'classes:set-metadata-fields',
   CLASSES_GET_ABILITY_ASSIGNMENTS: 'classes:get-ability-assignments',
   CLASSES_SET_ABILITY_ASSIGNMENTS: 'classes:set-ability-assignments',
+  CLASSES_GET_USED_BY: 'classes:get-used-by',
   FORMULA_EVALUATE: 'formulas:evaluate',
   FORMULA_EVALUATE_BATCH: 'formulas:evaluate-batch',
 
@@ -56,6 +57,7 @@ export const IPC_CHANNELS = {
   ITEMS_RESTORE: 'items:restore',
   ITEMS_HARD_DELETE: 'items:hard-delete',
   ITEMS_DUPLICATE: 'items:duplicate',
+  ITEMS_GET_USED_BY: 'items:get-used-by',
 
   // Crafting Recipes
   RECIPES_LIST: 'recipes:list',
@@ -94,6 +96,7 @@ export const IPC_CHANNELS = {
   LOOT_TABLES_DUPLICATE: 'loot-tables:duplicate',
   LOOT_TABLES_GET_ENTRIES: 'loot-tables:get-entries',
   LOOT_TABLES_SET_ENTRIES: 'loot-tables:set-entries',
+  LOOT_TABLES_GET_USED_BY: 'loot-tables:get-used-by',
 
   // Validation
   VALIDATION_RUN: 'validation:run',

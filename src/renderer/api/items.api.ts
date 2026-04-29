@@ -2,6 +2,7 @@ import { IPC_CHANNELS } from '../../shared/ipc-channels'
 import type {
   CreateItemInput,
   ItemRecord,
+  ItemUsedBy,
   UpdateItemInput,
 } from '../../shared/domain-types'
 
@@ -29,4 +30,7 @@ export const itemsApi = {
 
   duplicate: (id: string) =>
     window.anvil.invoke<ItemRecord | null>(IPC_CHANNELS.ITEMS_DUPLICATE, id),
+
+  getUsedBy: (id: string) =>
+    window.anvil.invoke<ItemUsedBy>(IPC_CHANNELS.ITEMS_GET_USED_BY, id),
 }

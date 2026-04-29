@@ -53,6 +53,10 @@ export interface ClassAbilityAssignment {
   sortOrder: number
 }
 
+export interface ClassUsedBy {
+  npcs: Array<{ id: string; displayName: string }>
+}
+
 // ─── Abilities ────────────────────────────────────────────────────────────────
 
 export interface AbilityRecord extends BaseRecord {
@@ -91,6 +95,12 @@ export interface AbilityUsedBy {
 }
 
 // ─── Items ────────────────────────────────────────────────────────────────────
+
+export interface ItemUsedBy {
+  recipes: Array<{ id: string; displayName: string }>
+  lootTables: Array<{ id: string; displayName: string }>
+}
+
 
 export interface ItemRecord extends BaseRecord {
   itemCategoryId: string
@@ -372,6 +382,10 @@ export interface UpdateLootTableInput {
   displayName?: string
   exportKey?: string
   description?: string
+}
+
+export interface LootTableUsedBy {
+  npcs: Array<{ id: string; displayName: string }>
 }
 
 // ─── Validation ───────────────────────────────────────────────────────────────

@@ -71,4 +71,8 @@ export function registerLootTablesHandlers(): void {
       return result
     },
   )
+
+  ipcMain.handle(IPC_CHANNELS.LOOT_TABLES_GET_USED_BY, (_event, id: string) =>
+    lootTableRepository.getUsedBy(id),
+  )
 }
