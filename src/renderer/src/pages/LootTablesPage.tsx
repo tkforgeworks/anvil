@@ -1,5 +1,5 @@
 import {
-  Add as AddIcon,
+  Casino as LootTablesIcon,
   ContentCopy as DuplicateIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
@@ -14,18 +14,12 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
-  FormControl,
   IconButton,
-  InputLabel,
-  MenuItem,
-  Select,
-  Stack,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableRow,
-  TextField,
   Tooltip,
   Typography,
 } from '@mui/material'
@@ -35,10 +29,12 @@ import { lifecycleApi } from '../../api/lifecycle.api'
 import { lootTablesApi } from '../../api/loot-tables.api'
 import { npcsApi } from '../../api/npcs.api'
 import type { LootTableEntry, LootTableRecord, NpcRecord } from '../../../shared/domain-types'
-import { ArchiveToggle, ArchiveTable, type ViewMode } from '../components/ArchiveView'
+import { ArchiveTable, type ViewMode } from '../components/ArchiveView'
 import { BulkActionToolbar, BulkDeleteDialog } from '../components/BulkActions'
 import { CreateLootTableDialog } from '../components/create-dialogs'
 import EditorModal from '../components/EditorModal'
+import EmptyState from '../components/EmptyState'
+import ListToolbar from '../components/ListToolbar'
 import { useMultiSelect } from '../hooks/useMultiSelect'
 import { useUiStore } from '../stores/ui.store'
 import LootTableEditorPage from './LootTableEditorPage'
@@ -215,15 +211,20 @@ export default function LootTablesPage(): React.JSX.Element {
 
   return (
     <Box>
-      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 3 }}>
-        <Typography variant="h5">Loot Tables</Typography>
-        <Stack direction="row" spacing={2} alignItems="center">
-          <ArchiveToggle value={viewMode} onChange={setViewMode} />
-          {viewMode === 'active' && (
-            <Button startIcon={<AddIcon />} variant="contained" onClick={() => setCreateOpen(true)}>New Loot Table</Button>
-          )}
-        </Stack>
-      </Stack>
+      <ListToolbar
+        search={search}
+        onSearchChange={setSearch}
+        sortKey={sortBy}
+        onSortChange={(v) => setSortBy(v as 'name' | 'updated')}
+        sortOptions={[
+          { value: 'name', label: 'Name' },
+          { value: 'updated', label: 'Last Modified' },
+        ]}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        onNew={() => setCreateOpen(true)}
+        newLabel="+ New Loot Table"
+      />
 
       {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>{error}</Alert>}
 
@@ -241,17 +242,6 @@ export default function LootTablesPage(): React.JSX.Element {
         />
       ) : (
         <>
-      <Stack direction="row" spacing={2} sx={{ mb: 2 }} flexWrap="wrap" useFlexGap>
-        <TextField size="small" placeholder="Search loot tables..." value={search} onChange={(e) => setSearch(e.target.value)} sx={{ flex: 1, minWidth: 220, maxWidth: 360 }} />
-        <FormControl size="small" sx={{ minWidth: 180 }}>
-          <InputLabel id="loot-table-sort-label">Sort</InputLabel>
-          <Select labelId="loot-table-sort-label" label="Sort" value={sortBy} onChange={(e) => setSortBy(e.target.value as 'name' | 'updated')}>
-            <MenuItem value="name">Name</MenuItem>
-            <MenuItem value="updated">Last Modified</MenuItem>
-          </Select>
-        </FormControl>
-      </Stack>
-
       <BulkActionToolbar
         count={multiSelect.count}
         mode="active"
@@ -259,9 +249,17 @@ export default function LootTablesPage(): React.JSX.Element {
       />
 
       {filtered.length === 0 ? (
-        <Typography variant="body2" color="text.secondary">
-          {lootTables.length === 0 ? 'No loot tables yet. Click "New Loot Table" to create one.' : 'No loot tables match your search.'}
-        </Typography>
+        lootTables.length === 0 ? (
+          <EmptyState
+            icon={<LootTablesIcon sx={{ fontSize: 'inherit' }} />}
+            title="No loot tables yet"
+            body="Create your first loot table to get started."
+            ctaLabel="+ Create First Loot Table"
+            onCtaClick={() => setCreateOpen(true)}
+          />
+        ) : (
+          <EmptyState title="No results match your search" />
+        )
       ) : (
         <Table size="small">
           <TableHead>

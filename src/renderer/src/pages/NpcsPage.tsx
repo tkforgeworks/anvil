@@ -1,8 +1,8 @@
 import {
-  Add as AddIcon,
   ContentCopy as DuplicateIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
+  SmartToy as NpcsIcon,
 } from '@mui/icons-material'
 import {
   Alert,
@@ -19,13 +19,11 @@ import {
   InputLabel,
   MenuItem,
   Select,
-  Stack,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableRow,
-  TextField,
   Tooltip,
   Typography,
 } from '@mui/material'
@@ -35,10 +33,12 @@ import { lifecycleApi } from '../../api/lifecycle.api'
 import { metaApi } from '../../api/meta.api'
 import { npcsApi } from '../../api/npcs.api'
 import type { MetaNpcType, NpcRecord } from '../../../shared/domain-types'
-import { ArchiveToggle, ArchiveTable, type ViewMode } from '../components/ArchiveView'
+import { ArchiveTable, type ViewMode } from '../components/ArchiveView'
 import { BulkActionToolbar, BulkDeleteDialog } from '../components/BulkActions'
 import { CreateNpcDialog } from '../components/create-dialogs'
 import EditorModal from '../components/EditorModal'
+import EmptyState from '../components/EmptyState'
+import ListToolbar from '../components/ListToolbar'
 import { useMultiSelect } from '../hooks/useMultiSelect'
 import { useUiStore } from '../stores/ui.store'
 import NpcEditorPage from './NpcEditorPage'
@@ -203,17 +203,33 @@ export default function NpcsPage(): React.JSX.Element {
 
   const filteredIds = filtered.map((npc) => npc.id)
 
+  const npcFilterSlot = (
+    <FormControl size="small" sx={{ minWidth: 190 }}>
+      <InputLabel id="npc-type-filter-label">NPC Type</InputLabel>
+      <Select labelId="npc-type-filter-label" label="NPC Type" value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
+        <MenuItem value="all">All NPC Types</MenuItem>
+        {npcTypes.map((type) => <MenuItem key={type.id} value={type.id}>{type.displayName}</MenuItem>)}
+      </Select>
+    </FormControl>
+  )
+
   return (
     <Box>
-      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 3 }}>
-        <Typography variant="h5">NPCs</Typography>
-        <Stack direction="row" spacing={2} alignItems="center">
-          <ArchiveToggle value={viewMode} onChange={setViewMode} />
-          {viewMode === 'active' && (
-            <Button startIcon={<AddIcon />} variant="contained" onClick={() => setCreateOpen(true)}>New NPC</Button>
-          )}
-        </Stack>
-      </Stack>
+      <ListToolbar
+        search={search}
+        onSearchChange={setSearch}
+        sortKey={sortBy}
+        onSortChange={(v) => setSortBy(v as 'name' | 'updated')}
+        sortOptions={[
+          { value: 'name', label: 'Name' },
+          { value: 'updated', label: 'Last Modified' },
+        ]}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        onNew={() => setCreateOpen(true)}
+        newLabel="+ New NPC"
+        filterSlot={npcFilterSlot}
+      />
 
       {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>{error}</Alert>}
 
@@ -231,24 +247,6 @@ export default function NpcsPage(): React.JSX.Element {
         />
       ) : (
         <>
-      <Stack direction="row" spacing={2} sx={{ mb: 2 }} flexWrap="wrap" useFlexGap>
-        <TextField size="small" placeholder="Search NPCs..." value={search} onChange={(e) => setSearch(e.target.value)} sx={{ flex: 1, minWidth: 220, maxWidth: 360 }} />
-        <FormControl size="small" sx={{ minWidth: 190 }}>
-          <InputLabel id="npc-type-filter-label">NPC Type</InputLabel>
-          <Select labelId="npc-type-filter-label" label="NPC Type" value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
-            <MenuItem value="all">All NPC Types</MenuItem>
-            {npcTypes.map((type) => <MenuItem key={type.id} value={type.id}>{type.displayName}</MenuItem>)}
-          </Select>
-        </FormControl>
-        <FormControl size="small" sx={{ minWidth: 180 }}>
-          <InputLabel id="npc-sort-label">Sort</InputLabel>
-          <Select labelId="npc-sort-label" label="Sort" value={sortBy} onChange={(e) => setSortBy(e.target.value as 'name' | 'updated')}>
-            <MenuItem value="name">Name</MenuItem>
-            <MenuItem value="updated">Last Modified</MenuItem>
-          </Select>
-        </FormControl>
-      </Stack>
-
       <BulkActionToolbar
         count={multiSelect.count}
         mode="active"
@@ -256,9 +254,17 @@ export default function NpcsPage(): React.JSX.Element {
       />
 
       {filtered.length === 0 ? (
-        <Typography variant="body2" color="text.secondary">
-          {npcs.length === 0 ? 'No NPCs yet. Click "New NPC" to create one.' : 'No NPCs match your filters.'}
-        </Typography>
+        npcs.length === 0 ? (
+          <EmptyState
+            icon={<NpcsIcon sx={{ fontSize: 'inherit' }} />}
+            title="No NPCs yet"
+            body="Create your first NPC to get started."
+            ctaLabel="+ Create First NPC"
+            onCtaClick={() => setCreateOpen(true)}
+          />
+        ) : (
+          <EmptyState title="No results match your filters" />
+        )
       ) : (
         <Table size="small">
           <TableHead>

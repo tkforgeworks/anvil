@@ -1,8 +1,8 @@
 import {
-  Add as AddIcon,
   ContentCopy as DuplicateIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
+  People as ClassesIcon,
 } from '@mui/icons-material'
 import {
   Alert,
@@ -14,18 +14,12 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
-  FormControl,
   IconButton,
-  InputLabel,
-  MenuItem,
-  Select,
-  Stack,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableRow,
-  TextField,
   Tooltip,
   Typography,
 } from '@mui/material'
@@ -34,10 +28,12 @@ import { useNavigate } from 'react-router-dom'
 import { classesApi } from '../../api/classes.api'
 import { lifecycleApi } from '../../api/lifecycle.api'
 import type { ClassRecord } from '../../../shared/domain-types'
-import { ArchiveToggle, ArchiveTable, type ViewMode } from '../components/ArchiveView'
+import { ArchiveTable, type ViewMode } from '../components/ArchiveView'
 import { BulkActionToolbar, BulkDeleteDialog } from '../components/BulkActions'
 import { CreateClassDialog } from '../components/create-dialogs'
 import EditorModal from '../components/EditorModal'
+import EmptyState from '../components/EmptyState'
+import ListToolbar from '../components/ListToolbar'
 import { useMultiSelect } from '../hooks/useMultiSelect'
 import { useUiStore } from '../stores/ui.store'
 import ClassEditorPage from './ClassEditorPage'
@@ -209,18 +205,20 @@ export default function ClassesPage(): React.JSX.Element {
 
   return (
     <Box>
-      {/* Header */}
-      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 3 }}>
-        <Typography variant="h5">Character Classes</Typography>
-        <Stack direction="row" spacing={2} alignItems="center">
-          <ArchiveToggle value={viewMode} onChange={setViewMode} />
-          {viewMode === 'active' && (
-            <Button startIcon={<AddIcon />} variant="contained" onClick={() => setCreateOpen(true)}>
-              New Class
-            </Button>
-          )}
-        </Stack>
-      </Stack>
+      <ListToolbar
+        search={search}
+        onSearchChange={setSearch}
+        sortKey={sortKey}
+        onSortChange={(v) => setSortKey(v as SortKey)}
+        sortOptions={[
+          { value: 'name', label: 'Name' },
+          { value: 'updated', label: 'Last Modified' },
+        ]}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        onNew={() => setCreateOpen(true)}
+        newLabel="+ New Class"
+      />
 
       {error && (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
@@ -242,42 +240,24 @@ export default function ClassesPage(): React.JSX.Element {
         />
       ) : (
         <>
-          {/* Toolbar */}
-          <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
-            <TextField
-              size="small"
-              placeholder="Search classes…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              sx={{ flex: 1, maxWidth: 360 }}
-            />
-            <FormControl size="small" sx={{ minWidth: 180 }}>
-              <InputLabel id="sort-label">Sort by</InputLabel>
-              <Select
-                labelId="sort-label"
-                label="Sort by"
-                value={sortKey}
-                onChange={(e) => setSortKey(e.target.value as SortKey)}
-              >
-                <MenuItem value="name">Name</MenuItem>
-                <MenuItem value="updated">Last Modified</MenuItem>
-              </Select>
-            </FormControl>
-          </Stack>
-
           <BulkActionToolbar
             count={multiSelect.count}
             mode="active"
             onBulkDelete={() => setBulkDeleteOpen(true)}
           />
 
-          {/* List */}
           {filtered.length === 0 ? (
-            <Typography variant="body2" color="text.secondary">
-              {classes.length === 0
-                ? 'No classes yet. Click "New Class" to create one.'
-                : 'No classes match your search.'}
-            </Typography>
+            classes.length === 0 ? (
+              <EmptyState
+                icon={<ClassesIcon sx={{ fontSize: 'inherit' }} />}
+                title="No classes yet"
+                body="Create your first character class to get started."
+                ctaLabel="+ Create First Class"
+                onCtaClick={() => setCreateOpen(true)}
+              />
+            ) : (
+              <EmptyState title="No results match your search" />
+            )
           ) : (
             <Table size="small">
               <TableHead>

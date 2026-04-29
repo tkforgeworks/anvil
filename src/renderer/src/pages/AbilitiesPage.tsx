@@ -1,5 +1,5 @@
 import {
-  Add as AddIcon,
+  AutoAwesome as AbilitiesIcon,
   ContentCopy as DuplicateIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
@@ -14,18 +14,12 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
-  FormControl,
   IconButton,
-  InputLabel,
-  MenuItem,
-  Select,
-  Stack,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableRow,
-  TextField,
   Tooltip,
   Typography,
 } from '@mui/material'
@@ -34,10 +28,12 @@ import { useNavigate } from 'react-router-dom'
 import { abilitiesApi } from '../../api/abilities.api'
 import { lifecycleApi } from '../../api/lifecycle.api'
 import type { AbilityRecord } from '../../../shared/domain-types'
-import { ArchiveToggle, ArchiveTable, type ViewMode } from '../components/ArchiveView'
+import { ArchiveTable, type ViewMode } from '../components/ArchiveView'
 import { BulkActionToolbar, BulkDeleteDialog } from '../components/BulkActions'
 import { CreateAbilityDialog } from '../components/create-dialogs'
 import EditorModal from '../components/EditorModal'
+import EmptyState from '../components/EmptyState'
+import ListToolbar from '../components/ListToolbar'
 import { useMultiSelect } from '../hooks/useMultiSelect'
 import { useUiStore } from '../stores/ui.store'
 import AbilityEditorPage from './AbilityEditorPage'
@@ -209,18 +205,20 @@ export default function AbilitiesPage(): React.JSX.Element {
 
   return (
     <Box>
-      {/* Header */}
-      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 3 }}>
-        <Typography variant="h5">Abilities</Typography>
-        <Stack direction="row" spacing={2} alignItems="center">
-          <ArchiveToggle value={viewMode} onChange={setViewMode} />
-          {viewMode === 'active' && (
-            <Button startIcon={<AddIcon />} variant="contained" onClick={() => setCreateOpen(true)}>
-              New Ability
-            </Button>
-          )}
-        </Stack>
-      </Stack>
+      <ListToolbar
+        search={search}
+        onSearchChange={setSearch}
+        sortKey={sortKey}
+        onSortChange={(v) => setSortKey(v as SortKey)}
+        sortOptions={[
+          { value: 'name', label: 'Name' },
+          { value: 'updated', label: 'Last Modified' },
+        ]}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        onNew={() => setCreateOpen(true)}
+        newLabel="+ New Ability"
+      />
 
       {error && (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
@@ -242,42 +240,24 @@ export default function AbilitiesPage(): React.JSX.Element {
         />
       ) : (
         <>
-          {/* Toolbar */}
-          <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
-            <TextField
-              size="small"
-              placeholder="Search abilities…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              sx={{ flex: 1, maxWidth: 360 }}
-            />
-            <FormControl size="small" sx={{ minWidth: 180 }}>
-              <InputLabel id="sort-label">Sort by</InputLabel>
-              <Select
-                labelId="sort-label"
-                label="Sort by"
-                value={sortKey}
-                onChange={(e) => setSortKey(e.target.value as SortKey)}
-              >
-                <MenuItem value="name">Name</MenuItem>
-                <MenuItem value="updated">Last Modified</MenuItem>
-              </Select>
-            </FormControl>
-          </Stack>
-
           <BulkActionToolbar
             count={multiSelect.count}
             mode="active"
             onBulkDelete={() => setBulkDeleteOpen(true)}
           />
 
-          {/* List */}
           {filtered.length === 0 ? (
-            <Typography variant="body2" color="text.secondary">
-              {abilities.length === 0
-                ? 'No abilities yet. Click "New Ability" to create one.'
-                : 'No abilities match your search.'}
-            </Typography>
+            abilities.length === 0 ? (
+              <EmptyState
+                icon={<AbilitiesIcon sx={{ fontSize: 'inherit' }} />}
+                title="No abilities yet"
+                body="Create your first ability to get started."
+                ctaLabel="+ Create First Ability"
+                onCtaClick={() => setCreateOpen(true)}
+              />
+            ) : (
+              <EmptyState title="No results match your search" />
+            )
           ) : (
             <Table size="small">
               <TableHead>

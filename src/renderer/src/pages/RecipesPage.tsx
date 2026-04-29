@@ -1,5 +1,5 @@
 import {
-  Add as AddIcon,
+  Construction as RecipesIcon,
   ContentCopy as DuplicateIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
@@ -19,13 +19,11 @@ import {
   InputLabel,
   MenuItem,
   Select,
-  Stack,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableRow,
-  TextField,
   Tooltip,
   Typography,
 } from '@mui/material'
@@ -41,10 +39,12 @@ import type {
   MetaCraftingStation,
   RecipeRecord,
 } from '../../../shared/domain-types'
-import { ArchiveToggle, ArchiveTable, type ViewMode } from '../components/ArchiveView'
+import { ArchiveTable, type ViewMode } from '../components/ArchiveView'
 import { BulkActionToolbar, BulkDeleteDialog } from '../components/BulkActions'
 import { CreateRecipeDialog } from '../components/create-dialogs'
 import EditorModal from '../components/EditorModal'
+import EmptyState from '../components/EmptyState'
+import ListToolbar from '../components/ListToolbar'
 import { useMultiSelect } from '../hooks/useMultiSelect'
 import { useUiStore } from '../stores/ui.store'
 import RecipeEditorPage from './RecipeEditorPage'
@@ -218,17 +218,41 @@ export default function RecipesPage(): React.JSX.Element {
 
   const filteredIds = filtered.map((recipe) => recipe.id)
 
+  const recipeFilterSlot = (
+    <>
+      <FormControl size="small" sx={{ minWidth: 190 }}>
+        <InputLabel id="station-filter-label">Station</InputLabel>
+        <Select labelId="station-filter-label" label="Station" value={stationFilter} onChange={(e) => setStationFilter(e.target.value)}>
+          <MenuItem value="all">All Stations</MenuItem>
+          <MenuItem value="">No Station</MenuItem>
+          {stations.map((station) => <MenuItem key={station.id} value={station.id}>{station.displayName}</MenuItem>)}
+        </Select>
+      </FormControl>
+      <FormControl size="small" sx={{ minWidth: 210 }}>
+        <InputLabel id="specialization-filter-label">Specialization</InputLabel>
+        <Select labelId="specialization-filter-label" label="Specialization" value={specializationFilter} onChange={(e) => setSpecializationFilter(e.target.value)}>
+          <MenuItem value="all">All Specializations</MenuItem>
+          <MenuItem value="">No Specialization</MenuItem>
+          {specializations.map((specialization) => <MenuItem key={specialization.id} value={specialization.id}>{specialization.displayName}</MenuItem>)}
+        </Select>
+      </FormControl>
+    </>
+  )
+
   return (
     <Box>
-      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 3 }}>
-        <Typography variant="h5">Crafting Recipes</Typography>
-        <Stack direction="row" spacing={2} alignItems="center">
-          <ArchiveToggle value={viewMode} onChange={setViewMode} />
-          {viewMode === 'active' && (
-            <Button startIcon={<AddIcon />} variant="contained" onClick={() => setCreateOpen(true)}>New Recipe</Button>
-          )}
-        </Stack>
-      </Stack>
+      <ListToolbar
+        search={search}
+        onSearchChange={setSearch}
+        sortKey="name"
+        onSortChange={() => {}}
+        sortOptions={[{ value: 'name', label: 'Name' }]}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        onNew={() => setCreateOpen(true)}
+        newLabel="+ New Recipe"
+        filterSlot={recipeFilterSlot}
+      />
 
       {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>{error}</Alert>}
 
@@ -246,26 +270,6 @@ export default function RecipesPage(): React.JSX.Element {
         />
       ) : (
         <>
-      <Stack direction="row" spacing={2} sx={{ mb: 2 }} flexWrap="wrap" useFlexGap>
-        <TextField size="small" placeholder="Search recipes..." value={search} onChange={(e) => setSearch(e.target.value)} sx={{ flex: 1, minWidth: 220, maxWidth: 360 }} />
-        <FormControl size="small" sx={{ minWidth: 190 }}>
-          <InputLabel id="station-filter-label">Station</InputLabel>
-          <Select labelId="station-filter-label" label="Station" value={stationFilter} onChange={(e) => setStationFilter(e.target.value)}>
-            <MenuItem value="all">All Stations</MenuItem>
-            <MenuItem value="">No Station</MenuItem>
-            {stations.map((station) => <MenuItem key={station.id} value={station.id}>{station.displayName}</MenuItem>)}
-          </Select>
-        </FormControl>
-        <FormControl size="small" sx={{ minWidth: 210 }}>
-          <InputLabel id="specialization-filter-label">Specialization</InputLabel>
-          <Select labelId="specialization-filter-label" label="Specialization" value={specializationFilter} onChange={(e) => setSpecializationFilter(e.target.value)}>
-            <MenuItem value="all">All Specializations</MenuItem>
-            <MenuItem value="">No Specialization</MenuItem>
-            {specializations.map((specialization) => <MenuItem key={specialization.id} value={specialization.id}>{specialization.displayName}</MenuItem>)}
-          </Select>
-        </FormControl>
-      </Stack>
-
       <BulkActionToolbar
         count={multiSelect.count}
         mode="active"
@@ -273,9 +277,17 @@ export default function RecipesPage(): React.JSX.Element {
       />
 
       {filtered.length === 0 ? (
-        <Typography variant="body2" color="text.secondary">
-          {recipes.length === 0 ? 'No recipes yet. Click "New Recipe" to create one.' : 'No recipes match your filters.'}
-        </Typography>
+        recipes.length === 0 ? (
+          <EmptyState
+            icon={<RecipesIcon sx={{ fontSize: 'inherit' }} />}
+            title="No recipes yet"
+            body="Create your first crafting recipe to get started."
+            ctaLabel="+ Create First Recipe"
+            onCtaClick={() => setCreateOpen(true)}
+          />
+        ) : (
+          <EmptyState title="No results match your filters" />
+        )
       ) : (
         <Table size="small">
           <TableHead>

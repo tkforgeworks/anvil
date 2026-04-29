@@ -1,8 +1,8 @@
 import {
-  Add as AddIcon,
   ContentCopy as DuplicateIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
+  Inventory as ItemsIcon,
 } from '@mui/icons-material'
 import {
   Alert,
@@ -20,13 +20,11 @@ import {
   InputLabel,
   MenuItem,
   Select,
-  Stack,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableRow,
-  TextField,
   Tooltip,
   Typography,
 } from '@mui/material'
@@ -36,10 +34,12 @@ import { itemsApi } from '../../api/items.api'
 import { lifecycleApi } from '../../api/lifecycle.api'
 import { metaApi } from '../../api/meta.api'
 import type { ItemRecord, MetaItemCategory, MetaRarity } from '../../../shared/domain-types'
-import { ArchiveToggle, ArchiveTable, type ViewMode } from '../components/ArchiveView'
+import { ArchiveTable, type ViewMode } from '../components/ArchiveView'
 import { BulkActionToolbar, BulkDeleteDialog } from '../components/BulkActions'
 import { CreateItemDialog } from '../components/create-dialogs'
 import EditorModal from '../components/EditorModal'
+import EmptyState from '../components/EmptyState'
+import ListToolbar from '../components/ListToolbar'
 import { useMultiSelect } from '../hooks/useMultiSelect'
 import { useUiStore } from '../stores/ui.store'
 import ItemEditorPage from './ItemEditorPage'
@@ -232,19 +232,60 @@ export default function ItemsPage(): React.JSX.Element {
 
   const filteredIds = filtered.map((item) => item.id)
 
+  const itemFilterSlot = (
+    <>
+      <FormControl size="small" sx={{ minWidth: 180 }}>
+        <InputLabel id="category-filter-label">Category</InputLabel>
+        <Select
+          labelId="category-filter-label"
+          label="Category"
+          value={categoryFilter}
+          onChange={(e) => setCategoryFilter(e.target.value)}
+        >
+          <MenuItem value="all">All Categories</MenuItem>
+          {categories.map((category) => (
+            <MenuItem key={category.id} value={category.id}>
+              {category.displayName}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+      <FormControl size="small" sx={{ minWidth: 160 }}>
+        <InputLabel id="rarity-filter-label">Rarity</InputLabel>
+        <Select
+          labelId="rarity-filter-label"
+          label="Rarity"
+          value={rarityFilter}
+          onChange={(e) => setRarityFilter(e.target.value)}
+        >
+          <MenuItem value="all">All Rarities</MenuItem>
+          {rarities.map((rarity) => (
+            <MenuItem key={rarity.id} value={rarity.id}>
+              {rarity.displayName}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+    </>
+  )
+
   return (
     <Box>
-      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 3 }}>
-        <Typography variant="h5">Items</Typography>
-        <Stack direction="row" spacing={2} alignItems="center">
-          <ArchiveToggle value={viewMode} onChange={setViewMode} />
-          {viewMode === 'active' && (
-            <Button startIcon={<AddIcon />} variant="contained" onClick={() => setCreateOpen(true)}>
-              New Item
-            </Button>
-          )}
-        </Stack>
-      </Stack>
+      <ListToolbar
+        search={search}
+        onSearchChange={setSearch}
+        sortKey={sortKey}
+        onSortChange={(v) => setSortKey(v as SortKey)}
+        sortOptions={[
+          { value: 'name', label: 'Name' },
+          { value: 'updated', label: 'Last Modified' },
+        ]}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        onNew={() => setCreateOpen(true)}
+        newLabel="+ New Item"
+        filterSlot={itemFilterSlot}
+      />
 
       {error && (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
@@ -266,60 +307,6 @@ export default function ItemsPage(): React.JSX.Element {
         />
       ) : (
         <>
-      <Stack direction="row" spacing={2} sx={{ mb: 2 }} flexWrap="wrap" useFlexGap>
-        <TextField
-          size="small"
-          placeholder="Search items..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          sx={{ flex: 1, minWidth: 220, maxWidth: 360 }}
-        />
-        <FormControl size="small" sx={{ minWidth: 180 }}>
-          <InputLabel id="category-filter-label">Category</InputLabel>
-          <Select
-            labelId="category-filter-label"
-            label="Category"
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-          >
-            <MenuItem value="all">All Categories</MenuItem>
-            {categories.map((category) => (
-              <MenuItem key={category.id} value={category.id}>
-                {category.displayName}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-        <FormControl size="small" sx={{ minWidth: 160 }}>
-          <InputLabel id="rarity-filter-label">Rarity</InputLabel>
-          <Select
-            labelId="rarity-filter-label"
-            label="Rarity"
-            value={rarityFilter}
-            onChange={(e) => setRarityFilter(e.target.value)}
-          >
-            <MenuItem value="all">All Rarities</MenuItem>
-            {rarities.map((rarity) => (
-              <MenuItem key={rarity.id} value={rarity.id}>
-                {rarity.displayName}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-        <FormControl size="small" sx={{ minWidth: 180 }}>
-          <InputLabel id="sort-label">Sort by</InputLabel>
-          <Select
-            labelId="sort-label"
-            label="Sort by"
-            value={sortKey}
-            onChange={(e) => setSortKey(e.target.value as SortKey)}
-          >
-            <MenuItem value="name">Name</MenuItem>
-            <MenuItem value="updated">Last Modified</MenuItem>
-          </Select>
-        </FormControl>
-      </Stack>
-
       <BulkActionToolbar
         count={multiSelect.count}
         mode="active"
@@ -327,11 +314,17 @@ export default function ItemsPage(): React.JSX.Element {
       />
 
       {filtered.length === 0 ? (
-        <Typography variant="body2" color="text.secondary">
-          {items.length === 0
-            ? 'No items yet. Click "New Item" to create one.'
-            : 'No items match your filters.'}
-        </Typography>
+        items.length === 0 ? (
+          <EmptyState
+            icon={<ItemsIcon sx={{ fontSize: 'inherit' }} />}
+            title="No items yet"
+            body="Create your first item to get started."
+            ctaLabel="+ Create First Item"
+            onCtaClick={() => setCreateOpen(true)}
+          />
+        ) : (
+          <EmptyState title="No results match your filters" />
+        )
       ) : (
         <Table size="small">
           <TableHead>
