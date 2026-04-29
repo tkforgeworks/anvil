@@ -17,10 +17,13 @@ import type {
   AbilityRecord,
   ClassAbilityAssignment,
   ClassRecord,
+  ClassUsedBy,
 } from '../../../shared/domain-types'
 import AbilityAssignmentPanel, { type AbilityAssignmentRef } from '../components/AbilityAssignmentPanel'
 import DerivedStatsEditor from '../components/DerivedStatsEditor'
 import EditHeader from '../components/EditHeader'
+import InspectorRail from '../components/InspectorRail'
+import type { UsedBySection } from '../components/InspectorRail'
 import SaveBar from '../components/SaveBar'
 import StatGrowthEditor from '../components/StatGrowthEditor'
 import ValidationBanner from '../components/ValidationBanner'
@@ -78,6 +81,8 @@ export default function ClassEditorPage({ recordId, onClose }: ClassEditorPagePr
   const [activeTab, setActiveTab] = useState(0)
   const [abilityAssignments, setAbilityAssignments] = useState<ClassAbilityAssignment[]>([])
   const [allAbilities, setAllAbilities] = useState<AbilityRecord[]>([])
+  const [usedBy, setUsedBy] = useState<ClassUsedBy | null>(null)
+  const [usedByLoading, setUsedByLoading] = useState(false)
   const { recordIssues, runValidation } = useRecordValidation('classes', id)
 
   type TabFields = Omit<FormSnapshot, 'displayName' | 'exportKey'>
@@ -165,6 +170,19 @@ export default function ClassEditorPage({ recordId, onClose }: ClassEditorPagePr
     void load()
   }, [load])
 
+  // Load "Used By" data eagerly for InspectorRail
+  useEffect(() => {
+    if (!id) return
+    setUsedByLoading(true)
+    classesApi
+      .getUsedBy(id)
+      .then((result) => setUsedBy(result))
+      .catch((cause) =>
+        setError(cause instanceof Error ? cause.message : 'Failed to load Used By data.'),
+      )
+      .finally(() => setUsedByLoading(false))
+  }, [id])
+
   const handleSave = async (): Promise<void> => {
     if (!id) return
     setSaving(true)
@@ -215,6 +233,18 @@ export default function ClassEditorPage({ recordId, onClose }: ClassEditorPagePr
   const handleBack = goBack
   const handleDiscard = (): void => void load()
 
+  const usedBySections: UsedBySection[] = useMemo(() => {
+    if (!usedBy) return []
+    const sections: UsedBySection[] = []
+    if (usedBy.npcs.length > 0) {
+      sections.push({
+        label: 'NPCs',
+        items: usedBy.npcs.map((n) => ({ id: n.id, displayName: n.displayName, route: `/npcs/${n.id}` })),
+      })
+    }
+    return sections
+  }, [usedBy])
+
   return (
     <Box>
       <EditHeader
@@ -246,79 +276,85 @@ export default function ClassEditorPage({ recordId, onClose }: ClassEditorPagePr
 
       <Divider sx={{ mb: 0 }} />
 
-      {/* Tabs */}
-      <Tabs value={activeTab} onChange={(_, v: number) => setActiveTab(v)} sx={{ mb: 0 }}>
-        <Tab label={<span>Overview<DirtyDot visible={dirtyTabs.has(0)} /></span>} />
-        <Tab label="Stat Growth" />
-        <Tab label="Derived Stats" />
-        <Tab label="Abilities" />
-      </Tabs>
+      <Box sx={{ display: 'flex' }}>
+        <Box sx={{ flex: 1, overflow: 'auto' }}>
+          {/* Tabs */}
+          <Tabs value={activeTab} onChange={(_, v: number) => setActiveTab(v)} sx={{ mb: 0 }}>
+            <Tab label={<span>Overview<DirtyDot visible={dirtyTabs.has(0)} /></span>} />
+            <Tab label="Stat Growth" />
+            <Tab label="Derived Stats" />
+            <Tab label="Abilities" />
+          </Tabs>
 
-      <Divider />
+          <Divider />
 
-      {/* Overview tab */}
-      <TabPanel index={0} value={activeTab}>
-        <Stack spacing={3} sx={{ maxWidth: 600 }}>
-          <TextField
-            label="Export Key"
-            value={exportKey}
-            onChange={(e) => {
-              setExportKey(e.target.value)
-              pushSnapshot({ exportKey: e.target.value })
-            }}
-            inputProps={{ style: { fontFamily: '"JetBrains Mono", monospace', fontSize: '0.85rem' } }}
-            placeholder="export-key"
-            helperText="Export key — used in exported files"
-            sx={{ maxWidth: 360 }}
-          />
-          <TextField
-            label="Description"
-            value={description}
-            onChange={(e) => {
-              setDescription(e.target.value)
-              pushSnapshot({ description: e.target.value })
-            }}
-            multiline
-            minRows={3}
-            fullWidth
-          />
-          <TextField
-            label="Resource Multiplier"
-            value={resourceMultiplier}
-            onChange={(e) => {
-              setResourceMultiplier(e.target.value)
-              pushSnapshot({ resourceMultiplier: e.target.value })
-            }}
-            type="number"
-            inputProps={{ step: 0.1, min: 0 }}
-            helperText="Class-level metadata field — usable as a variable in derived stat formulas"
-            sx={{ maxWidth: 240 }}
-          />
-        </Stack>
-      </TabPanel>
+          {/* Overview tab */}
+          <TabPanel index={0} value={activeTab}>
+            <Stack spacing={3} sx={{ maxWidth: 600 }}>
+              <TextField
+                label="Export Key"
+                value={exportKey}
+                onChange={(e) => {
+                  setExportKey(e.target.value)
+                  pushSnapshot({ exportKey: e.target.value })
+                }}
+                inputProps={{ style: { fontFamily: '"JetBrains Mono", monospace', fontSize: '0.85rem' } }}
+                placeholder="export-key"
+                helperText="Export key — used in exported files"
+                sx={{ maxWidth: 360 }}
+              />
+              <TextField
+                label="Description"
+                value={description}
+                onChange={(e) => {
+                  setDescription(e.target.value)
+                  pushSnapshot({ description: e.target.value })
+                }}
+                multiline
+                minRows={3}
+                fullWidth
+              />
+              <TextField
+                label="Resource Multiplier"
+                value={resourceMultiplier}
+                onChange={(e) => {
+                  setResourceMultiplier(e.target.value)
+                  pushSnapshot({ resourceMultiplier: e.target.value })
+                }}
+                type="number"
+                inputProps={{ step: 0.1, min: 0 }}
+                helperText="Class-level metadata field — usable as a variable in derived stat formulas"
+                sx={{ maxWidth: 240 }}
+              />
+            </Stack>
+          </TabPanel>
 
-      {/* Stat Growth tab */}
-      <TabPanel index={1} value={activeTab}>
-        <StatGrowthEditor classId={record.id} />
-      </TabPanel>
+          {/* Stat Growth tab */}
+          <TabPanel index={1} value={activeTab}>
+            <StatGrowthEditor classId={record.id} />
+          </TabPanel>
 
-      {/* Derived Stats tab */}
-      <TabPanel index={2} value={activeTab}>
-        <DerivedStatsEditor
-          classId={record.id}
-          resourceMultiplier={parseFloat(resourceMultiplier) || 1}
-        />
-      </TabPanel>
+          {/* Derived Stats tab */}
+          <TabPanel index={2} value={activeTab}>
+            <DerivedStatsEditor
+              classId={record.id}
+              resourceMultiplier={parseFloat(resourceMultiplier) || 1}
+            />
+          </TabPanel>
 
-      {/* Abilities tab */}
-      <TabPanel index={3} value={activeTab}>
-        <AbilityAssignmentPanel
-          assignments={abilityAssignments}
-          abilities={allAbilities}
-          onChange={(next) => void handleAbilityAssignmentsChange(next)}
-          disabled={isSaving}
-        />
-      </TabPanel>
+          {/* Abilities tab */}
+          <TabPanel index={3} value={activeTab}>
+            <AbilityAssignmentPanel
+              assignments={abilityAssignments}
+              abilities={allAbilities}
+              onChange={(next) => void handleAbilityAssignmentsChange(next)}
+              disabled={isSaving}
+            />
+          </TabPanel>
+        </Box>
+
+        <InspectorRail sections={usedBySections} isLoading={usedByLoading} />
+      </Box>
 
       <SaveBar
         isDirty={isDirty}

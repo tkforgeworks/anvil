@@ -20,9 +20,11 @@ import DirtyDot from '../components/DirtyDot'
 import { useNavigate, useParams } from 'react-router-dom'
 import { itemsApi } from '../../api/items.api'
 import { metaApi } from '../../api/meta.api'
-import type { ItemRecord, MetaItemCategory, MetaRarity } from '../../../shared/domain-types'
+import type { ItemRecord, ItemUsedBy, MetaItemCategory, MetaRarity } from '../../../shared/domain-types'
 import CustomFieldsPanel from '../components/CustomFieldsPanel'
 import EditHeader from '../components/EditHeader'
+import InspectorRail from '../components/InspectorRail'
+import type { UsedBySection } from '../components/InspectorRail'
 import SaveBar from '../components/SaveBar'
 import ValidationBanner from '../components/ValidationBanner'
 import { useRecordValidation } from '../hooks/useRecordValidation'
@@ -75,6 +77,8 @@ export default function ItemEditorPage({ recordId, onClose }: ItemEditorPageProp
   const [error, setError] = useState<string | null>(null)
   const [savedAt, setSavedAt] = useState<Date | null>(null)
   const [activeTab, setActiveTab] = useState(0)
+  const [usedBy, setUsedBy] = useState<ItemUsedBy | null>(null)
+  const [usedByLoading, setUsedByLoading] = useState(false)
   const { recordIssues, issuesForField, runValidation } = useRecordValidation('items', id)
 
   type TabFields = Omit<FormSnapshot, 'displayName' | 'exportKey'>
@@ -156,6 +160,19 @@ export default function ItemEditorPage({ recordId, onClose }: ItemEditorPageProp
     void load()
   }, [load])
 
+  // Load "Used By" data eagerly for InspectorRail
+  useEffect(() => {
+    if (!id) return
+    setUsedByLoading(true)
+    itemsApi
+      .getUsedBy(id)
+      .then((result) => setUsedBy(result))
+      .catch((cause) =>
+        setError(cause instanceof Error ? cause.message : 'Failed to load Used By data.'),
+      )
+      .finally(() => setUsedByLoading(false))
+  }, [id])
+
   const handleSave = async (): Promise<void> => {
     if (!id) return
     setSaving(true)
@@ -208,6 +225,24 @@ export default function ItemEditorPage({ recordId, onClose }: ItemEditorPageProp
   const handleBack = goBack
   const handleDiscard = (): void => void load()
 
+  const usedBySections: UsedBySection[] = useMemo(() => {
+    if (!usedBy) return []
+    const sections: UsedBySection[] = []
+    if (usedBy.recipes.length > 0) {
+      sections.push({
+        label: 'Crafting Recipes',
+        items: usedBy.recipes.map((r) => ({ id: r.id, displayName: r.displayName, route: `/recipes/${r.id}` })),
+      })
+    }
+    if (usedBy.lootTables.length > 0) {
+      sections.push({
+        label: 'Loot Tables',
+        items: usedBy.lootTables.map((lt) => ({ id: lt.id, displayName: lt.displayName, route: `/loot-tables/${lt.id}` })),
+      })
+    }
+    return sections
+  }, [usedBy])
+
   return (
     <Box>
       <EditHeader
@@ -238,95 +273,101 @@ export default function ItemEditorPage({ recordId, onClose }: ItemEditorPageProp
       <ValidationBanner issues={recordIssues} />
 
       <Divider sx={{ mb: 0 }} />
-      <Tabs value={activeTab} onChange={(_, value: number) => setActiveTab(value)}>
-        <Tab label={<span>Details<DirtyDot visible={dirtyTabs.has(0)} /></span>} />
-        <Tab label="Custom Fields" />
-      </Tabs>
-      <Divider />
+      <Box sx={{ display: 'flex' }}>
+        <Box sx={{ flex: 1, overflow: 'auto' }}>
+          <Tabs value={activeTab} onChange={(_, value: number) => setActiveTab(value)}>
+            <Tab label={<span>Details<DirtyDot visible={dirtyTabs.has(0)} /></span>} />
+            <Tab label="Custom Fields" />
+          </Tabs>
+          <Divider />
 
-      <TabPanel index={0} value={activeTab}>
-        <Stack spacing={3} sx={{ maxWidth: 680 }}>
-          <TextField
-            label="Export Key"
-            value={exportKey}
-            onChange={(e) => {
-              setExportKey(e.target.value)
-              pushSnapshot({ exportKey: e.target.value })
-            }}
-            inputProps={{ style: { fontFamily: '"JetBrains Mono", monospace', fontSize: '0.85rem' } }}
-            placeholder="export-key"
-            helperText="Export key — used in exported files"
-            sx={{ maxWidth: 360 }}
-          />
-          <Stack direction="row" spacing={2}>
-            <FormControl fullWidth required error={issuesForField('itemCategoryId').length > 0}>
-              <InputLabel id="item-category-label">Category</InputLabel>
-              <Select
-                labelId="item-category-label"
-                label="Category"
-                value={itemCategoryId}
+          <TabPanel index={0} value={activeTab}>
+            <Stack spacing={3} sx={{ maxWidth: 680 }}>
+              <TextField
+                label="Export Key"
+                value={exportKey}
                 onChange={(e) => {
-                  setItemCategoryId(e.target.value)
-                  pushSnapshot({ itemCategoryId: e.target.value })
+                  setExportKey(e.target.value)
+                  pushSnapshot({ exportKey: e.target.value })
                 }}
-              >
-                {categories.map((category) => (
-                  <MenuItem key={category.id} value={category.id}>
-                    {category.displayName}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <FormControl fullWidth required error={issuesForField('rarityId').length > 0}>
-              <InputLabel id="item-rarity-label">Rarity</InputLabel>
-              <Select
-                labelId="item-rarity-label"
-                label="Rarity"
-                value={rarityId}
+                inputProps={{ style: { fontFamily: '"JetBrains Mono", monospace', fontSize: '0.85rem' } }}
+                placeholder="export-key"
+                helperText="Export key — used in exported files"
+                sx={{ maxWidth: 360 }}
+              />
+              <Stack direction="row" spacing={2}>
+                <FormControl fullWidth required error={issuesForField('itemCategoryId').length > 0}>
+                  <InputLabel id="item-category-label">Category</InputLabel>
+                  <Select
+                    labelId="item-category-label"
+                    label="Category"
+                    value={itemCategoryId}
+                    onChange={(e) => {
+                      setItemCategoryId(e.target.value)
+                      pushSnapshot({ itemCategoryId: e.target.value })
+                    }}
+                  >
+                    {categories.map((category) => (
+                      <MenuItem key={category.id} value={category.id}>
+                        {category.displayName}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <FormControl fullWidth required error={issuesForField('rarityId').length > 0}>
+                  <InputLabel id="item-rarity-label">Rarity</InputLabel>
+                  <Select
+                    labelId="item-rarity-label"
+                    label="Rarity"
+                    value={rarityId}
+                    onChange={(e) => {
+                      setRarityId(e.target.value)
+                      pushSnapshot({ rarityId: e.target.value })
+                    }}
+                  >
+                    {rarities.map((rarity) => (
+                      <MenuItem key={rarity.id} value={rarity.id}>
+                        {rarity.displayName}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Stack>
+              <TextField
+                label="Description"
+                value={description}
                 onChange={(e) => {
-                  setRarityId(e.target.value)
-                  pushSnapshot({ rarityId: e.target.value })
+                  setDescription(e.target.value)
+                  pushSnapshot({ description: e.target.value })
                 }}
-              >
-                {rarities.map((rarity) => (
-                  <MenuItem key={rarity.id} value={rarity.id}>
-                    {rarity.displayName}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Stack>
-          <TextField
-            label="Description"
-            value={description}
-            onChange={(e) => {
-              setDescription(e.target.value)
-              pushSnapshot({ description: e.target.value })
-            }}
-            multiline
-            minRows={4}
-            fullWidth
-          />
-        </Stack>
-      </TabPanel>
+                multiline
+                minRows={4}
+                fullWidth
+              />
+            </Stack>
+          </TabPanel>
 
-      <TabPanel index={1} value={activeTab}>
-        <Box sx={{ maxWidth: 680 }}>
-          {isDirty ? (
-            <Alert severity="info">
-              Save item details before editing custom fields for this category.
-            </Alert>
-          ) : (
-            <CustomFieldsPanel
-              key={`${record.id}:${itemCategoryId}`}
-              domain="items"
-              recordId={record.id}
-              scopeType="item_category"
-              scopeId={itemCategoryId}
-            />
-          )}
+          <TabPanel index={1} value={activeTab}>
+            <Box sx={{ maxWidth: 680 }}>
+              {isDirty ? (
+                <Alert severity="info">
+                  Save item details before editing custom fields for this category.
+                </Alert>
+              ) : (
+                <CustomFieldsPanel
+                  key={`${record.id}:${itemCategoryId}`}
+                  domain="items"
+                  recordId={record.id}
+                  scopeType="item_category"
+                  scopeId={itemCategoryId}
+                />
+              )}
+            </Box>
+          </TabPanel>
         </Box>
-      </TabPanel>
+
+        <InspectorRail sections={usedBySections} isLoading={usedByLoading} />
+      </Box>
 
       <SaveBar
         isDirty={isDirty}
