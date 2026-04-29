@@ -10,9 +10,8 @@ const noDrag = { WebkitAppRegion: 'no-drag' } as const
 
 function saveStatusLabel(isDirty: boolean, saveStatus: SaveStatus): string {
   if (saveStatus === 'saving') return 'Saving...'
-  if (saveStatus === 'unsaved') return 'Unsaved Changes'
-  if (isDirty) return 'Unsaved Changes'
   if (saveStatus === 'error') return 'Save Error'
+  if (isDirty || saveStatus === 'unsaved') return 'Unsaved Changes'
   return 'Saved'
 }
 
@@ -65,13 +64,15 @@ export default function TitleBar(): React.JSX.Element {
           sx={{ ml: 2, fontSize: '0.7rem', opacity: 0.7, ...noDrag }}
         />
         <Stack direction="row" spacing={1} sx={{ ml: 'auto', alignItems: 'center', ...noDrag }}>
-          <Chip
-            label={saveStatusLabel(isDirty, saveStatus)}
-            size="small"
-            color={saveStatusColor(isDirty, saveStatus)}
-            variant="outlined"
-            sx={{ fontSize: '0.7rem' }}
-          />
+          {activeProject && (
+            <Chip
+              label={saveStatusLabel(isDirty, saveStatus)}
+              size="small"
+              color={saveStatusColor(isDirty, saveStatus)}
+              variant="outlined"
+              sx={{ fontSize: '0.7rem' }}
+            />
+          )}
           <Button
             color="inherit"
             size="small"

@@ -12,6 +12,7 @@ interface UiState {
   setTheme: (theme: AppTheme) => void
   setEditingMode: (mode: EditingMode) => void
   setSidebarOpen: (open: boolean) => void
+  toggleSidebar: () => void
   openModal: (id: string) => void
   closeModal: () => void
 }
@@ -25,6 +26,7 @@ export const useUiStore = create<UiState>()((set) => ({
   setTheme: (theme) => set({ theme }),
   setEditingMode: (mode) => set({ editingMode: mode }),
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
+  toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
   openModal: (id) => set({ activeModalId: id }),
   closeModal: () => set({ activeModalId: null }),
 }))
