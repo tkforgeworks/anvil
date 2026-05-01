@@ -2,7 +2,6 @@ import {
   Alert,
   Box,
   Button,
-  Divider,
   InputAdornment,
   Stack,
   Tab,
@@ -24,8 +23,8 @@ import { abilitiesApi } from '../../api/abilities.api'
 import { metaApi } from '../../api/meta.api'
 import type { AbilityRecord, AbilityUsedBy, MetaStat } from '../../../shared/domain-types'
 import EditHeader from '../components/EditHeader'
-import InspectorRail from '../components/InspectorRail'
 import type { UsedBySection } from '../components/InspectorRail'
+import OverviewTab from '../components/OverviewTab'
 import SaveBar from '../components/SaveBar'
 import ValidationBanner from '../components/ValidationBanner'
 import { useRecordValidation } from '../hooks/useRecordValidation'
@@ -95,8 +94,8 @@ export default function AbilityEditorPage({ recordId, onClose }: AbilityEditorPa
   const baselineRef = useRef<TabFields | null>(null)
 
   const tabFieldMap: Record<number, (keyof TabFields)[]> = useMemo(() => ({
-    0: ['description', 'abilityType', 'resourceType', 'resourceCost', 'cooldown'],
-    1: ['statModifiers'],
+    1: ['description', 'abilityType', 'resourceType', 'resourceCost', 'cooldown'],
+    2: ['statModifiers'],
   }), [])
 
   const currentTabFields: TabFields = useMemo(() => ({
@@ -209,6 +208,20 @@ export default function AbilityEditorPage({ recordId, onClose }: AbilityEditorPa
       .finally(() => setUsedByLoading(false))
   }, [id])
 
+  const usedBySections: UsedBySection[] = useMemo(() => {
+    if (!usedBy) return []
+    return [
+      {
+        label: 'Character Classes',
+        items: usedBy.classes.map((c) => ({ id: c.id, displayName: c.displayName, route: `/classes/${c.id}` })),
+      },
+      {
+        label: 'NPCs',
+        items: usedBy.npcs.map((n) => ({ id: n.id, displayName: n.displayName, route: `/npcs/${n.id}` })),
+      },
+    ]
+  }, [usedBy])
+
   const handleSave = async (): Promise<void> => {
     if (!id) return
     setSaving(true)
@@ -273,44 +286,34 @@ export default function AbilityEditorPage({ recordId, onClose }: AbilityEditorPa
   const handleBack = goBack
   const handleDiscard = (): void => void load()
 
-  const usedBySections: UsedBySection[] = useMemo(() => {
-    if (!usedBy) return []
-    const sections: UsedBySection[] = []
-    if (usedBy.classes.length > 0) {
-      sections.push({
-        label: 'Character Classes',
-        items: usedBy.classes.map((c) => ({ id: c.id, displayName: c.displayName, route: `/classes/${c.id}` })),
-      })
-    }
-    if (usedBy.npcs.length > 0) {
-      sections.push({
-        label: 'NPCs',
-        items: usedBy.npcs.map((n) => ({ id: n.id, displayName: n.displayName, route: `/npcs/${n.id}` })),
-      })
-    }
-    return sections
-  }, [usedBy])
-
   return (
     <Box>
-      <EditHeader
-        backLabel="Abilities"
-        onBack={handleBack}
-        displayName={displayName}
-        onDisplayNameChange={(value) => {
-          setDisplayName(value)
-          pushSnapshot({ displayName: value })
-        }}
-        exportKey={exportKey}
-        isDirty={isDirty}
-        isSaving={isSaving}
-        onSave={() => void handleSave()}
-        savedAt={savedAt}
-        canUndo={undoRedo.canUndo}
-        canRedo={undoRedo.canRedo}
-        onUndo={undoRedo.triggerUndo}
-        onRedo={undoRedo.triggerRedo}
-      />
+      <Box sx={{ position: 'sticky', top: 0, zIndex: 10, bgcolor: 'background.default', mt: -3, pt: 3 }}>
+        <EditHeader
+          backLabel="Abilities"
+          onBack={handleBack}
+          displayName={displayName}
+          onDisplayNameChange={(value) => {
+            setDisplayName(value)
+            pushSnapshot({ displayName: value })
+          }}
+          exportKey={exportKey}
+          isDirty={isDirty}
+          isSaving={isSaving}
+          onSave={() => void handleSave()}
+          savedAt={savedAt}
+          canUndo={undoRedo.canUndo}
+          canRedo={undoRedo.canRedo}
+          onUndo={undoRedo.triggerUndo}
+          onRedo={undoRedo.triggerRedo}
+        />
+
+        <Tabs value={activeTab} onChange={(_, v: number) => setActiveTab(v)}>
+          <Tab label="Overview" />
+          <Tab label={<span>Details<DirtyDot visible={dirtyTabs.has(1)} /></span>} />
+          <Tab label={<span>Stat Modifiers<DirtyDot visible={dirtyTabs.has(2)} /></span>} />
+        </Tabs>
+      </Box>
 
       {error && (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
@@ -320,145 +323,140 @@ export default function AbilityEditorPage({ recordId, onClose }: AbilityEditorPa
 
       <ValidationBanner issues={recordIssues} />
 
-      <Divider sx={{ mb: 0 }} />
-      <Box sx={{ display: 'flex' }}>
-        <Box sx={{ flex: 1, overflow: 'auto' }}>
-          <Tabs value={activeTab} onChange={(_, v: number) => setActiveTab(v)}>
-            <Tab label={<span>Details<DirtyDot visible={dirtyTabs.has(0)} /></span>} />
-            <Tab label={<span>Stat Modifiers<DirtyDot visible={dirtyTabs.has(1)} /></span>} />
-          </Tabs>
+      <TabPanel index={0} value={activeTab}>
+        <OverviewTab
+          displayName={displayName}
+          description={description}
+          usedBySections={usedBySections}
+          usedByLoading={usedByLoading}
+        />
+      </TabPanel>
 
-          {/* Details tab */}
-          <TabPanel index={0} value={activeTab}>
-            <Stack spacing={2} sx={{ maxWidth: 600 }}>
-              <TextField
-                label="Export Key"
-                value={exportKey}
-                onChange={(e) => {
-                  setExportKey(e.target.value)
-                  pushSnapshot({ exportKey: e.target.value })
-                }}
-                inputProps={{ style: { fontFamily: '"JetBrains Mono", monospace', fontSize: '0.85rem' } }}
-                placeholder="export-key"
-                helperText="Export key — used in exported files"
-                sx={{ maxWidth: 360 }}
-              />
-              <TextField
-                label="Description"
-                value={description}
-                onChange={(e) => {
-                  setDescription(e.target.value)
-                  pushSnapshot({ description: e.target.value })
-                }}
-                multiline
-                minRows={3}
-                fullWidth
-              />
-              <TextField
-                label="Ability Type"
-                value={abilityType}
-                onChange={(e) => {
-                  setAbilityType(e.target.value)
-                  pushSnapshot({ abilityType: e.target.value })
-                }}
-                fullWidth
-                helperText="e.g. active, passive, ultimate"
-              />
-              <TextField
-                label="Resource Type"
-                value={resourceType}
-                onChange={(e) => {
-                  setResourceType(e.target.value)
-                  pushSnapshot({ resourceType: e.target.value })
-                }}
-                fullWidth
-                helperText="e.g. mana, stamina, rage"
-              />
-              <Stack direction="row" spacing={2}>
-                <TextField
-                  label="Resource Cost"
-                  type="number"
-                  value={resourceCost}
-                  onChange={(e) => {
-                    setResourceCost(e.target.value)
-                    pushSnapshot({ resourceCost: e.target.value })
-                  }}
-                  inputProps={{ min: 0 }}
-                  sx={{ flex: 1 }}
-                />
-                <TextField
-                  label="Cooldown"
-                  type="number"
-                  value={cooldown}
-                  onChange={(e) => {
-                    setCooldown(e.target.value)
-                    pushSnapshot({ cooldown: e.target.value })
-                  }}
-                  inputProps={{ min: 0 }}
-                  helperText="In turns or seconds"
-                  sx={{ flex: 1 }}
-                />
-              </Stack>
-            </Stack>
-          </TabPanel>
+      <TabPanel index={1} value={activeTab}>
+        <Stack spacing={2} sx={{ maxWidth: 600 }}>
+          <TextField
+            label="Export Key"
+            value={exportKey}
+            onChange={(e) => {
+              setExportKey(e.target.value)
+              pushSnapshot({ exportKey: e.target.value })
+            }}
+            inputProps={{ style: { fontFamily: '"JetBrains Mono", monospace', fontSize: '0.85rem' } }}
+            placeholder="export-key"
+            helperText="Export key — used in exported files"
+            sx={{ maxWidth: 360 }}
+          />
+          <TextField
+            label="Description"
+            value={description}
+            onChange={(e) => {
+              setDescription(e.target.value)
+              pushSnapshot({ description: e.target.value })
+            }}
+            multiline
+            minRows={3}
+            fullWidth
+          />
+          <TextField
+            label="Ability Type"
+            value={abilityType}
+            onChange={(e) => {
+              setAbilityType(e.target.value)
+              pushSnapshot({ abilityType: e.target.value })
+            }}
+            fullWidth
+            helperText="e.g. active, passive, ultimate"
+          />
+          <TextField
+            label="Resource Type"
+            value={resourceType}
+            onChange={(e) => {
+              setResourceType(e.target.value)
+              pushSnapshot({ resourceType: e.target.value })
+            }}
+            fullWidth
+            helperText="e.g. mana, stamina, rage"
+          />
+          <Stack direction="row" spacing={2}>
+            <TextField
+              label="Resource Cost"
+              type="number"
+              value={resourceCost}
+              onChange={(e) => {
+                setResourceCost(e.target.value)
+                pushSnapshot({ resourceCost: e.target.value })
+              }}
+              inputProps={{ min: 0 }}
+              sx={{ flex: 1 }}
+            />
+            <TextField
+              label="Cooldown"
+              type="number"
+              value={cooldown}
+              onChange={(e) => {
+                setCooldown(e.target.value)
+                pushSnapshot({ cooldown: e.target.value })
+              }}
+              inputProps={{ min: 0 }}
+              helperText="In turns or seconds"
+              sx={{ flex: 1 }}
+            />
+          </Stack>
+        </Stack>
+      </TabPanel>
 
-          {/* Stat Modifiers tab */}
-          <TabPanel index={1} value={activeTab}>
-            {stats.length === 0 ? (
-              <Typography variant="body2" color="text.secondary">
-                No stats defined in this project.
-              </Typography>
-            ) : (
-              <>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  Flat modifiers applied when this ability is active. Zero values are not exported.
-                </Typography>
-                <Table size="small" sx={{ maxWidth: 400 }}>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Stat</TableCell>
-                      <TableCell>Modifier</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {stats.map((stat) => (
-                      <TableRow key={stat.id}>
-                        <TableCell>
-                          <Typography variant="body2">{stat.displayName}</Typography>
-                        </TableCell>
-                        <TableCell>
-                          <TextField
-                            type="number"
-                            size="small"
-                            value={statModifiers[stat.id] ?? '0'}
-                            onChange={(e) => {
-                              const nextModifiers = { ...statModifiers, [stat.id]: e.target.value }
-                              setStatModifiers(nextModifiers)
-                              pushSnapshot({ statModifiers: nextModifiers })
-                            }}
-                            sx={{ width: 120 }}
-                            InputProps={{
-                              startAdornment: (
-                                <InputAdornment position="start">
-                                  <Typography variant="caption" color="text.secondary">
-                                    ±
-                                  </Typography>
-                                </InputAdornment>
-                              ),
-                            }}
-                          />
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </>
-            )}
-          </TabPanel>
-        </Box>
-
-        <InspectorRail sections={usedBySections} isLoading={usedByLoading} />
-      </Box>
+      <TabPanel index={2} value={activeTab}>
+        {stats.length === 0 ? (
+          <Typography variant="body2" color="text.secondary">
+            No stats defined in this project.
+          </Typography>
+        ) : (
+          <>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Flat modifiers applied when this ability is active. Zero values are not exported.
+            </Typography>
+            <Table size="small" sx={{ maxWidth: 400 }}>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Stat</TableCell>
+                  <TableCell>Modifier</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {stats.map((stat) => (
+                  <TableRow key={stat.id}>
+                    <TableCell>
+                      <Typography variant="body2">{stat.displayName}</Typography>
+                    </TableCell>
+                    <TableCell>
+                      <TextField
+                        type="number"
+                        size="small"
+                        value={statModifiers[stat.id] ?? '0'}
+                        onChange={(e) => {
+                          const nextModifiers = { ...statModifiers, [stat.id]: e.target.value }
+                          setStatModifiers(nextModifiers)
+                          pushSnapshot({ statModifiers: nextModifiers })
+                        }}
+                        sx={{ width: 120 }}
+                        InputProps={{
+                          startAdornment: (
+                            <InputAdornment position="start">
+                              <Typography variant="caption" color="text.secondary">
+                                ±
+                              </Typography>
+                            </InputAdornment>
+                          ),
+                        }}
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </>
+        )}
+      </TabPanel>
 
       <SaveBar
         isDirty={isDirty}

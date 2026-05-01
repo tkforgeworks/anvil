@@ -10,14 +10,15 @@ import {
   Box,
   Button,
   Chip,
-  Divider,
   IconButton,
   Stack,
+  Tab,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableRow,
+  Tabs,
   TextField,
   Tooltip,
   Typography,
@@ -29,8 +30,8 @@ import { itemsApi } from '../../api/items.api'
 import { lootTablesApi } from '../../api/loot-tables.api'
 import { metaApi } from '../../api/meta.api'
 import EditHeader from '../components/EditHeader'
-import InspectorRail from '../components/InspectorRail'
 import type { UsedBySection } from '../components/InspectorRail'
+import OverviewTab from '../components/OverviewTab'
 import SaveBar from '../components/SaveBar'
 import ValidationBanner from '../components/ValidationBanner'
 import { useRecordValidation } from '../hooks/useRecordValidation'
@@ -42,6 +43,20 @@ import type {
   LootTableUsedBy,
   MetaRarity,
 } from '../../../shared/domain-types'
+
+interface TabPanelProps {
+  index: number
+  value: number
+  children: React.ReactNode
+}
+
+function TabPanel({ index, value, children }: TabPanelProps): React.JSX.Element {
+  return (
+    <Box role="tabpanel" hidden={value !== index} sx={{ pt: 3 }}>
+      {value === index && children}
+    </Box>
+  )
+}
 
 interface FormSnapshot {
   displayName: string
@@ -100,6 +115,7 @@ export default function LootTableEditorPage({ recordId, onClose }: LootTableEdit
   const [isLoading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [savedAt, setSavedAt] = useState<Date | null>(null)
+  const [activeTab, setActiveTab] = useState(0)
   const [usedBy, setUsedBy] = useState<LootTableUsedBy | null>(null)
   const [usedByLoading, setUsedByLoading] = useState(false)
   const { recordIssues, runValidation } = useRecordValidation('loot-tables', id)
@@ -222,6 +238,16 @@ export default function LootTableEditorPage({ recordId, onClose }: LootTableEdit
     pushSnapshot({ entries: nextEntries })
   }
 
+  const usedBySections: UsedBySection[] = useMemo(() => {
+    if (!usedBy) return []
+    return [
+      {
+        label: 'NPCs',
+        items: usedBy.npcs.map((n) => ({ id: n.id, displayName: n.displayName, route: `/npcs/${n.id}` })),
+      },
+    ]
+  }, [usedBy])
+
   const handleSave = async (): Promise<void> => {
     if (!id) return
     const normalizedEntries: CreateLootTableEntryInput[] = entries.map((entry, index) => {
@@ -300,186 +326,184 @@ export default function LootTableEditorPage({ recordId, onClose }: LootTableEdit
   const handleBack = goBack
   const handleDiscard = (): void => void load()
 
-  const usedBySections: UsedBySection[] = useMemo(() => {
-    if (!usedBy) return []
-    const sections: UsedBySection[] = []
-    if (usedBy.npcs.length > 0) {
-      sections.push({
-        label: 'NPCs',
-        items: usedBy.npcs.map((n) => ({ id: n.id, displayName: n.displayName, route: `/npcs/${n.id}` })),
-      })
-    }
-    return sections
-  }, [usedBy])
-
   return (
     <Box>
-      <EditHeader
-        backLabel="Loot Tables"
-        onBack={handleBack}
-        displayName={displayName}
-        onDisplayNameChange={(value) => {
-          setDisplayName(value)
-          pushSnapshot({ displayName: value })
-        }}
-        exportKey={exportKey}
-        isDirty={isDirty}
-        isSaving={isSaving}
-        onSave={() => void handleSave()}
-        savedAt={savedAt}
-        canUndo={undoRedo.canUndo}
-        canRedo={undoRedo.canRedo}
-        onUndo={undoRedo.triggerUndo}
-        onRedo={undoRedo.triggerRedo}
-      />
+      <Box sx={{ position: 'sticky', top: 0, zIndex: 10, bgcolor: 'background.default', mt: -3, pt: 3 }}>
+        <EditHeader
+          backLabel="Loot Tables"
+          onBack={handleBack}
+          displayName={displayName}
+          onDisplayNameChange={(value) => {
+            setDisplayName(value)
+            pushSnapshot({ displayName: value })
+          }}
+          exportKey={exportKey}
+          isDirty={isDirty}
+          isSaving={isSaving}
+          onSave={() => void handleSave()}
+          savedAt={savedAt}
+          canUndo={undoRedo.canUndo}
+          canRedo={undoRedo.canRedo}
+          onUndo={undoRedo.triggerUndo}
+          onRedo={undoRedo.triggerRedo}
+        />
+
+        <Tabs value={activeTab} onChange={(_, v: number) => setActiveTab(v)}>
+          <Tab label="Overview" />
+          <Tab label="Entries" />
+        </Tabs>
+      </Box>
 
       {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>{error}</Alert>}
       <ValidationBanner issues={recordIssues} />
       {hasDeletedReferences && <Alert severity="warning" sx={{ mb: 2 }}>This loot table references a soft-deleted item. Validation will flag this loot table.</Alert>}
 
-      <Box sx={{ display: 'flex' }}>
-        <Box sx={{ flex: 1, overflow: 'auto' }}>
-          <Stack spacing={3}>
-            <TextField
-              label="Export Key"
-              value={exportKey}
-              onChange={(e) => {
-                setExportKey(e.target.value)
-                pushSnapshot({ exportKey: e.target.value })
-              }}
-              inputProps={{ style: { fontFamily: '"JetBrains Mono", monospace', fontSize: '0.85rem' } }}
-              placeholder="export-key"
-              helperText="Export key — used in exported files"
-              sx={{ maxWidth: 360 }}
-            />
-            <TextField label="Description" value={description} onChange={(e) => { setDescription(e.target.value); pushSnapshot({ description: e.target.value }) }} multiline minRows={3} fullWidth sx={{ maxWidth: 760 }} />
+      <TabPanel index={0} value={activeTab}>
+        <OverviewTab
+          displayName={displayName}
+          description={description}
+          usedBySections={usedBySections}
+          usedByLoading={usedByLoading}
+        />
+      </TabPanel>
 
-            <Divider />
+      <TabPanel index={1} value={activeTab}>
+        <Stack spacing={3}>
+          <TextField
+            label="Export Key"
+            value={exportKey}
+            onChange={(e) => {
+              setExportKey(e.target.value)
+              pushSnapshot({ exportKey: e.target.value })
+            }}
+            inputProps={{ style: { fontFamily: '"JetBrains Mono", monospace', fontSize: '0.85rem' } }}
+            placeholder="export-key"
+            helperText="Export key — used in exported files"
+            sx={{ maxWidth: 360 }}
+          />
+          <TextField label="Description" value={description} onChange={(e) => { setDescription(e.target.value); pushSnapshot({ description: e.target.value }) }} multiline minRows={3} fullWidth sx={{ maxWidth: 760 }} />
 
-            <Stack spacing={2}>
-              <Stack direction="row" justifyContent="space-between" alignItems="center">
-                <Box>
-                  <Typography variant="subtitle1">Entries</Typography>
-                  <Typography variant="caption" color="text.secondary">Drop percentages are calculated from the current weights.</Typography>
-                </Box>
-                <Button startIcon={<AddIcon />} variant="outlined" size="small" onClick={addEntry} disabled={activeItems.length === 0}>
-                  Add Entry
-                </Button>
-              </Stack>
-              {activeItems.length === 0 && <Alert severity="info">Create an active item before adding loot entries.</Alert>}
-              {entries.length === 0 ? (
-                <Typography variant="body2" color="text.secondary">No entries yet.</Typography>
-              ) : (
-                <Box sx={{ overflowX: 'auto', pb: 1 }}>
-                  <Table size="small" sx={{ minWidth: 980 }}>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell width={460}>Item</TableCell>
-                        <TableCell width={110}>Weight</TableCell>
-                        <TableCell width={120}>Drop</TableCell>
-                        <TableCell width={120}>Min Qty</TableCell>
-                        <TableCell width={120}>Max Qty</TableCell>
-                        <TableCell width={140} align="right">Actions</TableCell>
-                      </TableRow>
-                    </TableHead>
-                  <TableBody>
-                    {entries.map((entry, index) => {
-                      const item = itemById.get(entry.itemId) ?? null
-                      const isDeleted = Boolean(item?.deletedAt)
-                      const rarity = item ? rarityById.get(item.rarityId) : undefined
-                      const weight = Math.max(1, Math.floor(entry.weight || 1))
-                      const percent = totalWeight > 0 ? (weight / totalWeight) * 100 : 0
-                      return (
-                        <TableRow key={`${entry.itemId}:${index}`}>
-                          <TableCell>
-                            <Stack direction="row" spacing={1} alignItems="flex-start" sx={{ minWidth: 420 }}>
-                              <Box sx={{ pt: 0.75, width: 40, flex: '0 0 auto' }}>
-                                {renderRarityChip(rarity)}
-                              </Box>
-                              <Autocomplete
-                                options={activeItems}
-                                value={item}
-                                getOptionLabel={itemLabel}
-                                isOptionEqualToValue={(option, value) => option.id === value.id}
-                                onChange={(_, selectedItem) => {
-                                  if (!selectedItem) return
-                                  setEntryAt(index, { itemId: selectedItem.id })
-                                }}
-                                renderOption={(props, option) => {
-                                  const optionRarity = rarityById.get(option.rarityId)
-                                  return (
-                                    <Box component="li" {...props}>
-                                      <Stack direction="row" spacing={1} alignItems="center" sx={{ width: '100%' }}>
-                                        {renderRarityChip(optionRarity)}
-                                        <Box sx={{ minWidth: 0 }}>
-                                          <Typography variant="body2">{option.displayName}</Typography>
-                                          <Typography variant="caption" color="text.secondary">
-                                            {optionRarity?.displayName ?? option.rarityId}
-                                          </Typography>
-                                        </Box>
-                                      </Stack>
-                                    </Box>
-                                  )
-                                }}
-                                renderInput={(params) => (
-                                  <TextField {...params} label="Item" size="small" error={isDeleted} helperText={isDeleted ? 'Soft-deleted item reference' : undefined} />
-                                )}
-                                sx={{ flex: 1, minWidth: 360 }}
-                              />
-                            </Stack>
-                            {isDeleted && <Typography variant="caption" color="warning.main" sx={{ textDecoration: 'line-through' }}>{item?.displayName}</Typography>}
-                          </TableCell>
-                          <TableCell>
-                            <TextField
-                              type="number"
-                              size="small"
-                              value={entry.weight}
-                              onChange={(e) => setEntryAt(index, { weight: Math.max(1, parseInt(e.target.value, 10) || 1) })}
-                              inputProps={{ min: 1, step: 1 }}
-                              fullWidth
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2" color="text.secondary">{formatPercent(percent)}</Typography>
-                          </TableCell>
-                          <TableCell>
-                            <TextField
-                              type="number"
-                              size="small"
-                              value={entry.quantityMin}
-                              onChange={(e) => setEntryAt(index, { quantityMin: Math.max(1, parseInt(e.target.value, 10) || 1) })}
-                              inputProps={{ min: 1, step: 1 }}
-                              fullWidth
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <TextField
-                              type="number"
-                              size="small"
-                              value={entry.quantityMax}
-                              onChange={(e) => setEntryAt(index, { quantityMax: Math.max(1, parseInt(e.target.value, 10) || 1) })}
-                              inputProps={{ min: 1, step: 1 }}
-                              fullWidth
-                            />
-                          </TableCell>
-                          <TableCell align="right">
-                            <Tooltip title="Move up"><span><IconButton size="small" onClick={() => moveEntry(index, -1)} disabled={index === 0}><MoveUpIcon fontSize="small" /></IconButton></span></Tooltip>
-                            <Tooltip title="Move down"><span><IconButton size="small" onClick={() => moveEntry(index, 1)} disabled={index === entries.length - 1}><MoveDownIcon fontSize="small" /></IconButton></span></Tooltip>
-                            <Tooltip title="Remove"><IconButton size="small" color="error" onClick={() => removeEntry(index)}><DeleteIcon fontSize="small" /></IconButton></Tooltip>
-                          </TableCell>
-                        </TableRow>
-                      )
-                    })}
-                  </TableBody>
-                </Table>
-                </Box>
-              )}
+          <Stack spacing={2}>
+            <Stack direction="row" justifyContent="space-between" alignItems="center">
+              <Box>
+                <Typography variant="subtitle1">Entries</Typography>
+                <Typography variant="caption" color="text.secondary">Drop percentages are calculated from the current weights.</Typography>
+              </Box>
+              <Button startIcon={<AddIcon />} variant="outlined" size="small" onClick={addEntry} disabled={activeItems.length === 0}>
+                Add Entry
+              </Button>
             </Stack>
+            {activeItems.length === 0 && <Alert severity="info">Create an active item before adding loot entries.</Alert>}
+            {entries.length === 0 ? (
+              <Typography variant="body2" color="text.secondary">No entries yet.</Typography>
+            ) : (
+              <Box sx={{ overflowX: 'auto', pb: 1 }}>
+                <Table size="small" sx={{ minWidth: 980 }}>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell width={460}>Item</TableCell>
+                      <TableCell width={110}>Weight</TableCell>
+                      <TableCell width={120}>Drop</TableCell>
+                      <TableCell width={120}>Min Qty</TableCell>
+                      <TableCell width={120}>Max Qty</TableCell>
+                      <TableCell width={140} align="right">Actions</TableCell>
+                    </TableRow>
+                  </TableHead>
+                <TableBody>
+                  {entries.map((entry, index) => {
+                    const item = itemById.get(entry.itemId) ?? null
+                    const isDeleted = Boolean(item?.deletedAt)
+                    const rarity = item ? rarityById.get(item.rarityId) : undefined
+                    const weight = Math.max(1, Math.floor(entry.weight || 1))
+                    const percent = totalWeight > 0 ? (weight / totalWeight) * 100 : 0
+                    return (
+                      <TableRow key={`${entry.itemId}:${index}`}>
+                        <TableCell>
+                          <Stack direction="row" spacing={1} alignItems="flex-start" sx={{ minWidth: 420 }}>
+                            <Box sx={{ pt: 0.75, width: 40, flex: '0 0 auto' }}>
+                              {renderRarityChip(rarity)}
+                            </Box>
+                            <Autocomplete
+                              options={activeItems}
+                              value={item}
+                              getOptionLabel={itemLabel}
+                              isOptionEqualToValue={(option, value) => option.id === value.id}
+                              onChange={(_, selectedItem) => {
+                                if (!selectedItem) return
+                                setEntryAt(index, { itemId: selectedItem.id })
+                              }}
+                              renderOption={(props, option) => {
+                                const optionRarity = rarityById.get(option.rarityId)
+                                return (
+                                  <Box component="li" {...props}>
+                                    <Stack direction="row" spacing={1} alignItems="center" sx={{ width: '100%' }}>
+                                      {renderRarityChip(optionRarity)}
+                                      <Box sx={{ minWidth: 0 }}>
+                                        <Typography variant="body2">{option.displayName}</Typography>
+                                        <Typography variant="caption" color="text.secondary">
+                                          {optionRarity?.displayName ?? option.rarityId}
+                                        </Typography>
+                                      </Box>
+                                    </Stack>
+                                  </Box>
+                                )
+                              }}
+                              renderInput={(params) => (
+                                <TextField {...params} label="Item" size="small" error={isDeleted} helperText={isDeleted ? 'Soft-deleted item reference' : undefined} />
+                              )}
+                              sx={{ flex: 1, minWidth: 360 }}
+                            />
+                          </Stack>
+                          {isDeleted && <Typography variant="caption" color="warning.main" sx={{ textDecoration: 'line-through' }}>{item?.displayName}</Typography>}
+                        </TableCell>
+                        <TableCell>
+                          <TextField
+                            type="number"
+                            size="small"
+                            value={entry.weight}
+                            onChange={(e) => setEntryAt(index, { weight: Math.max(1, parseInt(e.target.value, 10) || 1) })}
+                            inputProps={{ min: 1, step: 1 }}
+                            fullWidth
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" color="text.secondary">{formatPercent(percent)}</Typography>
+                        </TableCell>
+                        <TableCell>
+                          <TextField
+                            type="number"
+                            size="small"
+                            value={entry.quantityMin}
+                            onChange={(e) => setEntryAt(index, { quantityMin: Math.max(1, parseInt(e.target.value, 10) || 1) })}
+                            inputProps={{ min: 1, step: 1 }}
+                            fullWidth
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <TextField
+                            type="number"
+                            size="small"
+                            value={entry.quantityMax}
+                            onChange={(e) => setEntryAt(index, { quantityMax: Math.max(1, parseInt(e.target.value, 10) || 1) })}
+                            inputProps={{ min: 1, step: 1 }}
+                            fullWidth
+                          />
+                        </TableCell>
+                        <TableCell align="right">
+                          <Tooltip title="Move up"><span><IconButton size="small" onClick={() => moveEntry(index, -1)} disabled={index === 0}><MoveUpIcon fontSize="small" /></IconButton></span></Tooltip>
+                          <Tooltip title="Move down"><span><IconButton size="small" onClick={() => moveEntry(index, 1)} disabled={index === entries.length - 1}><MoveDownIcon fontSize="small" /></IconButton></span></Tooltip>
+                          <Tooltip title="Remove"><IconButton size="small" color="error" onClick={() => removeEntry(index)}><DeleteIcon fontSize="small" /></IconButton></Tooltip>
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })}
+                </TableBody>
+              </Table>
+              </Box>
+            )}
           </Stack>
-        </Box>
-
-        <InspectorRail sections={usedBySections} isLoading={usedByLoading} />
-      </Box>
+        </Stack>
+      </TabPanel>
 
       <SaveBar
         isDirty={isDirty}

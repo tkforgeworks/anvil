@@ -2,7 +2,6 @@ import {
   Alert,
   Box,
   Button,
-  Divider,
   Stack,
   Tab,
   Tabs,
@@ -22,8 +21,8 @@ import type {
 import AbilityAssignmentPanel, { type AbilityAssignmentRef } from '../components/AbilityAssignmentPanel'
 import DerivedStatsEditor from '../components/DerivedStatsEditor'
 import EditHeader from '../components/EditHeader'
-import InspectorRail from '../components/InspectorRail'
 import type { UsedBySection } from '../components/InspectorRail'
+import OverviewTab from '../components/OverviewTab'
 import SaveBar from '../components/SaveBar'
 import StatGrowthEditor from '../components/StatGrowthEditor'
 import ValidationBanner from '../components/ValidationBanner'
@@ -89,7 +88,7 @@ export default function ClassEditorPage({ recordId, onClose }: ClassEditorPagePr
   const baselineRef = useRef<TabFields | null>(null)
 
   const tabFieldMap: Record<number, (keyof TabFields)[]> = useMemo(() => ({
-    0: ['description', 'resourceMultiplier'],
+    1: ['description', 'resourceMultiplier'],
   }), [])
 
   const currentTabFields: TabFields = useMemo(() => ({
@@ -183,6 +182,16 @@ export default function ClassEditorPage({ recordId, onClose }: ClassEditorPagePr
       .finally(() => setUsedByLoading(false))
   }, [id])
 
+  const usedBySections: UsedBySection[] = useMemo(() => {
+    if (!usedBy) return []
+    return [
+      {
+        label: 'NPCs',
+        items: usedBy.npcs.map((n) => ({ id: n.id, displayName: n.displayName, route: `/npcs/${n.id}` })),
+      },
+    ]
+  }, [usedBy])
+
   const handleSave = async (): Promise<void> => {
     if (!id) return
     setSaving(true)
@@ -233,38 +242,36 @@ export default function ClassEditorPage({ recordId, onClose }: ClassEditorPagePr
   const handleBack = goBack
   const handleDiscard = (): void => void load()
 
-  const usedBySections: UsedBySection[] = useMemo(() => {
-    if (!usedBy) return []
-    const sections: UsedBySection[] = []
-    if (usedBy.npcs.length > 0) {
-      sections.push({
-        label: 'NPCs',
-        items: usedBy.npcs.map((n) => ({ id: n.id, displayName: n.displayName, route: `/npcs/${n.id}` })),
-      })
-    }
-    return sections
-  }, [usedBy])
-
   return (
     <Box>
-      <EditHeader
-        backLabel="Character Classes"
-        onBack={handleBack}
-        displayName={displayName}
-        onDisplayNameChange={(value) => {
-          setDisplayName(value)
-          pushSnapshot({ displayName: value })
-        }}
-        exportKey={exportKey}
-        isDirty={isDirty}
-        isSaving={isSaving}
-        onSave={() => void handleSave()}
-        savedAt={savedAt}
-        canUndo={undoRedo.canUndo}
-        canRedo={undoRedo.canRedo}
-        onUndo={undoRedo.triggerUndo}
-        onRedo={undoRedo.triggerRedo}
-      />
+      <Box sx={{ position: 'sticky', top: 0, zIndex: 10, bgcolor: 'background.default', mt: -3, pt: 3 }}>
+        <EditHeader
+          backLabel="Character Classes"
+          onBack={handleBack}
+          displayName={displayName}
+          onDisplayNameChange={(value) => {
+            setDisplayName(value)
+            pushSnapshot({ displayName: value })
+          }}
+          exportKey={exportKey}
+          isDirty={isDirty}
+          isSaving={isSaving}
+          onSave={() => void handleSave()}
+          savedAt={savedAt}
+          canUndo={undoRedo.canUndo}
+          canRedo={undoRedo.canRedo}
+          onUndo={undoRedo.triggerUndo}
+          onRedo={undoRedo.triggerRedo}
+        />
+
+        <Tabs value={activeTab} onChange={(_, v: number) => setActiveTab(v)} sx={{ mb: 0 }}>
+          <Tab label="Overview" />
+          <Tab label={<span>Details<DirtyDot visible={dirtyTabs.has(1)} /></span>} />
+          <Tab label="Stat Growth" />
+          <Tab label="Derived Stats" />
+          <Tab label="Abilities" />
+        </Tabs>
+      </Box>
 
       {error && (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
@@ -274,87 +281,74 @@ export default function ClassEditorPage({ recordId, onClose }: ClassEditorPagePr
 
       <ValidationBanner issues={recordIssues} />
 
-      <Divider sx={{ mb: 0 }} />
+      <TabPanel index={0} value={activeTab}>
+        <OverviewTab
+          displayName={displayName}
+          description={description}
+          usedBySections={usedBySections}
+          usedByLoading={usedByLoading}
+        />
+      </TabPanel>
 
-      <Box sx={{ display: 'flex' }}>
-        <Box sx={{ flex: 1, overflow: 'auto' }}>
-          {/* Tabs */}
-          <Tabs value={activeTab} onChange={(_, v: number) => setActiveTab(v)} sx={{ mb: 0 }}>
-            <Tab label={<span>Overview<DirtyDot visible={dirtyTabs.has(0)} /></span>} />
-            <Tab label="Stat Growth" />
-            <Tab label="Derived Stats" />
-            <Tab label="Abilities" />
-          </Tabs>
+      <TabPanel index={1} value={activeTab}>
+        <Stack spacing={3} sx={{ maxWidth: 600 }}>
+          <TextField
+            label="Export Key"
+            value={exportKey}
+            onChange={(e) => {
+              setExportKey(e.target.value)
+              pushSnapshot({ exportKey: e.target.value })
+            }}
+            inputProps={{ style: { fontFamily: '"JetBrains Mono", monospace', fontSize: '0.85rem' } }}
+            placeholder="export-key"
+            helperText="Export key — used in exported files"
+            sx={{ maxWidth: 360 }}
+          />
+          <TextField
+            label="Description"
+            value={description}
+            onChange={(e) => {
+              setDescription(e.target.value)
+              pushSnapshot({ description: e.target.value })
+            }}
+            multiline
+            minRows={3}
+            fullWidth
+          />
+          <TextField
+            label="Resource Multiplier"
+            value={resourceMultiplier}
+            onChange={(e) => {
+              setResourceMultiplier(e.target.value)
+              pushSnapshot({ resourceMultiplier: e.target.value })
+            }}
+            type="number"
+            inputProps={{ step: 0.1, min: 0 }}
+            helperText="Class-level metadata field — usable as a variable in derived stat formulas"
+            sx={{ maxWidth: 240 }}
+          />
+        </Stack>
+      </TabPanel>
 
-          <Divider />
+      <TabPanel index={2} value={activeTab}>
+        <StatGrowthEditor classId={record.id} />
+      </TabPanel>
 
-          {/* Overview tab */}
-          <TabPanel index={0} value={activeTab}>
-            <Stack spacing={3} sx={{ maxWidth: 600 }}>
-              <TextField
-                label="Export Key"
-                value={exportKey}
-                onChange={(e) => {
-                  setExportKey(e.target.value)
-                  pushSnapshot({ exportKey: e.target.value })
-                }}
-                inputProps={{ style: { fontFamily: '"JetBrains Mono", monospace', fontSize: '0.85rem' } }}
-                placeholder="export-key"
-                helperText="Export key — used in exported files"
-                sx={{ maxWidth: 360 }}
-              />
-              <TextField
-                label="Description"
-                value={description}
-                onChange={(e) => {
-                  setDescription(e.target.value)
-                  pushSnapshot({ description: e.target.value })
-                }}
-                multiline
-                minRows={3}
-                fullWidth
-              />
-              <TextField
-                label="Resource Multiplier"
-                value={resourceMultiplier}
-                onChange={(e) => {
-                  setResourceMultiplier(e.target.value)
-                  pushSnapshot({ resourceMultiplier: e.target.value })
-                }}
-                type="number"
-                inputProps={{ step: 0.1, min: 0 }}
-                helperText="Class-level metadata field — usable as a variable in derived stat formulas"
-                sx={{ maxWidth: 240 }}
-              />
-            </Stack>
-          </TabPanel>
+      <TabPanel index={3} value={activeTab}>
+        <DerivedStatsEditor
+          classId={record.id}
+          resourceMultiplier={parseFloat(resourceMultiplier) || 1}
+        />
+      </TabPanel>
 
-          {/* Stat Growth tab */}
-          <TabPanel index={1} value={activeTab}>
-            <StatGrowthEditor classId={record.id} />
-          </TabPanel>
-
-          {/* Derived Stats tab */}
-          <TabPanel index={2} value={activeTab}>
-            <DerivedStatsEditor
-              classId={record.id}
-              resourceMultiplier={parseFloat(resourceMultiplier) || 1}
-            />
-          </TabPanel>
-
-          {/* Abilities tab */}
-          <TabPanel index={3} value={activeTab}>
-            <AbilityAssignmentPanel
-              assignments={abilityAssignments}
-              abilities={allAbilities}
-              onChange={(next) => void handleAbilityAssignmentsChange(next)}
-              disabled={isSaving}
-            />
-          </TabPanel>
-        </Box>
-
-        <InspectorRail sections={usedBySections} isLoading={usedByLoading} />
-      </Box>
+      <TabPanel index={4} value={activeTab}>
+        <AbilityAssignmentPanel
+          assignments={abilityAssignments}
+          abilities={allAbilities}
+          onChange={(next) => void handleAbilityAssignmentsChange(next)}
+          disabled={isSaving}
+        />
+      </TabPanel>
 
       <SaveBar
         isDirty={isDirty}

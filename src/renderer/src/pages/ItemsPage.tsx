@@ -19,6 +19,7 @@ import {
   IconButton,
   InputLabel,
   MenuItem,
+  Paper,
   Select,
   Table,
   TableBody,
@@ -40,6 +41,7 @@ import { CreateItemDialog } from '../components/create-dialogs'
 import EditorModal from '../components/EditorModal'
 import EmptyState from '../components/EmptyState'
 import ListToolbar from '../components/ListToolbar'
+import PageHeader from '../components/PageHeader'
 import { useMultiSelect } from '../hooks/useMultiSelect'
 import { useUiStore } from '../stores/ui.store'
 import ItemEditorPage from './ItemEditorPage'
@@ -271,6 +273,7 @@ export default function ItemsPage(): React.JSX.Element {
 
   return (
     <Box>
+      <PageHeader title="Items" />
       <ListToolbar
         search={search}
         onSearchChange={setSearch}
@@ -313,122 +316,124 @@ export default function ItemsPage(): React.JSX.Element {
         onBulkDelete={() => setBulkDeleteOpen(true)}
       />
 
-      {filtered.length === 0 ? (
-        items.length === 0 ? (
-          <EmptyState
-            icon={<ItemsIcon sx={{ fontSize: 'inherit' }} />}
-            title="No items yet"
-            body="Create your first item to get started."
-            ctaLabel="+ Create First Item"
-            onCtaClick={() => setCreateOpen(true)}
-          />
+      <Paper variant="outlined" sx={{ borderRadius: 2.5 }}>
+        {filtered.length === 0 ? (
+          items.length === 0 ? (
+            <EmptyState
+              icon={<ItemsIcon sx={{ fontSize: 'inherit' }} />}
+              title="No items yet"
+              body="Create your first item to get started."
+              ctaLabel="+ Create First Item"
+              onCtaClick={() => setCreateOpen(true)}
+            />
+          ) : (
+            <EmptyState title="No results match your filters" />
+          )
         ) : (
-          <EmptyState title="No results match your filters" />
-        )
-      ) : (
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell padding="checkbox">
-                <Checkbox
-                  size="small"
-                  checked={multiSelect.isAllSelected(filteredIds)}
-                  indeterminate={multiSelect.count > 0 && !multiSelect.isAllSelected(filteredIds)}
-                  onChange={() => multiSelect.toggleAll(filteredIds)}
-                />
-              </TableCell>
-              <TableCell>Name</TableCell>
-              <TableCell>Export Key</TableCell>
-              <TableCell>Category</TableCell>
-              <TableCell>Rarity</TableCell>
-              <TableCell>Description</TableCell>
-              <TableCell align="right">Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filtered.map((item) => {
-              const category = categoryById.get(item.itemCategoryId)
-              const rarity = rarityById.get(item.rarityId)
-              return (
-                <TableRow
-                  key={item.id}
-                  hover
-                  sx={{ cursor: 'pointer' }}
-                  onClick={() => openEditor(item.id)}
-                >
-                  <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}>
-                    <Checkbox
-                      size="small"
-                      checked={multiSelect.isSelected(item.id)}
-                      onChange={() => multiSelect.toggle(item.id)}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2" fontWeight={500}>
-                      {item.displayName}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2" color="text.secondary" fontFamily="monospace">
-                      {item.exportKey}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2" color="text.secondary">
-                      {category?.displayName ?? item.itemCategoryId}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    {rarity ? (
-                      <Chip
-                        label={rarity.displayName}
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell padding="checkbox">
+                  <Checkbox
+                    size="small"
+                    checked={multiSelect.isAllSelected(filteredIds)}
+                    indeterminate={multiSelect.count > 0 && !multiSelect.isAllSelected(filteredIds)}
+                    onChange={() => multiSelect.toggleAll(filteredIds)}
+                  />
+                </TableCell>
+                <TableCell>Name</TableCell>
+                <TableCell>Export Key</TableCell>
+                <TableCell>Category</TableCell>
+                <TableCell>Rarity</TableCell>
+                <TableCell>Description</TableCell>
+                <TableCell align="right">Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {filtered.map((item) => {
+                const category = categoryById.get(item.itemCategoryId)
+                const rarity = rarityById.get(item.rarityId)
+                return (
+                  <TableRow
+                    key={item.id}
+                    hover
+                    sx={{ cursor: 'pointer' }}
+                    onClick={() => openEditor(item.id)}
+                  >
+                    <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}>
+                      <Checkbox
                         size="small"
-                        variant="outlined"
-                        sx={{ borderColor: rarity.colorHex }}
+                        checked={multiSelect.isSelected(item.id)}
+                        onChange={() => multiSelect.toggle(item.id)}
                       />
-                    ) : (
-                      <Typography variant="body2" color="text.secondary">
-                        {item.rarityId}
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" fontWeight={500}>
+                        {item.displayName}
                       </Typography>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{
-                        maxWidth: 260,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {item.description || '-'}
-                    </Typography>
-                  </TableCell>
-                  <TableCell align="right" onClick={(e) => e.stopPropagation()}>
-                    <Tooltip title="Edit">
-                      <IconButton size="small" onClick={() => openEditor(item.id)}>
-                        <EditIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Duplicate">
-                      <IconButton size="small" onClick={() => void handleDuplicate(item)}>
-                        <DuplicateIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Delete">
-                      <IconButton size="small" color="error" onClick={() => setDeleteTarget(item)}>
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  </TableCell>
-                </TableRow>
-              )
-            })}
-          </TableBody>
-        </Table>
-      )}
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" color="text.secondary" fontFamily="monospace">
+                        {item.exportKey}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" color="text.secondary">
+                        {category?.displayName ?? item.itemCategoryId}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      {rarity ? (
+                        <Chip
+                          label={rarity.displayName}
+                          size="small"
+                          variant="outlined"
+                          sx={{ borderColor: rarity.colorHex }}
+                        />
+                      ) : (
+                        <Typography variant="body2" color="text.secondary">
+                          {item.rarityId}
+                        </Typography>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{
+                          maxWidth: 260,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {item.description || '-'}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="right" onClick={(e) => e.stopPropagation()}>
+                      <Tooltip title="Edit">
+                        <IconButton size="small" onClick={() => openEditor(item.id)}>
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Duplicate">
+                        <IconButton size="small" onClick={() => void handleDuplicate(item)}>
+                          <DuplicateIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Delete">
+                        <IconButton size="small" color="error" onClick={() => setDeleteTarget(item)}>
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </TableCell>
+                  </TableRow>
+                )
+              })}
+            </TableBody>
+          </Table>
+        )}
+      </Paper>
         </>
       )}
 

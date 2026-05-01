@@ -15,6 +15,7 @@ import {
   DialogContentText,
   DialogTitle,
   IconButton,
+  Paper,
   Table,
   TableBody,
   TableCell,
@@ -34,6 +35,7 @@ import { CreateAbilityDialog } from '../components/create-dialogs'
 import EditorModal from '../components/EditorModal'
 import EmptyState from '../components/EmptyState'
 import ListToolbar from '../components/ListToolbar'
+import PageHeader from '../components/PageHeader'
 import { useMultiSelect } from '../hooks/useMultiSelect'
 import { useUiStore } from '../stores/ui.store'
 import AbilityEditorPage from './AbilityEditorPage'
@@ -205,6 +207,7 @@ export default function AbilitiesPage(): React.JSX.Element {
 
   return (
     <Box>
+      <PageHeader title="Abilities" />
       <ListToolbar
         search={search}
         onSearchChange={setSearch}
@@ -246,110 +249,112 @@ export default function AbilitiesPage(): React.JSX.Element {
             onBulkDelete={() => setBulkDeleteOpen(true)}
           />
 
-          {filtered.length === 0 ? (
-            abilities.length === 0 ? (
-              <EmptyState
-                icon={<AbilitiesIcon sx={{ fontSize: 'inherit' }} />}
-                title="No abilities yet"
-                body="Create your first ability to get started."
-                ctaLabel="+ Create First Ability"
-                onCtaClick={() => setCreateOpen(true)}
-              />
+          <Paper variant="outlined" sx={{ borderRadius: 2.5 }}>
+            {filtered.length === 0 ? (
+              abilities.length === 0 ? (
+                <EmptyState
+                  icon={<AbilitiesIcon sx={{ fontSize: 'inherit' }} />}
+                  title="No abilities yet"
+                  body="Create your first ability to get started."
+                  ctaLabel="+ Create First Ability"
+                  onCtaClick={() => setCreateOpen(true)}
+                />
+              ) : (
+                <EmptyState title="No results match your search" />
+              )
             ) : (
-              <EmptyState title="No results match your search" />
-            )
-          ) : (
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell padding="checkbox">
-                    <Checkbox
-                      size="small"
-                      checked={multiSelect.isAllSelected(filteredIds)}
-                      indeterminate={multiSelect.count > 0 && !multiSelect.isAllSelected(filteredIds)}
-                      onChange={() => multiSelect.toggleAll(filteredIds)}
-                    />
-                  </TableCell>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Export Key</TableCell>
-                  <TableCell>Type</TableCell>
-                  <TableCell>Description</TableCell>
-                  <TableCell align="right">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filtered.map((ability) => (
-                  <TableRow
-                    key={ability.id}
-                    hover
-                    sx={{ cursor: 'pointer' }}
-                    onClick={() => openEditor(ability.id)}
-                  >
-                    <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell padding="checkbox">
                       <Checkbox
                         size="small"
-                        checked={multiSelect.isSelected(ability.id)}
-                        onChange={() => multiSelect.toggle(ability.id)}
+                        checked={multiSelect.isAllSelected(filteredIds)}
+                        indeterminate={multiSelect.count > 0 && !multiSelect.isAllSelected(filteredIds)}
+                        onChange={() => multiSelect.toggleAll(filteredIds)}
                       />
                     </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" fontWeight={500}>
-                        {ability.displayName}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" color="text.secondary" fontFamily="monospace">
-                        {ability.exportKey}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" color="text.secondary">
-                        {ability.abilityType || '—'}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        sx={{
-                          maxWidth: 260,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {ability.description || '—'}
-                      </Typography>
-                    </TableCell>
-                    <TableCell align="right" onClick={(e) => e.stopPropagation()}>
-                      <Tooltip title="Edit">
-                        <IconButton
-                          size="small"
-                          onClick={() => openEditor(ability.id)}
-                        >
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Duplicate">
-                        <IconButton size="small" onClick={() => void handleDuplicate(ability)}>
-                          <DuplicateIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Delete">
-                        <IconButton
-                          size="small"
-                          color="error"
-                          onClick={() => setDeleteTarget(ability)}
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
+                    <TableCell>Name</TableCell>
+                    <TableCell>Export Key</TableCell>
+                    <TableCell>Type</TableCell>
+                    <TableCell>Description</TableCell>
+                    <TableCell align="right">Actions</TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+                </TableHead>
+                <TableBody>
+                  {filtered.map((ability) => (
+                    <TableRow
+                      key={ability.id}
+                      hover
+                      sx={{ cursor: 'pointer' }}
+                      onClick={() => openEditor(ability.id)}
+                    >
+                      <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}>
+                        <Checkbox
+                          size="small"
+                          checked={multiSelect.isSelected(ability.id)}
+                          onChange={() => multiSelect.toggle(ability.id)}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" fontWeight={500}>
+                          {ability.displayName}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" color="text.secondary" fontFamily="monospace">
+                          {ability.exportKey}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" color="text.secondary">
+                          {ability.abilityType || '—'}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{
+                            maxWidth: 260,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {ability.description || '—'}
+                        </Typography>
+                      </TableCell>
+                      <TableCell align="right" onClick={(e) => e.stopPropagation()}>
+                        <Tooltip title="Edit">
+                          <IconButton
+                            size="small"
+                            onClick={() => openEditor(ability.id)}
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Duplicate">
+                          <IconButton size="small" onClick={() => void handleDuplicate(ability)}>
+                            <DuplicateIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Delete">
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={() => setDeleteTarget(ability)}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </Paper>
         </>
       )}
 

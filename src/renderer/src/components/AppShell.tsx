@@ -70,17 +70,20 @@ export default function AppShell(): React.JSX.Element {
           sx={{
             flex: 1,
             overflow: 'auto',
-            p: 3,
+            px: 3,
+            pb: 3,
             bgcolor: 'background.default',
           }}
         >
-          {isRecoveryMode && (
-            <Alert severity="warning" sx={{ mb: 2 }}>
-              Recovery mode is active. This project is read-only and cannot be saved.
-              {recoveryMessage ? ` ${recoveryMessage}` : ''}
-            </Alert>
-          )}
-          <Outlet />
+          <Box sx={{ pt: 3 }}>
+            {isRecoveryMode && (
+              <Alert severity="warning" sx={{ mb: 2 }}>
+                Recovery mode is active. This project is read-only and cannot be saved.
+                {recoveryMessage ? ` ${recoveryMessage}` : ''}
+              </Alert>
+            )}
+            <Outlet />
+          </Box>
         </Box>
       </Box>
       <Snackbar

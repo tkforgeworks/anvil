@@ -18,7 +18,19 @@ export default function EmptyState({
   return (
     <Box sx={{ textAlign: 'center', py: 8 }}>
       {icon && (
-        <Box sx={{ fontSize: 48, color: 'text.disabled', mb: 2 }}>
+        <Box sx={{
+          width: 96,
+          height: 96,
+          borderRadius: '18px',
+          border: '1px dashed',
+          borderColor: 'divider',
+          bgcolor: 'background.paper',
+          display: 'grid',
+          placeItems: 'center',
+          color: 'text.disabled',
+          fontSize: 36,
+          mb: 1,
+        }}>
           {icon}
         </Box>
       )}

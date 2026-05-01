@@ -15,6 +15,7 @@ import {
   DialogContentText,
   DialogTitle,
   IconButton,
+  Paper,
   Table,
   TableBody,
   TableCell,
@@ -34,6 +35,7 @@ import { CreateClassDialog } from '../components/create-dialogs'
 import EditorModal from '../components/EditorModal'
 import EmptyState from '../components/EmptyState'
 import ListToolbar from '../components/ListToolbar'
+import PageHeader from '../components/PageHeader'
 import { useMultiSelect } from '../hooks/useMultiSelect'
 import { useUiStore } from '../stores/ui.store'
 import ClassEditorPage from './ClassEditorPage'
@@ -205,6 +207,7 @@ export default function ClassesPage(): React.JSX.Element {
 
   return (
     <Box>
+      <PageHeader title="Character Classes" />
       <ListToolbar
         search={search}
         onSearchChange={setSearch}
@@ -246,101 +249,103 @@ export default function ClassesPage(): React.JSX.Element {
             onBulkDelete={() => setBulkDeleteOpen(true)}
           />
 
-          {filtered.length === 0 ? (
-            classes.length === 0 ? (
-              <EmptyState
-                icon={<ClassesIcon sx={{ fontSize: 'inherit' }} />}
-                title="No classes yet"
-                body="Create your first character class to get started."
-                ctaLabel="+ Create First Class"
-                onCtaClick={() => setCreateOpen(true)}
-              />
+          <Paper variant="outlined" sx={{ borderRadius: 2.5 }}>
+            {filtered.length === 0 ? (
+              classes.length === 0 ? (
+                <EmptyState
+                  icon={<ClassesIcon sx={{ fontSize: 'inherit' }} />}
+                  title="No classes yet"
+                  body="Create your first character class to get started."
+                  ctaLabel="+ Create First Class"
+                  onCtaClick={() => setCreateOpen(true)}
+                />
+              ) : (
+                <EmptyState title="No results match your search" />
+              )
             ) : (
-              <EmptyState title="No results match your search" />
-            )
-          ) : (
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell padding="checkbox">
-                    <Checkbox
-                      size="small"
-                      checked={multiSelect.isAllSelected(filteredIds)}
-                      indeterminate={multiSelect.count > 0 && !multiSelect.isAllSelected(filteredIds)}
-                      onChange={() => multiSelect.toggleAll(filteredIds)}
-                    />
-                  </TableCell>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Export Key</TableCell>
-                  <TableCell>Description</TableCell>
-                  <TableCell align="right">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filtered.map((cls) => (
-                  <TableRow
-                    key={cls.id}
-                    hover
-                    sx={{ cursor: 'pointer' }}
-                    onClick={() => openEditor(cls.id)}
-                  >
-                    <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell padding="checkbox">
                       <Checkbox
                         size="small"
-                        checked={multiSelect.isSelected(cls.id)}
-                        onChange={() => multiSelect.toggle(cls.id)}
+                        checked={multiSelect.isAllSelected(filteredIds)}
+                        indeterminate={multiSelect.count > 0 && !multiSelect.isAllSelected(filteredIds)}
+                        onChange={() => multiSelect.toggleAll(filteredIds)}
                       />
                     </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" fontWeight={500}>
-                        {cls.displayName}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" color="text.secondary" fontFamily="monospace">
-                        {cls.exportKey}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        sx={{
-                          maxWidth: 300,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {cls.description || '—'}
-                      </Typography>
-                    </TableCell>
-                    <TableCell align="right" onClick={(e) => e.stopPropagation()}>
-                      <Tooltip title="Edit">
-                        <IconButton size="small" onClick={() => openEditor(cls.id)}>
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Duplicate">
-                        <IconButton size="small" onClick={() => void handleDuplicate(cls)}>
-                          <DuplicateIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Delete">
-                        <IconButton
-                          size="small"
-                          color="error"
-                          onClick={() => setDeleteTarget(cls)}
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
+                    <TableCell>Name</TableCell>
+                    <TableCell>Export Key</TableCell>
+                    <TableCell>Description</TableCell>
+                    <TableCell align="right">Actions</TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+                </TableHead>
+                <TableBody>
+                  {filtered.map((cls) => (
+                    <TableRow
+                      key={cls.id}
+                      hover
+                      sx={{ cursor: 'pointer' }}
+                      onClick={() => openEditor(cls.id)}
+                    >
+                      <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}>
+                        <Checkbox
+                          size="small"
+                          checked={multiSelect.isSelected(cls.id)}
+                          onChange={() => multiSelect.toggle(cls.id)}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" fontWeight={500}>
+                          {cls.displayName}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" color="text.secondary" fontFamily="monospace">
+                          {cls.exportKey}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{
+                            maxWidth: 300,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {cls.description || '—'}
+                        </Typography>
+                      </TableCell>
+                      <TableCell align="right" onClick={(e) => e.stopPropagation()}>
+                        <Tooltip title="Edit">
+                          <IconButton size="small" onClick={() => openEditor(cls.id)}>
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Duplicate">
+                          <IconButton size="small" onClick={() => void handleDuplicate(cls)}>
+                            <DuplicateIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Delete">
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={() => setDeleteTarget(cls)}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </Paper>
         </>
       )}
 

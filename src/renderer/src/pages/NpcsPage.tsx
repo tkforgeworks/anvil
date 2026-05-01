@@ -18,6 +18,7 @@ import {
   IconButton,
   InputLabel,
   MenuItem,
+  Paper,
   Select,
   Table,
   TableBody,
@@ -39,6 +40,7 @@ import { CreateNpcDialog } from '../components/create-dialogs'
 import EditorModal from '../components/EditorModal'
 import EmptyState from '../components/EmptyState'
 import ListToolbar from '../components/ListToolbar'
+import PageHeader from '../components/PageHeader'
 import { useMultiSelect } from '../hooks/useMultiSelect'
 import { useUiStore } from '../stores/ui.store'
 import NpcEditorPage from './NpcEditorPage'
@@ -215,6 +217,7 @@ export default function NpcsPage(): React.JSX.Element {
 
   return (
     <Box>
+      <PageHeader title="NPCs" />
       <ListToolbar
         search={search}
         onSearchChange={setSearch}
@@ -253,61 +256,63 @@ export default function NpcsPage(): React.JSX.Element {
         onBulkDelete={() => setBulkDeleteOpen(true)}
       />
 
-      {filtered.length === 0 ? (
-        npcs.length === 0 ? (
-          <EmptyState
-            icon={<NpcsIcon sx={{ fontSize: 'inherit' }} />}
-            title="No NPCs yet"
-            body="Create your first NPC to get started."
-            ctaLabel="+ Create First NPC"
-            onCtaClick={() => setCreateOpen(true)}
-          />
+      <Paper variant="outlined" sx={{ borderRadius: 2.5 }}>
+        {filtered.length === 0 ? (
+          npcs.length === 0 ? (
+            <EmptyState
+              icon={<NpcsIcon sx={{ fontSize: 'inherit' }} />}
+              title="No NPCs yet"
+              body="Create your first NPC to get started."
+              ctaLabel="+ Create First NPC"
+              onCtaClick={() => setCreateOpen(true)}
+            />
+          ) : (
+            <EmptyState title="No results match your filters" />
+          )
         ) : (
-          <EmptyState title="No results match your filters" />
-        )
-      ) : (
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell padding="checkbox">
-                <Checkbox
-                  size="small"
-                  checked={multiSelect.isAllSelected(filteredIds)}
-                  indeterminate={multiSelect.count > 0 && !multiSelect.isAllSelected(filteredIds)}
-                  onChange={() => multiSelect.toggleAll(filteredIds)}
-                />
-              </TableCell>
-              <TableCell>Name</TableCell>
-              <TableCell>Export Key</TableCell>
-              <TableCell>NPC Type</TableCell>
-              <TableCell>Last Modified</TableCell>
-              <TableCell align="right">Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filtered.map((npc) => (
-              <TableRow key={npc.id} hover sx={{ cursor: 'pointer' }} onClick={() => openEditor(npc.id)}>
-                <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell padding="checkbox">
                   <Checkbox
                     size="small"
-                    checked={multiSelect.isSelected(npc.id)}
-                    onChange={() => multiSelect.toggle(npc.id)}
+                    checked={multiSelect.isAllSelected(filteredIds)}
+                    indeterminate={multiSelect.count > 0 && !multiSelect.isAllSelected(filteredIds)}
+                    onChange={() => multiSelect.toggleAll(filteredIds)}
                   />
                 </TableCell>
-                <TableCell><Typography variant="body2" fontWeight={500}>{npc.displayName}</Typography></TableCell>
-                <TableCell><Typography variant="body2" color="text.secondary" fontFamily="monospace">{npc.exportKey}</Typography></TableCell>
-                <TableCell><Typography variant="body2" color="text.secondary">{typeById.get(npc.npcTypeId)?.displayName ?? npc.npcTypeId}</Typography></TableCell>
-                <TableCell><Typography variant="body2" color="text.secondary">{new Date(npc.updatedAt).toLocaleString()}</Typography></TableCell>
-                <TableCell align="right" onClick={(e) => e.stopPropagation()}>
-                  <Tooltip title="Edit"><IconButton size="small" onClick={() => openEditor(npc.id)}><EditIcon fontSize="small" /></IconButton></Tooltip>
-                  <Tooltip title="Duplicate"><IconButton size="small" onClick={() => void handleDuplicate(npc)}><DuplicateIcon fontSize="small" /></IconButton></Tooltip>
-                  <Tooltip title="Delete"><IconButton size="small" color="error" onClick={() => setDeleteTarget(npc)}><DeleteIcon fontSize="small" /></IconButton></Tooltip>
-                </TableCell>
+                <TableCell>Name</TableCell>
+                <TableCell>Export Key</TableCell>
+                <TableCell>NPC Type</TableCell>
+                <TableCell>Last Modified</TableCell>
+                <TableCell align="right">Actions</TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      )}
+            </TableHead>
+            <TableBody>
+              {filtered.map((npc) => (
+                <TableRow key={npc.id} hover sx={{ cursor: 'pointer' }} onClick={() => openEditor(npc.id)}>
+                  <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}>
+                    <Checkbox
+                      size="small"
+                      checked={multiSelect.isSelected(npc.id)}
+                      onChange={() => multiSelect.toggle(npc.id)}
+                    />
+                  </TableCell>
+                  <TableCell><Typography variant="body2" fontWeight={500}>{npc.displayName}</Typography></TableCell>
+                  <TableCell><Typography variant="body2" color="text.secondary" fontFamily="monospace">{npc.exportKey}</Typography></TableCell>
+                  <TableCell><Typography variant="body2" color="text.secondary">{typeById.get(npc.npcTypeId)?.displayName ?? npc.npcTypeId}</Typography></TableCell>
+                  <TableCell><Typography variant="body2" color="text.secondary">{new Date(npc.updatedAt).toLocaleString()}</Typography></TableCell>
+                  <TableCell align="right" onClick={(e) => e.stopPropagation()}>
+                    <Tooltip title="Edit"><IconButton size="small" onClick={() => openEditor(npc.id)}><EditIcon fontSize="small" /></IconButton></Tooltip>
+                    <Tooltip title="Duplicate"><IconButton size="small" onClick={() => void handleDuplicate(npc)}><DuplicateIcon fontSize="small" /></IconButton></Tooltip>
+                    <Tooltip title="Delete"><IconButton size="small" color="error" onClick={() => setDeleteTarget(npc)}><DeleteIcon fontSize="small" /></IconButton></Tooltip>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </Paper>
         </>
       )}
 

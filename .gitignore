@@ -2,6 +2,7 @@ archive/
 testing/
 test-project-exports/
 design_handoff_entry_and_dashboard/
+design_work/
 .claude/settings.local.json
 
 # Dependencies

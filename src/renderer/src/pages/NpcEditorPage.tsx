@@ -8,6 +8,8 @@ import {
   MenuItem,
   Select,
   Stack,
+  Tab,
+  Tabs,
   TextField,
   Typography,
 } from '@mui/material'
@@ -25,6 +27,7 @@ import ClassAssignmentPanel from '../components/ClassAssignmentPanel'
 import CustomFieldsPanel from '../components/CustomFieldsPanel'
 import EditHeader from '../components/EditHeader'
 import LootTableAssignmentPanel from '../components/LootTableAssignmentPanel'
+import OverviewTab from '../components/OverviewTab'
 import NpcStatBlockPanel from '../components/NpcStatBlockPanel'
 import SaveBar from '../components/SaveBar'
 import ValidationBanner from '../components/ValidationBanner'
@@ -43,6 +46,20 @@ import type {
 } from '../../../shared/domain-types'
 
 const DEFAULT_MAX_LEVEL = 20
+
+interface TabPanelProps {
+  index: number
+  value: number
+  children: React.ReactNode
+}
+
+function TabPanel({ index, value, children }: TabPanelProps): React.JSX.Element {
+  return (
+    <Box role="tabpanel" hidden={value !== index} sx={{ pt: 3 }}>
+      {value === index && children}
+    </Box>
+  )
+}
 
 interface FormSnapshot {
   displayName: string
@@ -86,6 +103,7 @@ export default function NpcEditorPage({ recordId, onClose }: NpcEditorPageProps 
   const [isLoading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [savedAt, setSavedAt] = useState<Date | null>(null)
+  const [activeTab, setActiveTab] = useState(0)
   const { recordIssues, issuesForField, runValidation } = useRecordValidation('npcs', id)
 
   const applySnapshot = useCallback((snapshot: FormSnapshot) => {
@@ -304,147 +322,160 @@ export default function NpcEditorPage({ recordId, onClose }: NpcEditorPageProps 
 
   return (
     <Box>
-      <EditHeader
-        backLabel="NPCs"
-        onBack={handleBack}
-        displayName={displayName}
-        onDisplayNameChange={(value) => {
-          setDisplayName(value)
-          pushSnapshot({ displayName: value })
-        }}
-        exportKey={exportKey}
-        isDirty={isDirty}
-        isSaving={isSaving}
-        onSave={() => void handleSave()}
-        savedAt={savedAt}
-        canUndo={undoRedo.canUndo}
-        canRedo={undoRedo.canRedo}
-        onUndo={undoRedo.triggerUndo}
-        onRedo={undoRedo.triggerRedo}
-      />
+      <Box sx={{ position: 'sticky', top: 0, zIndex: 10, bgcolor: 'background.default', mt: -3, pt: 3 }}>
+        <EditHeader
+          backLabel="NPCs"
+          onBack={handleBack}
+          displayName={displayName}
+          onDisplayNameChange={(value) => {
+            setDisplayName(value)
+            pushSnapshot({ displayName: value })
+          }}
+          exportKey={exportKey}
+          isDirty={isDirty}
+          isSaving={isSaving}
+          onSave={() => void handleSave()}
+          savedAt={savedAt}
+          canUndo={undoRedo.canUndo}
+          canRedo={undoRedo.canRedo}
+          onUndo={undoRedo.triggerUndo}
+          onRedo={undoRedo.triggerRedo}
+        />
+
+        <Tabs value={activeTab} onChange={(_, v: number) => setActiveTab(v)}>
+          <Tab label="Overview" />
+          <Tab label="Details" />
+        </Tabs>
+      </Box>
 
       {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>{error}</Alert>}
 
       <ValidationBanner issues={recordIssues} />
 
-      <Stack spacing={3} sx={{ maxWidth: 900 }}>
-        <TextField
-          label="Export Key"
-          value={exportKey}
-          onChange={(e) => {
-            setExportKey(e.target.value)
-            pushSnapshot({ exportKey: e.target.value })
-          }}
-          inputProps={{ style: { fontFamily: '"JetBrains Mono", monospace', fontSize: '0.85rem' } }}
-          placeholder="export-key"
-          helperText="Export key — used in exported files"
-          sx={{ maxWidth: 360 }}
-        />
-        <FormControl fullWidth required sx={{ maxWidth: 760 }} error={issuesForField('npcTypeId').length > 0}>
-          <InputLabel id="npc-type-label">NPC Type</InputLabel>
-          <Select labelId="npc-type-label" label="NPC Type" value={npcTypeId} onChange={(e) => handleTypeChange(e.target.value)}>
-            {npcTypes.map((type) => <MenuItem key={type.id} value={type.id}>{type.displayName}</MenuItem>)}
-          </Select>
-        </FormControl>
+      <TabPanel index={0} value={activeTab}>
+        <OverviewTab displayName={displayName} description={description} />
+      </TabPanel>
 
-        <TextField label="Description" value={description} onChange={(e) => { setDescription(e.target.value); pushSnapshot({ description: e.target.value }) }} multiline minRows={4} fullWidth sx={{ maxWidth: 760 }} />
-
-        <Divider />
-
-        <Box>
-          <Typography variant="subtitle1" gutterBottom>
-            Classes
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Assign one or more character classes at specified levels. Stat values from all assigned classes combine additively.
-          </Typography>
-          {deletedAssignedClasses.length > 0 && (
-            <Alert severity="warning" sx={{ mb: 2 }}>
-              This NPC is assigned to soft-deleted {deletedAssignedClasses.length === 1 ? 'class' : 'classes'}:{' '}
-              {deletedAssignedClasses.map((c) => c.displayName).join(', ')}. Their stat contributions are still included.
-            </Alert>
-          )}
-          <ClassAssignmentPanel
-            assignments={assignments}
-            classes={classes}
-            maxLevel={maxLevel}
-            onChange={(next) => void handleAssignmentsChange(next)}
-            disabled={isSaving}
+      <TabPanel index={1} value={activeTab}>
+        <Stack spacing={3} sx={{ maxWidth: 900 }}>
+          <TextField
+            label="Export Key"
+            value={exportKey}
+            onChange={(e) => {
+              setExportKey(e.target.value)
+              pushSnapshot({ exportKey: e.target.value })
+            }}
+            inputProps={{ style: { fontFamily: '"JetBrains Mono", monospace', fontSize: '0.85rem' } }}
+            placeholder="export-key"
+            helperText="Export key — used in exported files"
+            sx={{ maxWidth: 360 }}
           />
-        </Box>
+          <FormControl fullWidth required sx={{ maxWidth: 760 }} error={issuesForField('npcTypeId').length > 0}>
+            <InputLabel id="npc-type-label">NPC Type</InputLabel>
+            <Select labelId="npc-type-label" label="NPC Type" value={npcTypeId} onChange={(e) => handleTypeChange(e.target.value)}>
+              {npcTypes.map((type) => <MenuItem key={type.id} value={type.id}>{type.displayName}</MenuItem>)}
+            </Select>
+          </FormControl>
 
-        <Divider />
+          <TextField label="Description" value={description} onChange={(e) => { setDescription(e.target.value); pushSnapshot({ description: e.target.value }) }} multiline minRows={4} fullWidth sx={{ maxWidth: 760 }} />
 
-        <Box>
-          <Typography variant="subtitle1" gutterBottom>
-            Stat Block
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Inherited values are summed from assigned classes at their levels. Enter an override to replace the inherited value for any stat.
-          </Typography>
-          <NpcStatBlockPanel
-            stats={stats}
-            assignments={assignments}
-            growthByClass={growthByClass}
-            overrides={overrides}
-            onOverrideChange={handleOverrideChange}
-            disabled={isSaving}
-          />
-        </Box>
+          <Divider />
 
-        <Divider />
+          <Box>
+            <Typography variant="subtitle1" gutterBottom>
+              Classes
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Assign one or more character classes at specified levels. Stat values from all assigned classes combine additively.
+            </Typography>
+            {deletedAssignedClasses.length > 0 && (
+              <Alert severity="warning" sx={{ mb: 2 }}>
+                This NPC is assigned to soft-deleted {deletedAssignedClasses.length === 1 ? 'class' : 'classes'}:{' '}
+                {deletedAssignedClasses.map((c) => c.displayName).join(', ')}. Their stat contributions are still included.
+              </Alert>
+            )}
+            <ClassAssignmentPanel
+              assignments={assignments}
+              classes={classes}
+              maxLevel={maxLevel}
+              onChange={(next) => void handleAssignmentsChange(next)}
+              disabled={isSaving}
+            />
+          </Box>
 
-        <Box>
-          <Typography variant="subtitle1" gutterBottom>
-            Abilities
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Assign abilities this NPC has access to. Changes are saved immediately.
-          </Typography>
-          <AbilityAssignmentPanel
-            assignments={abilityAssignments}
-            abilities={allAbilities}
-            onChange={(next) => void handleAbilityAssignmentsChange(next)}
-            disabled={isSaving}
-          />
-        </Box>
+          <Divider />
 
-        <Divider />
+          <Box>
+            <Typography variant="subtitle1" gutterBottom>
+              Stat Block
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Inherited values are summed from assigned classes at their levels. Enter an override to replace the inherited value for any stat.
+            </Typography>
+            <NpcStatBlockPanel
+              stats={stats}
+              assignments={assignments}
+              growthByClass={growthByClass}
+              overrides={overrides}
+              onOverrideChange={handleOverrideChange}
+              disabled={isSaving}
+            />
+          </Box>
 
-        <Box>
-          <Typography variant="subtitle1" gutterBottom>
-            Loot Table
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Assign a loot table that drops when this NPC is defeated. The entries below are read-only.
-          </Typography>
-          <LootTableAssignmentPanel
-            value={lootTableId}
-            lootTables={lootTables}
-            items={items}
-            onChange={handleLootTableChange}
-            disabled={isSaving}
-          />
-        </Box>
+          <Divider />
 
-        <Divider />
+          <Box>
+            <Typography variant="subtitle1" gutterBottom>
+              Abilities
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Assign abilities this NPC has access to. Changes are saved immediately.
+            </Typography>
+            <AbilityAssignmentPanel
+              assignments={abilityAssignments}
+              abilities={allAbilities}
+              onChange={(next) => void handleAbilityAssignmentsChange(next)}
+              disabled={isSaving}
+            />
+          </Box>
 
-        <Box>
-          <Typography variant="subtitle1" gutterBottom>
-            Type Fields
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            {typeById.get(npcTypeId)?.displayName ?? 'Selected NPC type'}
-          </Typography>
-          <CustomFieldsPanel
-            key={npcTypeId}
-            domain="npcs"
-            recordId={record.id}
-            scopeType="npc_type"
-            scopeId={npcTypeId}
-          />
-        </Box>
-      </Stack>
+          <Divider />
+
+          <Box>
+            <Typography variant="subtitle1" gutterBottom>
+              Loot Table
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Assign a loot table that drops when this NPC is defeated. The entries below are read-only.
+            </Typography>
+            <LootTableAssignmentPanel
+              value={lootTableId}
+              lootTables={lootTables}
+              items={items}
+              onChange={handleLootTableChange}
+              disabled={isSaving}
+            />
+          </Box>
+
+          <Divider />
+
+          <Box>
+            <Typography variant="subtitle1" gutterBottom>
+              Type Fields
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              {typeById.get(npcTypeId)?.displayName ?? 'Selected NPC type'}
+            </Typography>
+            <CustomFieldsPanel
+              key={npcTypeId}
+              domain="npcs"
+              recordId={record.id}
+              scopeType="npc_type"
+              scopeId={npcTypeId}
+            />
+          </Box>
+        </Stack>
+      </TabPanel>
 
       <SaveBar
         isDirty={isDirty}

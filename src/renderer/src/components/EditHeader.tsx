@@ -42,9 +42,6 @@ export default function EditHeader({
     <Paper
       variant="outlined"
       sx={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 10,
         p: 2,
         mb: 2,
         borderColor: isDirty ? 'warning.main' : 'divider',
@@ -103,13 +100,38 @@ export default function EditHeader({
       </Stack>
 
       {/* Row 3: Export key (read-only) */}
-      <Typography
-        variant="caption"
-        color="text.secondary"
-        sx={{ mt: 1, display: 'block', fontFamily: '"JetBrains Mono", monospace', fontSize: '0.75rem' }}
-      >
-        key: {exportKey}
-      </Typography>
+      <Stack direction="row" alignItems="center" spacing={1} sx={{ mt: 1 }}>
+        <Typography
+          variant="caption"
+          sx={{
+            textTransform: 'uppercase',
+            letterSpacing: '0.06em',
+            color: 'text.disabled',
+            fontWeight: 600,
+            fontSize: '0.625rem',
+          }}
+        >
+          Key
+        </Typography>
+        <Box
+          component="code"
+          sx={{
+            bgcolor: 'action.hover',
+            border: 1,
+            borderColor: 'divider',
+            borderRadius: 1,
+            px: 0.75,
+            py: 0.25,
+            fontFamily: '"JetBrains Mono", monospace',
+            fontSize: '0.75rem',
+          }}
+        >
+          {exportKey}
+        </Box>
+        <Typography variant="caption" color="text.disabled">
+          &middot; used in exported files
+        </Typography>
+      </Stack>
     </Paper>
   )
 }

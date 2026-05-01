@@ -1,6 +1,5 @@
 import {
   Box,
-  Chip,
   CircularProgress,
   Paper,
   Stack,
@@ -32,13 +31,21 @@ export default function InspectorRail({
 }: InspectorRailProps): React.JSX.Element {
   const navigate = useNavigate()
 
-  const totalItems = sections.reduce((sum, section) => sum + section.items.length, 0)
-  const isEmpty = !isLoading && (sections.length === 0 || totalItems === 0)
+  const isEmpty = !isLoading && sections.length === 0
 
   return (
     <Box sx={{ width: 260, flexShrink: 0, pl: 2 }}>
       <Paper variant="outlined" sx={{ position: 'sticky', top: 0, p: 2 }}>
-        <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5 }}>
+        <Typography
+          variant="subtitle2"
+          sx={{
+            fontWeight: 700,
+            textTransform: 'uppercase',
+            letterSpacing: '0.08em',
+            fontSize: '0.6875rem',
+            mb: 1.5,
+          }}
+        >
           Used By
         </Typography>
 
@@ -55,27 +62,76 @@ export default function InspectorRail({
         )}
 
         {!isLoading && !isEmpty && (
-          <Stack spacing={1.5}>
-            {sections.map((section) => (
-              <Box key={section.label}>
-                <Typography variant="caption" color="text.secondary">
-                  {section.label} ({section.items.length})
-                </Typography>
-                <Stack direction="row" flexWrap="wrap" gap={0.5} sx={{ mt: 0.5 }}>
-                  {section.items.map((item) => (
-                    <Chip
-                      key={item.id}
-                      label={item.displayName}
-                      variant="outlined"
-                      size="small"
-                      clickable
-                      onClick={() => void navigate(item.route)}
-                    />
-                  ))}
-                </Stack>
+          <Box>
+            {sections.map((section, i) => (
+              <Box
+                key={section.label}
+                sx={{
+                  pb: 1.5,
+                  mb: i < sections.length - 1 ? 1.5 : 0,
+                  borderBottom: i < sections.length - 1 ? '1px dashed' : 'none',
+                  borderColor: 'divider',
+                }}
+              >
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    {section.label}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontFamily: '"JetBrains Mono", monospace',
+                      fontSize: '0.6875rem',
+                      color: 'text.disabled',
+                    }}
+                  >
+                    {section.items.length}
+                  </Typography>
+                </Box>
+
+                {section.items.length === 0 ? (
+                  <Typography
+                    variant="body2"
+                    color="text.disabled"
+                    sx={{ fontStyle: 'italic', fontSize: '0.6875rem' }}
+                  >
+                    Not assigned to any {section.label.toLowerCase().replace(/s$/, '')}.
+                  </Typography>
+                ) : (
+                  <Stack spacing={0.5}>
+                    {section.items.map((item) => (
+                      <Box
+                        key={item.id}
+                        onClick={() => void navigate(item.route)}
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1,
+                          px: 1,
+                          py: 0.75,
+                          borderRadius: 1,
+                          cursor: 'pointer',
+                          fontSize: '0.75rem',
+                          color: 'text.primary',
+                          '&:hover': { bgcolor: 'action.hover', color: 'primary.main' },
+                        }}
+                      >
+                        <Typography color="text.disabled" sx={{ fontSize: 'inherit' }}>
+                          &#x203A;
+                        </Typography>
+                        <Typography sx={{ flex: 1, fontSize: 'inherit' }}>
+                          {item.displayName}
+                        </Typography>
+                        <Typography color="text.disabled" sx={{ fontSize: 'inherit' }}>
+                          &rarr;
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Stack>
+                )}
               </Box>
             ))}
-          </Stack>
+          </Box>
         )}
       </Paper>
     </Box>

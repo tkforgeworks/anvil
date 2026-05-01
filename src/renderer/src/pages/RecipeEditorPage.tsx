@@ -9,7 +9,6 @@ import {
   Autocomplete,
   Box,
   Button,
-  Divider,
   FormControl,
   IconButton,
   InputLabel,
@@ -43,6 +42,7 @@ import type {
   RecipeRecord,
 } from '../../../shared/domain-types'
 import EditHeader from '../components/EditHeader'
+import OverviewTab from '../components/OverviewTab'
 import SaveBar from '../components/SaveBar'
 import ValidationBanner from '../components/ValidationBanner'
 import { useRecordValidation } from '../hooks/useRecordValidation'
@@ -113,8 +113,8 @@ export default function RecipeEditorPage({ recordId, onClose }: RecipeEditorPage
   const baselineRef = useRef<TabFields | null>(null)
 
   const tabFieldMap: Record<number, (keyof TabFields)[]> = useMemo(() => ({
-    0: ['description', 'outputItemId', 'outputQuantity', 'craftingStationId', 'craftingSpecializationId'],
-    1: ['ingredients'],
+    1: ['description', 'outputItemId', 'outputQuantity', 'craftingStationId', 'craftingSpecializationId'],
+    2: ['ingredients'],
   }), [])
 
   const currentTabFields: TabFields = useMemo(() => ({
@@ -260,7 +260,7 @@ export default function RecipeEditorPage({ recordId, onClose }: RecipeEditorPage
       sortOrder: index,
     }))
     if (normalizedIngredients.some((ingredient) => ingredient.itemId === outputItemId)) {
-      setActiveTab(1)
+      setActiveTab(2)
       setError('A recipe ingredient cannot be the same item as the output item.')
       return
     }
@@ -331,38 +331,43 @@ export default function RecipeEditorPage({ recordId, onClose }: RecipeEditorPage
 
   return (
     <Box>
-      <EditHeader
-        backLabel="Crafting Recipes"
-        onBack={handleBack}
-        displayName={displayName}
-        onDisplayNameChange={(value) => {
-          setDisplayName(value)
-          pushSnapshot({ displayName: value })
-        }}
-        exportKey={exportKey}
-        isDirty={isDirty}
-        isSaving={isSaving}
-        onSave={() => void handleSave()}
-        savedAt={savedAt}
-        canUndo={undoRedo.canUndo}
-        canRedo={undoRedo.canRedo}
-        onUndo={undoRedo.triggerUndo}
-        onRedo={undoRedo.triggerRedo}
-      />
+      <Box sx={{ position: 'sticky', top: 0, zIndex: 10, bgcolor: 'background.default', mt: -3, pt: 3 }}>
+        <EditHeader
+          backLabel="Crafting Recipes"
+          onBack={handleBack}
+          displayName={displayName}
+          onDisplayNameChange={(value) => {
+            setDisplayName(value)
+            pushSnapshot({ displayName: value })
+          }}
+          exportKey={exportKey}
+          isDirty={isDirty}
+          isSaving={isSaving}
+          onSave={() => void handleSave()}
+          savedAt={savedAt}
+          canUndo={undoRedo.canUndo}
+          canRedo={undoRedo.canRedo}
+          onUndo={undoRedo.triggerUndo}
+          onRedo={undoRedo.triggerRedo}
+        />
+
+        <Tabs value={activeTab} onChange={(_, value: number) => setActiveTab(value)}>
+          <Tab label="Overview" />
+          <Tab label={<span>Details<DirtyDot visible={dirtyTabs.has(1)} /></span>} />
+          <Tab label={<span>Ingredients<DirtyDot visible={dirtyTabs.has(2)} /></span>} />
+        </Tabs>
+      </Box>
 
       {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>{error}</Alert>}
       <ValidationBanner issues={recordIssues} />
       {hasDeletedReferences && <Alert severity="warning" sx={{ mb: 2 }}>This recipe references a soft-deleted item. Validation will flag this recipe.</Alert>}
       {hasOutputAsIngredient && <Alert severity="error" sx={{ mb: 2 }}>The output item cannot also be an ingredient.</Alert>}
 
-      <Divider sx={{ mb: 0 }} />
-      <Tabs value={activeTab} onChange={(_, value: number) => setActiveTab(value)}>
-        <Tab label={<span>Details<DirtyDot visible={dirtyTabs.has(0)} /></span>} />
-        <Tab label={<span>Ingredients<DirtyDot visible={dirtyTabs.has(1)} /></span>} />
-      </Tabs>
-      <Divider />
-
       <TabPanel index={0} value={activeTab}>
+        <OverviewTab displayName={displayName} description={description} />
+      </TabPanel>
+
+      <TabPanel index={1} value={activeTab}>
         <Stack spacing={3} sx={{ maxWidth: 760 }}>
           <TextField
             label="Export Key"
@@ -419,7 +424,7 @@ export default function RecipeEditorPage({ recordId, onClose }: RecipeEditorPage
         </Stack>
       </TabPanel>
 
-      <TabPanel index={1} value={activeTab}>
+      <TabPanel index={2} value={activeTab}>
         <Stack spacing={2} sx={{ maxWidth: 860 }}>
           <Stack direction="row" justifyContent="space-between" alignItems="center">
             <Typography variant="subtitle1">Ingredients</Typography>

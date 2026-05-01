@@ -18,6 +18,7 @@ import {
   IconButton,
   InputLabel,
   MenuItem,
+  Paper,
   Select,
   Table,
   TableBody,
@@ -45,6 +46,7 @@ import { CreateRecipeDialog } from '../components/create-dialogs'
 import EditorModal from '../components/EditorModal'
 import EmptyState from '../components/EmptyState'
 import ListToolbar from '../components/ListToolbar'
+import PageHeader from '../components/PageHeader'
 import { useMultiSelect } from '../hooks/useMultiSelect'
 import { useUiStore } from '../stores/ui.store'
 import RecipeEditorPage from './RecipeEditorPage'
@@ -241,6 +243,7 @@ export default function RecipesPage(): React.JSX.Element {
 
   return (
     <Box>
+      <PageHeader title="Crafting Recipes" />
       <ListToolbar
         search={search}
         onSearchChange={setSearch}
@@ -276,63 +279,65 @@ export default function RecipesPage(): React.JSX.Element {
         onBulkDelete={() => setBulkDeleteOpen(true)}
       />
 
-      {filtered.length === 0 ? (
-        recipes.length === 0 ? (
-          <EmptyState
-            icon={<RecipesIcon sx={{ fontSize: 'inherit' }} />}
-            title="No recipes yet"
-            body="Create your first crafting recipe to get started."
-            ctaLabel="+ Create First Recipe"
-            onCtaClick={() => setCreateOpen(true)}
-          />
+      <Paper variant="outlined" sx={{ borderRadius: 2.5 }}>
+        {filtered.length === 0 ? (
+          recipes.length === 0 ? (
+            <EmptyState
+              icon={<RecipesIcon sx={{ fontSize: 'inherit' }} />}
+              title="No recipes yet"
+              body="Create your first crafting recipe to get started."
+              ctaLabel="+ Create First Recipe"
+              onCtaClick={() => setCreateOpen(true)}
+            />
+          ) : (
+            <EmptyState title="No results match your filters" />
+          )
         ) : (
-          <EmptyState title="No results match your filters" />
-        )
-      ) : (
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell padding="checkbox">
-                <Checkbox
-                  size="small"
-                  checked={multiSelect.isAllSelected(filteredIds)}
-                  indeterminate={multiSelect.count > 0 && !multiSelect.isAllSelected(filteredIds)}
-                  onChange={() => multiSelect.toggleAll(filteredIds)}
-                />
-              </TableCell>
-              <TableCell>Name</TableCell>
-              <TableCell>Export Key</TableCell>
-              <TableCell>Output</TableCell>
-              <TableCell>Station</TableCell>
-              <TableCell>Specialization</TableCell>
-              <TableCell align="right">Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filtered.map((recipe) => (
-              <TableRow key={recipe.id} hover sx={{ cursor: 'pointer' }} onClick={() => openEditor(recipe.id)}>
-                <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell padding="checkbox">
                   <Checkbox
                     size="small"
-                    checked={multiSelect.isSelected(recipe.id)}
-                    onChange={() => multiSelect.toggle(recipe.id)}
+                    checked={multiSelect.isAllSelected(filteredIds)}
+                    indeterminate={multiSelect.count > 0 && !multiSelect.isAllSelected(filteredIds)}
+                    onChange={() => multiSelect.toggleAll(filteredIds)}
                   />
                 </TableCell>
-                <TableCell><Typography variant="body2" fontWeight={500}>{recipe.displayName}</Typography></TableCell>
-                <TableCell><Typography variant="body2" color="text.secondary" fontFamily="monospace">{recipe.exportKey}</Typography></TableCell>
-                <TableCell><Typography variant="body2" color="text.secondary">{itemById.get(recipe.outputItemId)?.displayName ?? recipe.outputItemId} x{recipe.outputQuantity}</Typography></TableCell>
-                <TableCell><Typography variant="body2" color="text.secondary">{recipe.craftingStationId ? stationById.get(recipe.craftingStationId)?.displayName ?? recipe.craftingStationId : '-'}</Typography></TableCell>
-                <TableCell><Typography variant="body2" color="text.secondary">{recipe.craftingSpecializationId ? specializationById.get(recipe.craftingSpecializationId)?.displayName ?? recipe.craftingSpecializationId : '-'}</Typography></TableCell>
-                <TableCell align="right" onClick={(e) => e.stopPropagation()}>
-                  <Tooltip title="Edit"><IconButton size="small" onClick={() => openEditor(recipe.id)}><EditIcon fontSize="small" /></IconButton></Tooltip>
-                  <Tooltip title="Duplicate"><IconButton size="small" onClick={() => void handleDuplicate(recipe)}><DuplicateIcon fontSize="small" /></IconButton></Tooltip>
-                  <Tooltip title="Delete"><IconButton size="small" color="error" onClick={() => setDeleteTarget(recipe)}><DeleteIcon fontSize="small" /></IconButton></Tooltip>
-                </TableCell>
+                <TableCell>Name</TableCell>
+                <TableCell>Export Key</TableCell>
+                <TableCell>Output</TableCell>
+                <TableCell>Station</TableCell>
+                <TableCell>Specialization</TableCell>
+                <TableCell align="right">Actions</TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      )}
+            </TableHead>
+            <TableBody>
+              {filtered.map((recipe) => (
+                <TableRow key={recipe.id} hover sx={{ cursor: 'pointer' }} onClick={() => openEditor(recipe.id)}>
+                  <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}>
+                    <Checkbox
+                      size="small"
+                      checked={multiSelect.isSelected(recipe.id)}
+                      onChange={() => multiSelect.toggle(recipe.id)}
+                    />
+                  </TableCell>
+                  <TableCell><Typography variant="body2" fontWeight={500}>{recipe.displayName}</Typography></TableCell>
+                  <TableCell><Typography variant="body2" color="text.secondary" fontFamily="monospace">{recipe.exportKey}</Typography></TableCell>
+                  <TableCell><Typography variant="body2" color="text.secondary">{itemById.get(recipe.outputItemId)?.displayName ?? recipe.outputItemId} x{recipe.outputQuantity}</Typography></TableCell>
+                  <TableCell><Typography variant="body2" color="text.secondary">{recipe.craftingStationId ? stationById.get(recipe.craftingStationId)?.displayName ?? recipe.craftingStationId : '-'}</Typography></TableCell>
+                  <TableCell><Typography variant="body2" color="text.secondary">{recipe.craftingSpecializationId ? specializationById.get(recipe.craftingSpecializationId)?.displayName ?? recipe.craftingSpecializationId : '-'}</Typography></TableCell>
+                  <TableCell align="right" onClick={(e) => e.stopPropagation()}>
+                    <Tooltip title="Edit"><IconButton size="small" onClick={() => openEditor(recipe.id)}><EditIcon fontSize="small" /></IconButton></Tooltip>
+                    <Tooltip title="Duplicate"><IconButton size="small" onClick={() => void handleDuplicate(recipe)}><DuplicateIcon fontSize="small" /></IconButton></Tooltip>
+                    <Tooltip title="Delete"><IconButton size="small" color="error" onClick={() => setDeleteTarget(recipe)}><DeleteIcon fontSize="small" /></IconButton></Tooltip>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </Paper>
         </>
       )}
 
