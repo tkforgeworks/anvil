@@ -113,9 +113,9 @@ export default function RecycleBinPage(): React.JSX.Element {
 
   const handleHardDelete = async (domain: LifecycleDomain, id: string): Promise<void> => {
     setError(null)
+    setDeleteTarget(null)
     try {
       await lifecycleApi.bulkHardDelete(domain, [id])
-      setDeleteTarget(null)
       multiSelect.clear()
       await load()
     } catch (cause) {
@@ -139,12 +139,12 @@ export default function RecycleBinPage(): React.JSX.Element {
 
   const handleBulkHardDelete = async (): Promise<void> => {
     setError(null)
+    setBulkHardDeleteOpen(false)
     try {
       const byDomain = groupSelectedByDomain()
       for (const [domain, ids] of byDomain) {
         await lifecycleApi.bulkHardDelete(domain, ids)
       }
-      setBulkHardDeleteOpen(false)
       multiSelect.clear()
       await load()
     } catch (cause) {
@@ -154,9 +154,9 @@ export default function RecycleBinPage(): React.JSX.Element {
 
   const handleEmptyTrash = async (): Promise<void> => {
     setError(null)
+    setEmptyTrashOpen(false)
     try {
       await lifecycleApi.emptyTrash()
-      setEmptyTrashOpen(false)
       multiSelect.clear()
       await load()
     } catch (cause) {

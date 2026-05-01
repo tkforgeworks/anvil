@@ -192,22 +192,28 @@ export function generateSaveDescription(changes: ChangeEntry[]): string {
   return fragments.join(', ')
 }
 
+function titleCase(s: string): string {
+  return s.replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
 function describeSingleRecord(group: RecordGroup): string {
   const labels = DOMAIN_LABELS[group.domain]
-  const name = group.recordName || labels.singular
+  const domain = titleCase(labels.singular)
+  const hasName = Boolean(group.recordName)
+  const prefix = hasName ? `${group.recordName} - ${domain}` : domain
 
-  if (group.actions.has('create')) return `${name} ${labels.singular} created`
-  if (group.actions.has('delete')) return `${name} ${labels.singular} deleted`
-  if (group.actions.has('restore')) return `${name} ${labels.singular} restored`
-  if (group.actions.has('duplicate')) return `${name} ${labels.singular} duplicated`
-  if (group.actions.has('hard-delete')) return `${name} ${labels.singular} permanently deleted`
+  if (group.actions.has('create')) return `${prefix} created`
+  if (group.actions.has('delete')) return `${prefix} deleted`
+  if (group.actions.has('restore')) return `${prefix} restored`
+  if (group.actions.has('duplicate')) return `${prefix} duplicated`
+  if (group.actions.has('hard-delete')) return `${prefix} permanently deleted`
 
   if (group.subAreas.size === 1) {
     const subArea = [...group.subAreas][0]
     const subLabel = SUB_AREA_LABELS[subArea]
-    if (subLabel) return `${subLabel} for ${name} changed`
-    return `${name} ${labels.singular} changed`
+    if (subLabel) return `${prefix} - ${subLabel} changed`
+    return `${prefix} changed`
   }
 
-  return `Multiple changes in ${name} ${labels.singular}`
+  return `${prefix} - Multiple changes`
 }

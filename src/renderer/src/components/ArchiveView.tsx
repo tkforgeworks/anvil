@@ -146,10 +146,11 @@ export function ArchiveTable<T extends BaseRecord>({
     setActionError(null)
     try {
       await onHardDelete(id)
-      setDeleteTarget(null)
       multiSelect.clear()
     } catch (cause) {
       setActionError(cause instanceof Error ? cause.message : 'Delete failed.')
+    } finally {
+      setDeleteTarget(null)
     }
   }
 
@@ -169,10 +170,11 @@ export function ArchiveTable<T extends BaseRecord>({
     setActionError(null)
     try {
       await onBulkHardDelete([...multiSelect.selected])
-      setBulkHardDeleteOpen(false)
       multiSelect.clear()
     } catch (cause) {
       setActionError(cause instanceof Error ? cause.message : 'Bulk delete failed.')
+    } finally {
+      setBulkHardDeleteOpen(false)
     }
   }
 
