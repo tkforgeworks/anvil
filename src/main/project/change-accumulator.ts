@@ -46,6 +46,42 @@ export function clearChanges(): void {
   pendingChanges = []
 }
 
+const OFFSETTING_ACTIONS: [ChangeAction, ChangeAction][] = [
+  ['delete', 'restore'],
+]
+
+function isOffset(a: ChangeAction, b: ChangeAction): boolean {
+  return OFFSETTING_ACTIONS.some(
+    ([x, y]) => (a === x && b === y) || (a === y && b === x),
+  )
+}
+
+export function hasNetPendingChanges(): boolean {
+  const actionsByRecord = new Map<string, ChangeAction[]>()
+  for (const change of pendingChanges) {
+    const key = `${change.domain}:${change.recordId}`
+    const actions = actionsByRecord.get(key) ?? []
+    actions.push(change.action)
+    actionsByRecord.set(key, actions)
+  }
+  for (const actions of actionsByRecord.values()) {
+    const remaining = [...actions]
+    for (let i = 0; i < remaining.length; i++) {
+      if (remaining[i] === null) continue
+      for (let j = i + 1; j < remaining.length; j++) {
+        if (remaining[j] === null) continue
+        if (isOffset(remaining[i]!, remaining[j]!)) {
+          remaining[i] = null as unknown as ChangeAction
+          remaining[j] = null as unknown as ChangeAction
+          break
+        }
+      }
+    }
+    if (remaining.some((a) => a !== null)) return true
+  }
+  return false
+}
+
 const DOMAIN_LABELS: Record<DomainKey, { singular: string; plural: string }> = {
   'classes': { singular: 'class', plural: 'classes' },
   'abilities': { singular: 'ability', plural: 'abilities' },
@@ -112,6 +148,16 @@ export function generateSaveDescription(changes: ChangeEntry[]): string {
   }
 
   const fragments: string[] = []
+
+  for (const [key, group] of groups) {
+    if (group.actions.has('delete') && group.actions.has('restore')) {
+      group.actions.delete('delete')
+      group.actions.delete('restore')
+      if (group.actions.size === 0 && group.subAreas.size <= 1) {
+        groups.delete(key)
+      }
+    }
+  }
 
   const groupList = [...groups.values()]
   const domains = new Set(groupList.map((g) => g.domain))

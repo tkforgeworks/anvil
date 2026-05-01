@@ -17,7 +17,7 @@ import { closeDatabase, getDb, openDatabase, type DbConnection } from '../db/con
 import { CURRENT_SCHEMA_VERSION, runMigrations } from '../db/migrations/runner'
 import { getAppSettings } from '../settings/app-settings-service'
 import { logError, logInfo, setLogDirectory } from '../logging/app-logger'
-import { clearChanges, recordChange, type ChangeEntry } from './change-accumulator'
+import { clearChanges, hasNetPendingChanges, recordChange, type ChangeEntry } from './change-accumulator'
 import { createProjectFolder, detectProjectFolder, sanitizeFolderName } from './project-folder'
 import { recordSave } from './save-history-service'
 import type {
@@ -634,8 +634,9 @@ export function markProjectDirty(change?: ChangeEntry): ProjectStateSnapshot {
   if (!activeProject || isRecoveryMode) return getProjectState()
 
   if (change) recordChange(change)
-  isDirty = true
-  saveStatus = 'unsaved'
+  const hasChanges = hasNetPendingChanges()
+  isDirty = hasChanges
+  saveStatus = hasChanges ? 'unsaved' : 'saved'
   saveError = null
   return getProjectState()
 }
