@@ -34,6 +34,7 @@ import { ArchiveTable, type ViewMode } from '../components/ArchiveView'
 import { BulkActionToolbar, BulkDeleteDialog } from '../components/BulkActions'
 import { CreateLootTableDialog } from '../components/create-dialogs'
 import EditorModal from '../components/EditorModal'
+import DeferredLoader from '../components/DeferredLoader'
 import EmptyState from '../components/EmptyState'
 import ListToolbar from '../components/ListToolbar'
 import PageHeader from '../components/PageHeader'
@@ -99,6 +100,7 @@ export default function LootTablesPage(): React.JSX.Element {
   const [createOpen, setCreateOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<LootTableRecord | null>(null)
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
+  const [isLoading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [modalRecordId, setModalRecordId] = useState<string | null>(null)
   const multiSelect = useMultiSelect()
@@ -117,6 +119,7 @@ export default function LootTablesPage(): React.JSX.Element {
   }, [npcs])
 
   const load = useCallback(async () => {
+    setLoading(true)
     setError(null)
     try {
       const [records, npcList] = await Promise.all([
@@ -129,15 +132,20 @@ export default function LootTablesPage(): React.JSX.Element {
       setEntriesByTableId(new Map(entryPairs))
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Failed to load loot tables.')
+    } finally {
+      setLoading(false)
     }
   }, [])
 
   const loadArchived = useCallback(async () => {
+    setLoading(true)
     try {
       const records = await lootTablesApi.list(false, true)
       setArchivedLootTables(records)
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Failed to load archived loot tables.')
+    } finally {
+      setLoading(false)
     }
   }, [])
 
@@ -231,7 +239,9 @@ export default function LootTablesPage(): React.JSX.Element {
 
       {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>{error}</Alert>}
 
-      {viewMode === 'archived' ? (
+      {isLoading ? (
+        <DeferredLoader />
+      ) : viewMode === 'archived' ? (
         <ArchiveTable
           records={archivedLootTables}
           domainLabel="Loot Table"

@@ -38,6 +38,7 @@ import { ArchiveTable, type ViewMode } from '../components/ArchiveView'
 import { BulkActionToolbar, BulkDeleteDialog } from '../components/BulkActions'
 import { CreateNpcDialog } from '../components/create-dialogs'
 import EditorModal from '../components/EditorModal'
+import DeferredLoader from '../components/DeferredLoader'
 import EmptyState from '../components/EmptyState'
 import ListToolbar from '../components/ListToolbar'
 import PageHeader from '../components/PageHeader'
@@ -103,6 +104,7 @@ export default function NpcsPage(): React.JSX.Element {
   const [createOpen, setCreateOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<NpcRecord | null>(null)
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
+  const [isLoading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [modalRecordId, setModalRecordId] = useState<string | null>(null)
   const multiSelect = useMultiSelect()
@@ -115,6 +117,7 @@ export default function NpcsPage(): React.JSX.Element {
   const typeById = useMemo(() => new Map(npcTypes.map((type) => [type.id, type])), [npcTypes])
 
   const load = useCallback(async () => {
+    setLoading(true)
     setError(null)
     try {
       const [records, typeList] = await Promise.all([
@@ -125,15 +128,20 @@ export default function NpcsPage(): React.JSX.Element {
       setNpcTypes(typeList)
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Failed to load NPCs.')
+    } finally {
+      setLoading(false)
     }
   }, [])
 
   const loadArchived = useCallback(async () => {
+    setLoading(true)
     try {
       const records = await npcsApi.list(false, true)
       setArchivedNPCs(records)
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Failed to load archived NPCs.')
+    } finally {
+      setLoading(false)
     }
   }, [])
 
@@ -236,7 +244,9 @@ export default function NpcsPage(): React.JSX.Element {
 
       {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>{error}</Alert>}
 
-      {viewMode === 'archived' ? (
+      {isLoading ? (
+        <DeferredLoader />
+      ) : viewMode === 'archived' ? (
         <ArchiveTable
           records={archivedNPCs}
           domainLabel="NPC"

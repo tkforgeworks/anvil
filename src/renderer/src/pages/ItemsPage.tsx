@@ -39,6 +39,7 @@ import { ArchiveTable, type ViewMode } from '../components/ArchiveView'
 import { BulkActionToolbar, BulkDeleteDialog } from '../components/BulkActions'
 import { CreateItemDialog } from '../components/create-dialogs'
 import EditorModal from '../components/EditorModal'
+import DeferredLoader from '../components/DeferredLoader'
 import EmptyState from '../components/EmptyState'
 import ListToolbar from '../components/ListToolbar'
 import PageHeader from '../components/PageHeader'
@@ -122,6 +123,7 @@ export default function ItemsPage(): React.JSX.Element {
   const [createOpen, setCreateOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<ItemRecord | null>(null)
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
+  const [isLoading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [modalRecordId, setModalRecordId] = useState<string | null>(null)
   const multiSelect = useMultiSelect()
@@ -141,6 +143,7 @@ export default function ItemsPage(): React.JSX.Element {
   )
 
   const load = useCallback(async () => {
+    setLoading(true)
     setError(null)
     try {
       const [records, categoryList, rarityList] = await Promise.all([
@@ -153,15 +156,20 @@ export default function ItemsPage(): React.JSX.Element {
       setRarities(rarityList)
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Failed to load items.')
+    } finally {
+      setLoading(false)
     }
   }, [])
 
   const loadArchived = useCallback(async () => {
+    setLoading(true)
     try {
       const records = await itemsApi.list(false, true)
       setArchivedItems(records)
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Failed to load archived items.')
+    } finally {
+      setLoading(false)
     }
   }, [])
 
@@ -296,7 +304,9 @@ export default function ItemsPage(): React.JSX.Element {
         </Alert>
       )}
 
-      {viewMode === 'archived' ? (
+      {isLoading ? (
+        <DeferredLoader />
+      ) : viewMode === 'archived' ? (
         <ArchiveTable
           records={archivedItems}
           domainLabel="Item"

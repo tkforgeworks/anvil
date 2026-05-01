@@ -33,6 +33,7 @@ import { ArchiveTable, type ViewMode } from '../components/ArchiveView'
 import { BulkActionToolbar, BulkDeleteDialog } from '../components/BulkActions'
 import { CreateClassDialog } from '../components/create-dialogs'
 import EditorModal from '../components/EditorModal'
+import DeferredLoader from '../components/DeferredLoader'
 import EmptyState from '../components/EmptyState'
 import ListToolbar from '../components/ListToolbar'
 import PageHeader from '../components/PageHeader'
@@ -111,6 +112,7 @@ export default function ClassesPage(): React.JSX.Element {
   const [createOpen, setCreateOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<ClassRecord | null>(null)
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
+  const [isLoading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [modalRecordId, setModalRecordId] = useState<string | null>(null)
   const multiSelect = useMultiSelect()
@@ -121,20 +123,26 @@ export default function ClassesPage(): React.JSX.Element {
   }
 
   const load = useCallback(async () => {
+    setLoading(true)
     try {
       const records = await classesApi.list()
       setClasses(records)
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Failed to load classes.')
+    } finally {
+      setLoading(false)
     }
   }, [])
 
   const loadArchived = useCallback(async () => {
+    setLoading(true)
     try {
       const records = await classesApi.list(false, true)
       setArchivedClasses(records)
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Failed to load archived classes.')
+    } finally {
+      setLoading(false)
     }
   }, [])
 
@@ -229,7 +237,9 @@ export default function ClassesPage(): React.JSX.Element {
         </Alert>
       )}
 
-      {viewMode === 'archived' ? (
+      {isLoading ? (
+        <DeferredLoader />
+      ) : viewMode === 'archived' ? (
         <ArchiveTable
           records={archivedClasses}
           domainLabel="Class"
