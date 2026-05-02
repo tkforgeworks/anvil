@@ -28,6 +28,7 @@ import {
   ListItemIcon,
   ListItemText,
   MenuItem,
+  Paper,
   Select,
   Stack,
   TextField,
@@ -48,6 +49,7 @@ import {
   type ExportScope,
   type CustomTemplate,
 } from '../../api/export.api'
+import PageHeader from '../components/PageHeader'
 
 const DOMAIN_OPTIONS = [
   { value: 'classes', label: 'Classes' },
@@ -250,24 +252,25 @@ export default function ExportPage(): React.JSX.Element {
   const canPreview = selectedPreset && (scopeMode === 'full' || scopeDomain)
 
   return (
-    <Stack spacing={3}>
-      <Stack direction="row" alignItems="center" justifyContent="space-between">
-        <Typography variant="h5" component="h1" sx={{ fontWeight: 700 }}>
-          Export
-        </Typography>
-        <Button
-          variant="outlined"
-          startIcon={<AddIcon />}
-          onClick={openNewTemplate}
-          size="small"
-        >
-          New Template
-        </Button>
-      </Stack>
+    <Box>
+      <PageHeader
+        title="Export"
+        action={
+          <Button
+            variant="outlined"
+            startIcon={<AddIcon />}
+            onClick={openNewTemplate}
+            size="small"
+          >
+            New Template
+          </Button>
+        }
+      />
 
       {error && (
         <Alert
           severity="error"
+          sx={{ mb: 2 }}
           onClose={() => { setError(null); setValidationBlocked(false) }}
         >
           {error}
@@ -284,172 +287,175 @@ export default function ExportPage(): React.JSX.Element {
       )}
 
       {success && (
-        <Alert severity="success" onClose={() => setSuccess(null)}>
+        <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccess(null)}>
           {success}
         </Alert>
       )}
 
-      <Stack spacing={3} sx={{ maxWidth: 600 }}>
-        <FormControl fullWidth>
-          <InputLabel id="export-preset-label">Template / Preset</InputLabel>
-          <Select
-            labelId="export-preset-label"
-            label="Template / Preset"
-            value={selectedPreset}
-            onChange={(e) => { setSelectedPreset(e.target.value); setPreview(null) }}
-          >
-            {presets.map((preset) => (
-              <MenuItem key={preset.id} value={preset.id}>
-                <Stack direction="row" alignItems="center" spacing={1} sx={{ width: '100%' }}>
-                  <span>{preset.name}</span>
-                  {preset.builtIn && (
-                    <Chip label="Built-in" size="small" variant="outlined" sx={{ ml: 'auto' }} />
-                  )}
-                </Stack>
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        {currentPreset && (
-          <Stack direction="row" alignItems="center" spacing={1}>
-            <Typography variant="body2" color="text.secondary" sx={{ flex: 1 }}>
-              {currentPreset.description}
-            </Typography>
-            {!currentPreset.builtIn && (
-              <>
-                <Tooltip title="Edit template">
-                  <IconButton size="small" onClick={() => void openEditTemplate(currentPreset.id)}>
-                    <EditIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title="Delete template">
-                  <IconButton size="small" onClick={() => void handleDeleteTemplate(currentPreset.id)}>
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-              </>
-            )}
-          </Stack>
-        )}
-
-        <FormControl fullWidth>
-          <InputLabel id="export-scope-label">Scope</InputLabel>
-          <Select
-            labelId="export-scope-label"
-            label="Scope"
-            value={scopeMode}
-            onChange={(e) => { setScopeMode(e.target.value as ScopeMode); setPreview(null) }}
-          >
-            <MenuItem value="full">Full Project</MenuItem>
-            <MenuItem value="domain">Single Domain</MenuItem>
-            <MenuItem value="selection">Record Selection</MenuItem>
-          </Select>
-        </FormControl>
-
-        {(scopeMode === 'domain' || scopeMode === 'selection') && (
+      <Paper variant="outlined" sx={{ borderRadius: 2.5, p: 3 }}>
+        <Stack spacing={3} sx={{ maxWidth: 600 }}>
           <FormControl fullWidth>
-            <InputLabel id="export-domain-label">Domain</InputLabel>
+            <InputLabel id="export-preset-label">Template / Preset</InputLabel>
             <Select
-              labelId="export-domain-label"
-              label="Domain"
-              value={scopeDomain}
-              onChange={(e) => { setScopeDomain(e.target.value); setPreview(null) }}
+              labelId="export-preset-label"
+              label="Template / Preset"
+              value={selectedPreset}
+              onChange={(e) => { setSelectedPreset(e.target.value); setPreview(null) }}
             >
-              {DOMAIN_OPTIONS.map((opt) => (
-                <MenuItem key={opt.value} value={opt.value}>
-                  {opt.label}
+              {presets.map((preset) => (
+                <MenuItem key={preset.id} value={preset.id}>
+                  <Stack direction="row" alignItems="center" spacing={1} sx={{ width: '100%' }}>
+                    <span>{preset.name}</span>
+                    {preset.builtIn && (
+                      <Chip label="Built-in" size="small" variant="outlined" sx={{ ml: 'auto' }} />
+                    )}
+                  </Stack>
                 </MenuItem>
               ))}
             </Select>
           </FormControl>
-        )}
 
-        {scopeMode === 'selection' && scopeDomain && domainRecords.length > 0 && (
-          <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 1, maxHeight: 300, overflow: 'auto' }}>
-            <List dense disablePadding>
-              <ListItem disablePadding>
-                <ListItemButton onClick={toggleAll} dense>
-                  <ListItemIcon sx={{ minWidth: 36 }}>
-                    <Checkbox
-                      edge="start"
-                      checked={selectedRecordIds.size === domainRecords.length}
-                      indeterminate={selectedRecordIds.size > 0 && selectedRecordIds.size < domainRecords.length}
-                      tabIndex={-1}
-                      disableRipple
-                    />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={`Select All (${selectedRecordIds.size}/${domainRecords.length})`}
-                    primaryTypographyProps={{ fontWeight: 600, variant: 'body2' }}
-                  />
-                </ListItemButton>
-              </ListItem>
-              {domainRecords.map((record) => (
-                <ListItem key={record.id} disablePadding>
-                  <ListItemButton onClick={() => toggleRecord(record.id)} dense>
+          {currentPreset && (
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <Typography variant="body2" color="text.secondary" sx={{ flex: 1 }}>
+                {currentPreset.description}
+              </Typography>
+              {!currentPreset.builtIn && (
+                <>
+                  <Tooltip title="Edit template">
+                    <IconButton size="small" onClick={() => void openEditTemplate(currentPreset.id)}>
+                      <EditIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Delete template">
+                    <IconButton size="small" onClick={() => void handleDeleteTemplate(currentPreset.id)}>
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </>
+              )}
+            </Stack>
+          )}
+
+          <FormControl fullWidth>
+            <InputLabel id="export-scope-label">Scope</InputLabel>
+            <Select
+              labelId="export-scope-label"
+              label="Scope"
+              value={scopeMode}
+              onChange={(e) => { setScopeMode(e.target.value as ScopeMode); setPreview(null) }}
+            >
+              <MenuItem value="full">Full Project</MenuItem>
+              <MenuItem value="domain">Single Domain</MenuItem>
+              <MenuItem value="selection">Record Selection</MenuItem>
+            </Select>
+          </FormControl>
+
+          {(scopeMode === 'domain' || scopeMode === 'selection') && (
+            <FormControl fullWidth>
+              <InputLabel id="export-domain-label">Domain</InputLabel>
+              <Select
+                labelId="export-domain-label"
+                label="Domain"
+                value={scopeDomain}
+                onChange={(e) => { setScopeDomain(e.target.value); setPreview(null) }}
+              >
+                {DOMAIN_OPTIONS.map((opt) => (
+                  <MenuItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
+
+          {scopeMode === 'selection' && scopeDomain && domainRecords.length > 0 && (
+            <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 1, maxHeight: 300, overflow: 'auto' }}>
+              <List dense disablePadding>
+                <ListItem disablePadding>
+                  <ListItemButton onClick={toggleAll} dense>
                     <ListItemIcon sx={{ minWidth: 36 }}>
                       <Checkbox
                         edge="start"
-                        checked={selectedRecordIds.has(record.id)}
+                        checked={selectedRecordIds.size === domainRecords.length}
+                        indeterminate={selectedRecordIds.size > 0 && selectedRecordIds.size < domainRecords.length}
                         tabIndex={-1}
                         disableRipple
                       />
                     </ListItemIcon>
-                    <ListItemText primary={record.displayName} />
+                    <ListItemText
+                      primary={`Select All (${selectedRecordIds.size}/${domainRecords.length})`}
+                      primaryTypographyProps={{ fontWeight: 600, variant: 'body2' }}
+                    />
                   </ListItemButton>
                 </ListItem>
-              ))}
-            </List>
-          </Box>
-        )}
+                {domainRecords.map((record) => (
+                  <ListItem key={record.id} disablePadding>
+                    <ListItemButton onClick={() => toggleRecord(record.id)} dense>
+                      <ListItemIcon sx={{ minWidth: 36 }}>
+                        <Checkbox
+                          edge="start"
+                          checked={selectedRecordIds.has(record.id)}
+                          tabIndex={-1}
+                          disableRipple
+                        />
+                      </ListItemIcon>
+                      <ListItemText primary={record.displayName} />
+                    </ListItemButton>
+                  </ListItem>
+                ))}
+              </List>
+            </Box>
+          )}
 
-        {scopeMode === 'selection' && scopeDomain && domainRecords.length === 0 && (
-          <Typography variant="body2" color="text.secondary">
-            No records found in this domain.
-          </Typography>
-        )}
+          {scopeMode === 'selection' && scopeDomain && domainRecords.length === 0 && (
+            <Typography variant="body2" color="text.secondary">
+              No records found in this domain.
+            </Typography>
+          )}
 
-        <Stack direction="row" spacing={2}>
-          <Button
-            variant="outlined"
-            startIcon={<PreviewIcon />}
-            onClick={() => void handlePreview()}
-            disabled={isLoading || !canPreview}
-          >
-            {isLoading ? 'Loading...' : 'Preview'}
-          </Button>
-          <Button
-            variant="contained"
-            startIcon={<ExportIcon />}
-            onClick={() => void handleExport()}
-            disabled={isLoading || !canPreview}
-          >
-            Export to File
-          </Button>
+          <Stack direction="row" spacing={2}>
+            <Button
+              variant="outlined"
+              startIcon={<PreviewIcon />}
+              onClick={() => void handlePreview()}
+              disabled={isLoading || !canPreview}
+            >
+              {isLoading ? 'Loading...' : 'Preview'}
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<ExportIcon />}
+              onClick={() => void handleExport()}
+              disabled={isLoading || !canPreview}
+            >
+              Export to File
+            </Button>
+          </Stack>
         </Stack>
-      </Stack>
+      </Paper>
 
       {preview != null && (
-        <Box>
+        <Box sx={{ mt: 3 }}>
           <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 600 }}>
             Preview
           </Typography>
-          <Box
-            sx={{
-              bgcolor: 'grey.900',
-              color: 'grey.100',
-              p: 2,
-              borderRadius: 1,
-              fontFamily: 'monospace',
-              fontSize: '0.8rem',
-              whiteSpace: 'pre',
-              overflow: 'auto',
-              maxHeight: 600,
-            }}
-          >
-            {preview}
-          </Box>
+          <Paper variant="outlined" sx={{ borderRadius: 2.5, overflow: 'hidden' }}>
+            <Box
+              sx={{
+                bgcolor: 'grey.900',
+                color: 'grey.100',
+                p: 2,
+                fontFamily: 'monospace',
+                fontSize: '0.8rem',
+                whiteSpace: 'pre',
+                overflow: 'auto',
+                maxHeight: 600,
+              }}
+            >
+              {preview}
+            </Box>
+          </Paper>
         </Box>
       )}
 
@@ -630,6 +636,6 @@ Rarity: {{ item.rarity_id | export_key }}
           </Button>
         </DialogActions>
       </Dialog>
-    </Stack>
+    </Box>
   )
 }

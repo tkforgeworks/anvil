@@ -8,7 +8,7 @@ function createWindow(): void {
   const win = new BrowserWindow({
     width: 1280,
     height: 800,
-    minWidth: 1200,
+    minWidth: 1400,
     minHeight: 600,
     frame: false,
     icon: join(__dirname, '../../resources/icon.png'),

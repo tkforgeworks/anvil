@@ -8,11 +8,11 @@ import {
   Box,
   Button,
   Chip,
+  Paper,
   Stack,
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
   TableRow,
   Typography,
@@ -20,6 +20,9 @@ import {
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { validationApi } from '../../api/validation.api'
+import DeferredLoader from '../components/DeferredLoader'
+import EmptyState from '../components/EmptyState'
+import PageHeader from '../components/PageHeader'
 import { useValidationStore } from '../stores/validation.store'
 import type { ValidationDomain, ValidationIssue, ValidationSeverity } from '../../../shared/domain-types'
 
@@ -123,30 +126,24 @@ export default function ValidationPage(): React.JSX.Element {
   const grouped = groupByDomain(issues)
 
   return (
-    <Stack spacing={3}>
-      <Stack direction="row" alignItems="center" justifyContent="space-between">
-        <Box>
-          <Typography variant="h5" component="h1" sx={{ fontWeight: 700 }}>
-            Validation
-          </Typography>
-          {lastValidatedAt && (
-            <Typography variant="caption" color="text.secondary">
-              Last checked: {formatTimestamp(lastValidatedAt)}
-            </Typography>
-          )}
-        </Box>
-        <Button
-          variant="outlined"
-          startIcon={<RefreshIcon />}
-          onClick={() => void runValidation()}
-          disabled={isRunning}
-        >
-          {isRunning ? 'Running...' : 'Re-run'}
-        </Button>
-      </Stack>
+    <Box>
+      <PageHeader
+        title="Validation"
+        subtitle={lastValidatedAt ? `Last checked: ${formatTimestamp(lastValidatedAt)}` : undefined}
+        action={
+          <Button
+            variant="outlined"
+            startIcon={<RefreshIcon />}
+            onClick={() => void runValidation()}
+            disabled={isRunning}
+          >
+            {isRunning ? 'Running...' : 'Re-run'}
+          </Button>
+        }
+      />
 
       {issues.length > 0 && (
-        <Stack direction="row" spacing={2}>
+        <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
           {errorCount > 0 && (
             <Chip
               icon={<ErrorIcon />}
@@ -166,67 +163,69 @@ export default function ValidationPage(): React.JSX.Element {
         </Stack>
       )}
 
-      {issues.length === 0 && lastValidatedAt && !isRunning && (
-        <Box sx={{ textAlign: 'center', py: 6 }}>
-          <CheckIcon sx={{ fontSize: 48, color: 'success.main', mb: 1 }} />
-          <Typography variant="h6" color="text.secondary">
-            No issues found
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            All records passed validation checks.
-          </Typography>
-        </Box>
-      )}
-
-      {[...grouped.entries()].map(([domain, domainIssues]) => (
-        <Box key={domain}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-            {DOMAIN_LABELS[domain]}
-          </Typography>
-          <TableContainer>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell width={40} />
-                  <TableCell width={220}>Record</TableCell>
-                  <TableCell width={160}>Field</TableCell>
-                  <TableCell>Message</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {domainIssues.map((issue) => {
-                  const route = domainRoute(issue)
-                  return (
-                    <TableRow
-                      key={issue.id}
-                      hover={route != null}
-                      onClick={route ? () => navigate(route) : undefined}
-                      sx={route ? { cursor: 'pointer' } : undefined}
-                    >
-                      <TableCell>{severityIcon(issue.severity)}</TableCell>
-                      <TableCell>
-                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                          {issue.recordDisplayName}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        {issue.field && (
-                          <Typography variant="body2" color="text.secondary" sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>
-                            {issue.field}
-                          </Typography>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2">{issue.message}</Typography>
-                      </TableCell>
+      {isRunning && !lastValidatedAt ? (
+        <DeferredLoader />
+      ) : issues.length === 0 && lastValidatedAt && !isRunning ? (
+        <Paper variant="outlined" sx={{ borderRadius: 2.5 }}>
+          <EmptyState
+            icon={<CheckIcon sx={{ fontSize: 'inherit', color: 'success.main' }} />}
+            title="No issues found"
+            body="All records passed validation checks."
+          />
+        </Paper>
+      ) : (
+        <Stack spacing={2.5}>
+          {[...grouped.entries()].map(([domain, domainIssues]) => (
+            <Box key={domain}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                {DOMAIN_LABELS[domain]}
+              </Typography>
+              <Paper variant="outlined" sx={{ borderRadius: 2.5 }}>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell width={40} />
+                      <TableCell width={220}>Record</TableCell>
+                      <TableCell width={160}>Field</TableCell>
+                      <TableCell>Message</TableCell>
                     </TableRow>
-                  )
-                })}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Box>
-      ))}
-    </Stack>
+                  </TableHead>
+                  <TableBody>
+                    {domainIssues.map((issue) => {
+                      const route = domainRoute(issue)
+                      return (
+                        <TableRow
+                          key={issue.id}
+                          hover={route != null}
+                          onClick={route ? () => navigate(route) : undefined}
+                          sx={route ? { cursor: 'pointer' } : undefined}
+                        >
+                          <TableCell>{severityIcon(issue.severity)}</TableCell>
+                          <TableCell>
+                            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                              {issue.recordDisplayName}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            {issue.field && (
+                              <Typography variant="body2" color="text.secondary" sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>
+                                {issue.field}
+                              </Typography>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2">{issue.message}</Typography>
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })}
+                  </TableBody>
+                </Table>
+              </Paper>
+            </Box>
+          ))}
+        </Stack>
+      )}
+    </Box>
   )
 }

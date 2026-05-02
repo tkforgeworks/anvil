@@ -29,6 +29,7 @@ export default function EmptyState({
           placeItems: 'center',
           color: 'text.disabled',
           fontSize: 36,
+          mx: 'auto',
           mb: 1,
         }}>
           {icon}

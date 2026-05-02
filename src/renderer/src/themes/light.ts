@@ -19,4 +19,15 @@ export const lightTheme = createTheme({
     fontFamily: "'Poppins', sans-serif",
     fontFamilyMono: "'JetBrains Mono', monospace",
   },
+  components: {
+    MuiTableCell: {
+      styleOverrides: {
+        root: {
+          'tbody tr:last-of-type &': {
+            borderBottom: 0,
+          },
+        },
+      },
+    },
+  },
 })

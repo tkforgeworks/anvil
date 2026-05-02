@@ -9,6 +9,7 @@ import {
   Button,
   Checkbox,
   IconButton,
+  Paper,
   Stack,
   Table,
   TableBody,
@@ -33,6 +34,9 @@ import {
   BulkHardDeleteDialog,
   EmptyTrashDialog,
 } from '../components/BulkActions'
+import DeferredLoader from '../components/DeferredLoader'
+import EmptyState from '../components/EmptyState'
+import PageHeader from '../components/PageHeader'
 import { useMultiSelect } from '../hooks/useMultiSelect'
 
 interface DomainGroup {
@@ -66,6 +70,7 @@ function formatDeletedAt(iso: string | null): string {
 export default function RecycleBinPage(): React.JSX.Element {
   const [groups, setGroups] = useState<DomainGroup[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [isLoading, setLoading] = useState(true)
   const [deleteTarget, setDeleteTarget] = useState<BaseRecord | null>(null)
   const [deleteTargetDomain, setDeleteTargetDomain] = useState<LifecycleDomain>('classes')
   const [emptyTrashOpen, setEmptyTrashOpen] = useState(false)
@@ -73,9 +78,9 @@ export default function RecycleBinPage(): React.JSX.Element {
   const multiSelect = useMultiSelect()
 
   const totalCount = groups.reduce((sum, g) => sum + g.records.length, 0)
-  const allRecordIds = groups.flatMap((g) => g.records.map((r) => r.id))
 
   const load = useCallback(async () => {
+    setLoading(true)
     setError(null)
     try {
       const results = await Promise.all(
@@ -88,6 +93,8 @@ export default function RecycleBinPage(): React.JSX.Element {
       setGroups(results.filter((g) => g.records.length > 0))
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Failed to load archived records.')
+    } finally {
+      setLoading(false)
     }
   }, [])
 
@@ -178,9 +185,9 @@ export default function RecycleBinPage(): React.JSX.Element {
 
   return (
     <Box>
-      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 3 }}>
-        <Typography variant="h5">Recycle Bin</Typography>
-        {totalCount > 0 && (
+      <PageHeader
+        title="Recycle Bin"
+        action={totalCount > 0 ? (
           <Button
             color="error"
             variant="outlined"
@@ -189,8 +196,8 @@ export default function RecycleBinPage(): React.JSX.Element {
           >
             Empty Trash
           </Button>
-        )}
-      </Stack>
+        ) : undefined}
+      />
 
       {error && (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
@@ -198,99 +205,111 @@ export default function RecycleBinPage(): React.JSX.Element {
         </Alert>
       )}
 
-      <BulkActionToolbar
-        count={multiSelect.count}
-        mode="recycle-bin"
-        onBulkRestore={() => void handleBulkRestore()}
-        onBulkHardDelete={() => setBulkHardDeleteOpen(true)}
-      />
-
-      {totalCount === 0 ? (
-        <Typography variant="body2" color="text.secondary">
-          Trash is empty.
-        </Typography>
+      {isLoading ? (
+        <DeferredLoader />
+      ) : totalCount === 0 ? (
+        <Paper variant="outlined" sx={{ borderRadius: 2.5 }}>
+          <EmptyState
+            icon={<RestoreIcon sx={{ fontSize: 'inherit' }} />}
+            title="Trash is empty"
+            body="Deleted records will appear here."
+          />
+        </Paper>
       ) : (
-        groups.map((group) => (
-          <Box key={group.domain} sx={{ mb: 3 }}>
-            <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1 }}>
-              {group.label}
-              <Typography component="span" variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-                ({group.records.length})
-              </Typography>
-            </Typography>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell padding="checkbox">
-                    <Checkbox
-                      size="small"
-                      checked={group.records.every((r) => multiSelect.isSelected(r.id))}
-                      indeterminate={
-                        group.records.some((r) => multiSelect.isSelected(r.id)) &&
-                        !group.records.every((r) => multiSelect.isSelected(r.id))
-                      }
-                      onChange={() => multiSelect.toggleAll(group.records.map((r) => r.id))}
-                    />
-                  </TableCell>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Export Key</TableCell>
-                  <TableCell>Deleted At</TableCell>
-                  <TableCell align="right">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {group.records.map((record) => (
-                  <TableRow key={record.id}>
-                    <TableCell padding="checkbox">
-                      <Checkbox
-                        size="small"
-                        checked={multiSelect.isSelected(record.id)}
-                        onChange={() => multiSelect.toggle(record.id)}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" fontWeight={500} color="text.secondary">
-                        {record.displayName}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" color="text.secondary" fontFamily="monospace">
-                        {record.exportKey}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" color="text.secondary">
-                        {formatDeletedAt(record.deletedAt)}
-                      </Typography>
-                    </TableCell>
-                    <TableCell align="right">
-                      <Stack direction="row" spacing={0.5} justifyContent="flex-end">
-                        <Tooltip title="Restore">
-                          <IconButton
+        <>
+          <BulkActionToolbar
+            count={multiSelect.count}
+            mode="recycle-bin"
+            onBulkRestore={() => void handleBulkRestore()}
+            onBulkHardDelete={() => setBulkHardDeleteOpen(true)}
+          />
+
+          <Stack spacing={2.5}>
+            {groups.map((group) => (
+              <Box key={group.domain}>
+                <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1 }}>
+                  {group.label}
+                  <Typography component="span" variant="body2" color="text.secondary" sx={{ ml: 1 }}>
+                    ({group.records.length})
+                  </Typography>
+                </Typography>
+                <Paper variant="outlined" sx={{ borderRadius: 2.5 }}>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell padding="checkbox">
+                          <Checkbox
                             size="small"
-                            color="primary"
-                            onClick={() => void handleRestore(group.domain, record.id)}
-                          >
-                            <RestoreIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Permanently Delete">
-                          <IconButton
-                            size="small"
-                            color="error"
-                            onClick={() => { setDeleteTarget(record); setDeleteTargetDomain(group.domain) }}
-                          >
-                            <PermanentDeleteIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      </Stack>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Box>
-        ))
+                            checked={group.records.every((r) => multiSelect.isSelected(r.id))}
+                            indeterminate={
+                              group.records.some((r) => multiSelect.isSelected(r.id)) &&
+                              !group.records.every((r) => multiSelect.isSelected(r.id))
+                            }
+                            onChange={() => multiSelect.toggleAll(group.records.map((r) => r.id))}
+                          />
+                        </TableCell>
+                        <TableCell>Name</TableCell>
+                        <TableCell>Export Key</TableCell>
+                        <TableCell>Deleted At</TableCell>
+                        <TableCell align="right">Actions</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {group.records.map((record) => (
+                        <TableRow key={record.id}>
+                          <TableCell padding="checkbox">
+                            <Checkbox
+                              size="small"
+                              checked={multiSelect.isSelected(record.id)}
+                              onChange={() => multiSelect.toggle(record.id)}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2" fontWeight={500} color="text.secondary">
+                              {record.displayName}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2" color="text.secondary" fontFamily="monospace">
+                              {record.exportKey}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2" color="text.secondary">
+                              {formatDeletedAt(record.deletedAt)}
+                            </Typography>
+                          </TableCell>
+                          <TableCell align="right">
+                            <Stack direction="row" spacing={0.5} justifyContent="flex-end">
+                              <Tooltip title="Restore">
+                                <IconButton
+                                  size="small"
+                                  color="primary"
+                                  onClick={() => void handleRestore(group.domain, record.id)}
+                                >
+                                  <RestoreIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="Permanently Delete">
+                                <IconButton
+                                  size="small"
+                                  color="error"
+                                  onClick={() => { setDeleteTarget(record); setDeleteTargetDomain(group.domain) }}
+                                >
+                                  <PermanentDeleteIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            </Stack>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </Paper>
+              </Box>
+            ))}
+          </Stack>
+        </>
       )}
 
       <PermanentDeleteDialog

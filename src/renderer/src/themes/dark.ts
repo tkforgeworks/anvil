@@ -27,5 +27,14 @@ export const darkTheme = createTheme({
         },
       },
     },
+    MuiTableCell: {
+      styleOverrides: {
+        root: {
+          'tbody tr:last-of-type &': {
+            borderBottom: 0,
+          },
+        },
+      },
+    },
   },
 })

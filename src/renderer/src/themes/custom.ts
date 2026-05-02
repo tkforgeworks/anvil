@@ -34,8 +34,8 @@ export function buildCustomTheme(colors: CustomThemeColors): ReturnType<typeof c
       fontFamily: "'Poppins', sans-serif",
       fontFamilyMono: "'JetBrains Mono', monospace",
     },
-    components:
-      mode === 'dark'
+    components: {
+      ...(mode === 'dark'
         ? {
             MuiCssBaseline: {
               styleOverrides: {
@@ -45,6 +45,16 @@ export function buildCustomTheme(colors: CustomThemeColors): ReturnType<typeof c
               },
             },
           }
-        : {},
+        : {}),
+      MuiTableCell: {
+        styleOverrides: {
+          root: {
+            'tbody tr:last-of-type &': {
+              borderBottom: 0,
+            },
+          },
+        },
+      },
+    },
   })
 }
