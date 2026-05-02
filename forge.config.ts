@@ -1,6 +1,7 @@
 import type { ForgeConfig } from '@electron-forge/shared-types'
 
 const config: ForgeConfig = {
+  outDir: 'dist',
   packagerConfig: {
     asar: {
       unpack: 'node_modules/better-sqlite3/**/*',

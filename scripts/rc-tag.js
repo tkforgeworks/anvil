@@ -11,31 +11,27 @@ if (!['patch', 'minor', 'major'].includes(bumpType)) {
 }
 
 const pkg = JSON.parse(readFileSync(resolve(__dirname, '..', 'package.json'), 'utf8'))
-const current = pkg.version.replace(/-rc\.\d+$/, '')
-const parts = current.split('.').map(Number)
+const isAlreadyRc = pkg.version.includes('-rc.')
 
-let next
-if (bumpType === 'major') {
-  next = `${parts[0] + 1}.0.0`
-} else if (bumpType === 'minor') {
-  next = `${parts[0]}.${parts[1] + 1}.0`
+let base
+if (isAlreadyRc) {
+  // Already in an RC cycle — keep the same base version, just increment the RC number
+  base = pkg.version.replace(/-rc\.\d+$/, '')
 } else {
-  next = `${parts[0]}.${parts[1]}.${parts[2] + 1}`
-}
-
-// If the current version is already an RC for the same base, keep that base
-const currentBase = current
-if (pkg.version.includes('-rc.') && currentBase === next) {
-  // Already on an RC for this version — the tag scan below handles incrementing
-} else if (pkg.version.includes('-rc.')) {
-  // Current version is an RC but for a different base — use the new base
-} else {
-  // Current version is stable — bump to next
+  // Starting a new RC cycle from a stable version — bump according to type
+  const parts = pkg.version.split('.').map(Number)
+  if (bumpType === 'major') {
+    base = `${parts[0] + 1}.0.0`
+  } else if (bumpType === 'minor') {
+    base = `${parts[0]}.${parts[1] + 1}.0`
+  } else {
+    base = `${parts[0]}.${parts[1]}.${parts[2] + 1}`
+  }
 }
 
 let highestRc = 0
 try {
-  const tags = execSync(`git tag --list "v${next}-rc.*"`, { encoding: 'utf8' }).trim()
+  const tags = execSync(`git tag --list "v${base}-rc.*"`, { encoding: 'utf8' }).trim()
   if (tags) {
     for (const tag of tags.split('\n')) {
       const match = tag.match(/-rc\.(\d+)$/)
@@ -49,7 +45,7 @@ try {
   // No tags found — start at rc.1
 }
 
-const rcVersion = `${next}-rc.${highestRc + 1}`
+const rcVersion = `${base}-rc.${highestRc + 1}`
 
 console.log(`Bumping to ${rcVersion}`)
 execSync(`npm version ${rcVersion} -m "Release candidate %s"`, { stdio: 'inherit' })
