@@ -19,7 +19,7 @@ export const projectApi = {
   getSaveHistory: (limit?: number) =>
     window.anvil.invoke<SaveHistoryEntry[]>(IPC_CHANNELS.PROJECT_GET_SAVE_HISTORY, limit),
   getAutoSaveInfo: () =>
-    window.anvil.invoke<{ intervalMs: number; nextSaveAt: string | null }>(IPC_CHANNELS.PROJECT_GET_AUTO_SAVE_INFO),
+    window.anvil.invoke<{ enabled: boolean; intervalMs: number; nextSaveAt: string | null }>(IPC_CHANNELS.PROJECT_GET_AUTO_SAVE_INFO),
   backup: () =>
     window.anvil.invoke<{ success: boolean }>(IPC_CHANNELS.PROJECT_BACKUP),
   getWeeklyDeltas: () =>
