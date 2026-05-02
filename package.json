@@ -1,7 +1,7 @@
 {
   "name": "anvil",
   "productName": "Anvil",
-  "version": "0.1.1-rc.1",
+  "version": "0.1.2-rc.1",
   "description": "RPG Data Management Tool",
   "main": "out/main/index.js",
   "scripts": {
