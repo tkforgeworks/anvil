@@ -57,6 +57,9 @@ export default function TitleBar(): React.JSX.Element {
         <Typography variant="h6" component="div" sx={{ fontWeight: 700, letterSpacing: 0 }}>
           ANVIL
         </Typography>
+        <Typography variant="caption" sx={{ ml: 0.5, opacity: 0.4, fontSize: '0.6rem' }}>
+          v{__APP_VERSION__} ({__GIT_SHA__})
+        </Typography>
         <Chip
           label={activeProject ? activeProject.projectName : 'No Project Open'}
           size="small"
