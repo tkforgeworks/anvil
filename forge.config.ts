@@ -8,17 +8,15 @@ const config: ForgeConfig = {
     name: 'Anvil',
     executableName: 'anvil',
     icon: './resources/icon',
-    ignore: [
-      /^\/src/,
-      /^\/design_notes/,
-      /^\/archive/,
-      /^\/\.claude/,
-      /^\/\.git/,
-      /^\/tsconfig/,
-      /^\/electron\.vite\.config/,
-      /^\/forge\.config/,
-      /node_modules\/\.bin/,
-    ],
+    ignore: (filePath: string) => {
+      if (!filePath) return false
+      if (/\/node_modules\/\.bin(\/|$)/.test(filePath)) return true
+      if (/^\/package\.json$/.test(filePath)) return false
+      if (/^\/out(\/|$)/.test(filePath)) return false
+      if (/^\/node_modules(\/|$)/.test(filePath)) return false
+      if (/^\/resources(\/|$)/.test(filePath)) return false
+      return true
+    },
   },
   makers: [
     {
