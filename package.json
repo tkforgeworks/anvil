@@ -1,10 +1,13 @@
 {
   "name": "anvil",
   "productName": "Anvil",
-  "version": "0.1.2-rc.2",
+  "version": "0.1.2-rc.3",
   "description": "RPG Data Management Tool",
   "author": "TKForgeWorks",
-  "repository": { "type": "git", "url": "https://github.com/tkforgeworks/anvil.git" },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tkforgeworks/anvil.git"
+  },
   "license": "UNLICENSED",
   "homepage": "https://www.tkforgeworks.com",
   "main": "out/main/index.js",
