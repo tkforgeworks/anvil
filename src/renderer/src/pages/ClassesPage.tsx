@@ -89,7 +89,7 @@ function DeleteDialog({ record, onClose, onDeleted }: DeleteDialogProps): React.
         <Button onClick={onClose} disabled={isBusy}>
           Cancel
         </Button>
-        <Button color="error" variant="contained" onClick={() => void handleDelete()} disabled={isBusy}>
+        <Button data-tid="dialog-delete-confirm" color="error" variant="contained" onClick={() => void handleDelete()} disabled={isBusy}>
           Delete
         </Button>
       </DialogActions>
@@ -342,6 +342,7 @@ export default function ClassesPage(): React.JSX.Element {
                         </Tooltip>
                         <Tooltip title="Delete">
                           <IconButton
+                            data-tid="list-row-delete"
                             size="small"
                             color="error"
                             onClick={() => setDeleteTarget(cls)}

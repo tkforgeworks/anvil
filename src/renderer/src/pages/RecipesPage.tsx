@@ -91,7 +91,7 @@ function DeleteDialog({ record, onClose, onDeleted }: DeleteDialogProps): React.
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} disabled={isBusy}>Cancel</Button>
-        <Button color="error" variant="contained" onClick={() => void handleDelete()} disabled={isBusy}>Delete</Button>
+        <Button data-tid="dialog-delete-confirm" color="error" variant="contained" onClick={() => void handleDelete()} disabled={isBusy}>Delete</Button>
       </DialogActions>
     </Dialog>
   )
@@ -340,7 +340,7 @@ export default function RecipesPage(): React.JSX.Element {
                   <TableCell align="right" onClick={(e) => e.stopPropagation()}>
                     <Tooltip title="Edit"><IconButton size="small" onClick={() => openEditor(recipe.id)}><EditIcon fontSize="small" /></IconButton></Tooltip>
                     <Tooltip title="Duplicate"><IconButton size="small" onClick={() => void handleDuplicate(recipe)}><DuplicateIcon fontSize="small" /></IconButton></Tooltip>
-                    <Tooltip title="Delete"><IconButton size="small" color="error" onClick={() => setDeleteTarget(recipe)}><DeleteIcon fontSize="small" /></IconButton></Tooltip>
+                    <Tooltip title="Delete"><IconButton data-tid="list-row-delete" size="small" color="error" onClick={() => setDeleteTarget(recipe)}><DeleteIcon fontSize="small" /></IconButton></Tooltip>
                   </TableCell>
                 </TableRow>
               ))}

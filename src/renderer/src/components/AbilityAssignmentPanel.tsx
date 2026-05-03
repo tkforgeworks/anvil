@@ -190,6 +190,7 @@ export default function AbilityAssignmentPanel({
           }
         />
         <Button
+          data-tid="ability-assignment-add"
           variant="outlined"
           onClick={handleAdd}
           disabled={!pickerValue || disabled}

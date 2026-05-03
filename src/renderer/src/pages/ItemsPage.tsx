@@ -94,6 +94,7 @@ function DeleteDialog({ record, onClose, onDeleted }: DeleteDialogProps): React.
           Cancel
         </Button>
         <Button
+          data-tid="dialog-delete-confirm"
           color="error"
           variant="contained"
           onClick={() => void handleDelete()}
@@ -432,7 +433,7 @@ export default function ItemsPage(): React.JSX.Element {
                         </IconButton>
                       </Tooltip>
                       <Tooltip title="Delete">
-                        <IconButton size="small" color="error" onClick={() => setDeleteTarget(item)}>
+                        <IconButton data-tid="list-row-delete" size="small" color="error" onClick={() => setDeleteTarget(item)}>
                           <DeleteIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
