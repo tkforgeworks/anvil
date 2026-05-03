@@ -96,10 +96,11 @@ export function CreateClassDialog({ open, onClose, onCreated }: CreateClassDialo
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} disabled={isBusy}>
+        <Button data-tid="dialog-create-cancel" onClick={onClose} disabled={isBusy}>
           Cancel
         </Button>
         <Button
+          data-tid="dialog-create-confirm"
           variant="contained"
           onClick={() => void handleCreate()}
           disabled={!displayName.trim() || isBusy}

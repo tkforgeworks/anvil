@@ -53,6 +53,7 @@ export default function AppShell(): React.JSX.Element {
       if (!target?.tagName) return
 
       const tag = target.tagName.toLowerCase()
+      if (tag === 'body' || tag === 'html' || tag === 'main') return
       const isInput = tag === 'input' || tag === 'textarea'
       if (isInput && (target as HTMLInputElement).type === 'password') return
 

@@ -159,10 +159,10 @@ export function CreateItemDialog({
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} disabled={isBusy}>
+        <Button data-tid="dialog-create-cancel" onClick={onClose} disabled={isBusy}>
           Cancel
         </Button>
-        <Button variant="contained" onClick={() => void handleCreate()} disabled={!canCreate}>
+        <Button data-tid="dialog-create-confirm" variant="contained" onClick={() => void handleCreate()} disabled={!canCreate}>
           Create Item
         </Button>
       </DialogActions>

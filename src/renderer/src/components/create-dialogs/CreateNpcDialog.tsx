@@ -95,8 +95,8 @@ export function CreateNpcDialog({ open, npcTypes, onClose, onCreated }: CreateNp
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} disabled={isBusy}>Cancel</Button>
-        <Button variant="contained" onClick={() => void handleCreate()} disabled={!displayName.trim() || !npcTypeId || isBusy}>Create NPC</Button>
+        <Button data-tid="dialog-create-cancel" onClick={onClose} disabled={isBusy}>Cancel</Button>
+        <Button data-tid="dialog-create-confirm" variant="contained" onClick={() => void handleCreate()} disabled={!displayName.trim() || !npcTypeId || isBusy}>Create NPC</Button>
       </DialogActions>
     </Dialog>
   )

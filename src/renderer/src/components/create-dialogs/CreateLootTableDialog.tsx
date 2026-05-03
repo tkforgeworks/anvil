@@ -80,8 +80,8 @@ export function CreateLootTableDialog({ open, onClose, onCreated }: CreateLootTa
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} disabled={isBusy}>Cancel</Button>
-        <Button variant="contained" onClick={() => void handleCreate()} disabled={!displayName.trim() || isBusy}>Create Loot Table</Button>
+        <Button data-tid="dialog-create-cancel" onClick={onClose} disabled={isBusy}>Cancel</Button>
+        <Button data-tid="dialog-create-confirm" variant="contained" onClick={() => void handleCreate()} disabled={!displayName.trim() || isBusy}>Create Loot Table</Button>
       </DialogActions>
     </Dialog>
   )

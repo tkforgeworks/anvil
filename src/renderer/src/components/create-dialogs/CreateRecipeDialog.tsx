@@ -142,8 +142,8 @@ export function CreateRecipeDialog({
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} disabled={isBusy}>Cancel</Button>
-        <Button variant="contained" onClick={() => void handleCreate()} disabled={!displayName.trim() || !outputItemId || isBusy}>Create Recipe</Button>
+        <Button data-tid="dialog-create-cancel" onClick={onClose} disabled={isBusy}>Cancel</Button>
+        <Button data-tid="dialog-create-confirm" variant="contained" onClick={() => void handleCreate()} disabled={!displayName.trim() || !outputItemId || isBusy}>Create Recipe</Button>
       </DialogActions>
     </Dialog>
   )
