@@ -19,7 +19,7 @@ export default function EditorModal({ open, title, onClose, children }: EditorMo
     >
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 1 }}>
         {title}
-        <IconButton size="small" onClick={onClose}>
+        <IconButton size="small" onClick={onClose} data-tid="dialog-editor-modal-close">
           <CloseIcon fontSize="small" />
         </IconButton>
       </DialogTitle>

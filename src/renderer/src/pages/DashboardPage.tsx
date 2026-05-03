@@ -234,6 +234,7 @@ export default function DashboardPage(): React.JSX.Element {
             size="small"
             startIcon={<BackupIcon />}
             onClick={() => void handleBackup()}
+            data-tid="dash-backup"
             sx={{ color: '#fff', borderColor: 'rgba(255,255,255,0.5)', textTransform: 'none' }}
           >
             Backup
@@ -243,6 +244,7 @@ export default function DashboardPage(): React.JSX.Element {
             size="small"
             startIcon={<AddIcon />}
             onClick={(e) => setQuickAddAnchor(e.currentTarget)}
+            data-tid="dash-quick-add"
             sx={{ bgcolor: 'rgba(255,255,255,0.2)', textTransform: 'none', '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' } }}
           >
             Quick add
@@ -273,6 +275,7 @@ export default function DashboardPage(): React.JSX.Element {
             <ButtonBase
               key={key}
               onClick={() => navigate(path)}
+              data-tid={`dash-tile-${key === 'lootTables' ? 'loot-tables' : key}`}
               sx={{ display: 'block', textAlign: 'left', width: '100%' }}
             >
               <Paper variant="outlined" sx={{ p: 1.25 }}>

@@ -33,10 +33,10 @@ export default function SaveBar({
         <WarningAmberIcon color="warning" />
         <Typography variant="body2">You have unsaved changes</Typography>
         <Box sx={{ flex: 1 }} />
-        <Button variant="outlined" color="inherit" onClick={onDiscard} disabled={isSaving}>
+        <Button variant="outlined" color="inherit" onClick={onDiscard} disabled={isSaving} data-tid="savebar-discard">
           Discard
         </Button>
-        <Button variant="contained" onClick={onSave} disabled={isSaving}>
+        <Button variant="contained" onClick={onSave} disabled={isSaving} data-tid="savebar-save">
           Save
         </Button>
       </Stack>

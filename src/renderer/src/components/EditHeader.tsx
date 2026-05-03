@@ -50,7 +50,7 @@ export default function EditHeader({
       {/* Row 1: Back navigation */}
       <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
         <Tooltip title={`Back to ${backLabel}`}>
-          <IconButton size="small" onClick={onBack}>
+          <IconButton size="small" onClick={onBack} data-tid="editor-back">
             <ArrowBackIcon fontSize="small" />
           </IconButton>
         </Tooltip>
@@ -71,14 +71,14 @@ export default function EditHeader({
         />
         <Tooltip title="Undo (Ctrl+Z)">
           <span>
-            <IconButton size="small" onClick={onUndo} disabled={!canUndo}>
+            <IconButton size="small" onClick={onUndo} disabled={!canUndo} data-tid="editor-undo">
               <UndoIcon fontSize="small" />
             </IconButton>
           </span>
         </Tooltip>
         <Tooltip title="Redo (Ctrl+Y)">
           <span>
-            <IconButton size="small" onClick={onRedo} disabled={!canRedo}>
+            <IconButton size="small" onClick={onRedo} disabled={!canRedo} data-tid="editor-redo">
               <RedoIcon fontSize="small" />
             </IconButton>
           </span>
@@ -94,6 +94,7 @@ export default function EditHeader({
           startIcon={<SaveIcon />}
           onClick={onSave}
           disabled={!isDirty || isSaving}
+          data-tid="editor-save"
         >
           Save
         </Button>

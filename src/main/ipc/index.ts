@@ -12,6 +12,7 @@ import { registerMetaHandlers } from './meta.handlers'
 import { registerCustomFieldsHandlers } from './custom-fields.handlers'
 import { registerFormulaHandlers } from './formula.handlers'
 import { registerLifecycleHandlers } from './lifecycle.handlers'
+import { registerTelemetryHandlers } from './telemetry.handlers'
 
 /**
  * Registers all IPC handlers for all domains.
@@ -32,4 +33,5 @@ export function registerAllIpcHandlers(): void {
   registerCustomFieldsHandlers()
   registerFormulaHandlers()
   registerLifecycleHandlers()
+  registerTelemetryHandlers()
 }

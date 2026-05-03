@@ -2,6 +2,7 @@ import { app, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { registerAllIpcHandlers } from './ipc'
 import { initLogger } from './logging/app-logger'
+import { writeTelemetrySessionStart } from './logging/telemetry-writer'
 import { closeActiveProject } from './project/project-service'
 
 function createWindow(): void {
@@ -45,6 +46,7 @@ function registerWindowControls(): void {
 
 app.whenReady().then(() => {
   initLogger()
+  if (__TELEMETRY_ENABLED__) writeTelemetrySessionStart()
   registerAllIpcHandlers()
   registerWindowControls()
   ipcMain.handle('ping', () => 'pong')

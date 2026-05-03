@@ -41,8 +41,8 @@ export default function SettingsPage(): React.JSX.Element {
       </Typography>
 
       <Tabs value={activeTab} onChange={(_, v: number) => setActiveTab(v)} sx={{ mb: 0 }}>
-        <Tab label="Application" />
-        <Tab label="Project" />
+        <Tab label="Application" data-tid="settings-tab-application" />
+        <Tab label="Project" data-tid="settings-tab-project" />
       </Tabs>
       <Divider />
 

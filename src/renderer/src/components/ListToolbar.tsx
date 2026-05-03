@@ -44,6 +44,7 @@ export default function ListToolbar({
         placeholder="Search..."
         value={search}
         onChange={(e) => onSearchChange(e.target.value)}
+        data-tid="toolbar-search"
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">
@@ -62,6 +63,7 @@ export default function ListToolbar({
         label="Sort by"
         value={sortKey}
         onChange={(e) => onSortChange(e.target.value)}
+        data-tid="toolbar-sort"
         sx={{ width: 160 }}
       >
         {sortOptions.map((opt) => (
@@ -78,13 +80,14 @@ export default function ListToolbar({
         exclusive
         onChange={(_e, v) => { if (v) onViewModeChange(v as 'active' | 'archived') }}
         size="small"
+        data-tid="toolbar-view-toggle"
       >
         <ToggleButton value="active">Active</ToggleButton>
         <ToggleButton value="archived">Archived</ToggleButton>
       </ToggleButtonGroup>
 
       {viewMode !== 'archived' && !hideNew && (
-        <Button variant="contained" size="small" onClick={onNew}>
+        <Button variant="contained" size="small" onClick={onNew} data-tid="toolbar-new">
           {newLabel}
         </Button>
       )}

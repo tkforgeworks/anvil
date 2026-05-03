@@ -183,6 +183,9 @@ export const IPC_CHANNELS = {
   LIFECYCLE_EMPTY_TRASH: 'lifecycle:empty-trash',
   LIFECYCLE_COMPUTE_DELETE_IMPACT: 'lifecycle:compute-delete-impact',
   LIFECYCLE_COUNT_DELETED: 'lifecycle:count-deleted',
+
+  // Telemetry
+  TELEMETRY_FLUSH: 'telemetry:flush',
 } as const
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS]

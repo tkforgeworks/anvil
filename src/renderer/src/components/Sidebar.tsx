@@ -44,15 +44,16 @@ interface NavItem {
   badge?: number
   badgeColor?: string
   countKey?: keyof RecordCounts
+  tid?: string
 }
 
 const DOMAIN_NAV: NavItem[] = [
-  { label: 'Classes', to: '/classes', icon: <ClassesIcon fontSize="small" />, countKey: 'classes' },
-  { label: 'Abilities', to: '/abilities', icon: <AbilitiesIcon fontSize="small" />, countKey: 'abilities' },
-  { label: 'Items', to: '/items', icon: <ItemsIcon fontSize="small" />, countKey: 'items' },
-  { label: 'Recipes', to: '/recipes', icon: <RecipesIcon fontSize="small" />, countKey: 'recipes' },
-  { label: 'NPCs', to: '/npcs', icon: <NpcsIcon fontSize="small" />, countKey: 'npcs' },
-  { label: 'Loot Tables', to: '/loot-tables', icon: <LootIcon fontSize="small" />, countKey: 'lootTables' },
+  { label: 'Classes', to: '/classes', icon: <ClassesIcon fontSize="small" />, countKey: 'classes', tid: 'nav-classes' },
+  { label: 'Abilities', to: '/abilities', icon: <AbilitiesIcon fontSize="small" />, countKey: 'abilities', tid: 'nav-abilities' },
+  { label: 'Items', to: '/items', icon: <ItemsIcon fontSize="small" />, countKey: 'items', tid: 'nav-items' },
+  { label: 'Recipes', to: '/recipes', icon: <RecipesIcon fontSize="small" />, countKey: 'recipes', tid: 'nav-recipes' },
+  { label: 'NPCs', to: '/npcs', icon: <NpcsIcon fontSize="small" />, countKey: 'npcs', tid: 'nav-npcs' },
+  { label: 'Loot Tables', to: '/loot-tables', icon: <LootIcon fontSize="small" />, countKey: 'lootTables', tid: 'nav-loot-tables' },
 ]
 
 function NavListItem({
@@ -68,6 +69,7 @@ function NavListItem({
     <ListItemButton
       component={NavLink}
       to={item.to}
+      data-tid={item.tid}
       sx={{
         borderRadius: 1,
         mx: 0.5,
@@ -165,10 +167,10 @@ export default function Sidebar(): React.JSX.Element {
   const drawerWidth = collapsed ? DRAWER_WIDTH_COLLAPSED : DRAWER_WIDTH_EXPANDED
 
   const utilityNav: NavItem[] = [
-    { label: 'Validation', to: '/validation', icon: <ValidationIcon fontSize="small" />, badge: issueCount, badgeColor: hasErrors ? 'error.main' : 'warning.main' },
-    { label: 'Recycle Bin', to: '/recycle-bin', icon: <RecycleBinIcon fontSize="small" />, badge: trashCount, badgeColor: 'text.secondary' },
-    { label: 'Export', to: '/export', icon: <ExportIcon fontSize="small" /> },
-    { label: 'Settings', to: '/settings', icon: <SettingsIcon fontSize="small" /> },
+    { label: 'Validation', to: '/validation', icon: <ValidationIcon fontSize="small" />, badge: issueCount, badgeColor: hasErrors ? 'error.main' : 'warning.main', tid: 'nav-validation' },
+    { label: 'Recycle Bin', to: '/recycle-bin', icon: <RecycleBinIcon fontSize="small" />, badge: trashCount, badgeColor: 'text.secondary', tid: 'nav-recycle-bin' },
+    { label: 'Export', to: '/export', icon: <ExportIcon fontSize="small" />, tid: 'nav-export' },
+    { label: 'Settings', to: '/settings', icon: <SettingsIcon fontSize="small" />, tid: 'nav-settings' },
   ]
 
   const dashboardButton = (
@@ -176,6 +178,7 @@ export default function Sidebar(): React.JSX.Element {
       component={NavLink}
       to="/"
       end
+      data-tid="nav-dashboard"
       sx={{
         borderRadius: 1,
         mx: 0.5,
@@ -256,7 +259,7 @@ export default function Sidebar(): React.JSX.Element {
 
       <Box sx={{ mt: 'auto', display: 'flex', justifyContent: 'center', pb: 1 }}>
         <Tooltip title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'} placement="right" arrow>
-          <IconButton size="small" onClick={toggleSidebar}>
+          <IconButton size="small" onClick={toggleSidebar} data-tid="nav-collapse">
             {collapsed ? <ExpandIcon fontSize="small" /> : <CollapseIcon fontSize="small" />}
           </IconButton>
         </Tooltip>

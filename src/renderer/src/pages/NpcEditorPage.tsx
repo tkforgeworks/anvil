@@ -343,8 +343,8 @@ export default function NpcEditorPage({ recordId, onClose }: NpcEditorPageProps 
         />
 
         <Tabs value={activeTab} onChange={(_, v: number) => setActiveTab(v)}>
-          <Tab label="Overview" />
-          <Tab label="Details" />
+          <Tab label="Overview" data-tid="tab-npc-overview" />
+          <Tab label="Details" data-tid="tab-npc-details" />
         </Tabs>
       </Box>
 

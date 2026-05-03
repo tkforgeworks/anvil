@@ -8,10 +8,26 @@ const ALLOWED_CHANNELS = new Set<string>([
   'ping',
 ])
 
+const TELEMETRY_EXCLUDED = new Set<string>([
+  IPC_CHANNELS.TELEMETRY_FLUSH,
+  IPC_CHANNELS.PROJECT_GET_STATE,
+  IPC_CHANNELS.LIFECYCLE_COUNT_DELETED,
+])
+
 const bridge: AnvilBridge = {
   invoke: (channel, ...args) => {
     if (!ALLOWED_CHANNELS.has(channel)) {
       return Promise.reject(new Error(`Blocked IPC channel: ${channel}`))
+    }
+    if (__TELEMETRY_ENABLED__ && !TELEMETRY_EXCLUDED.has(channel)) {
+      const start = performance.now()
+      return ipcRenderer.invoke(channel, ...args).finally(() => {
+        ipcRenderer.invoke(IPC_CHANNELS.TELEMETRY_FLUSH, [{
+          ts: new Date().toISOString(),
+          type: 'ipc',
+          data: { channel, durationMs: Math.round(performance.now() - start) },
+        }]).catch(() => {})
+      })
     }
     return ipcRenderer.invoke(channel, ...args)
   },

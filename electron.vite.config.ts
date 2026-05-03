@@ -11,6 +11,7 @@ const buildDefines = {
   __APP_VERSION__: appVersion,
   __GIT_SHA__: gitSha,
   __BUILD_DATE__: buildDate,
+  __TELEMETRY_ENABLED__: JSON.stringify(process.env.VITE_TELEMETRY_ENABLED === 'true'),
 }
 
 export default defineConfig({

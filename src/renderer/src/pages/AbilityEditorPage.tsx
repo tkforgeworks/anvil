@@ -309,9 +309,9 @@ export default function AbilityEditorPage({ recordId, onClose }: AbilityEditorPa
         />
 
         <Tabs value={activeTab} onChange={(_, v: number) => setActiveTab(v)}>
-          <Tab label="Overview" />
-          <Tab label={<span>Details<DirtyDot visible={dirtyTabs.has(1)} /></span>} />
-          <Tab label={<span>Stat Modifiers<DirtyDot visible={dirtyTabs.has(2)} /></span>} />
+          <Tab label="Overview" data-tid="tab-ability-overview" />
+          <Tab label={<span>Details<DirtyDot visible={dirtyTabs.has(1)} /></span>} data-tid="tab-ability-details" />
+          <Tab label={<span>Stat Modifiers<DirtyDot visible={dirtyTabs.has(2)} /></span>} data-tid="tab-ability-stat-modifiers" />
         </Tabs>
       </Box>
 

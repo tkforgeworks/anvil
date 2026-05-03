@@ -265,11 +265,11 @@ export default function ClassEditorPage({ recordId, onClose }: ClassEditorPagePr
         />
 
         <Tabs value={activeTab} onChange={(_, v: number) => setActiveTab(v)} sx={{ mb: 0 }}>
-          <Tab label="Overview" />
-          <Tab label={<span>Details<DirtyDot visible={dirtyTabs.has(1)} /></span>} />
-          <Tab label="Stat Growth" />
-          <Tab label="Derived Stats" />
-          <Tab label="Abilities" />
+          <Tab label="Overview" data-tid="tab-class-overview" />
+          <Tab label={<span>Details<DirtyDot visible={dirtyTabs.has(1)} /></span>} data-tid="tab-class-details" />
+          <Tab label="Stat Growth" data-tid="tab-class-stat-growth" />
+          <Tab label="Derived Stats" data-tid="tab-class-derived-stats" />
+          <Tab label="Abilities" data-tid="tab-class-abilities" />
         </Tabs>
       </Box>
 

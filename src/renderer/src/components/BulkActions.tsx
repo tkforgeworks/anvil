@@ -56,6 +56,7 @@ export function BulkActionToolbar({
           variant="outlined"
           startIcon={<DeleteIcon />}
           onClick={onBulkDelete}
+          data-tid="bulk-delete"
         >
           Delete Selected
         </Button>
@@ -67,6 +68,7 @@ export function BulkActionToolbar({
           variant="outlined"
           startIcon={<RestoreIcon />}
           onClick={onBulkRestore}
+          data-tid="bulk-restore"
         >
           Restore Selected
         </Button>
@@ -78,6 +80,7 @@ export function BulkActionToolbar({
           variant="outlined"
           startIcon={<PermanentDeleteIcon />}
           onClick={onBulkHardDelete}
+          data-tid="bulk-hard-delete"
         >
           Permanently Delete
         </Button>
@@ -168,12 +171,13 @@ export function BulkDeleteDialog({
         )}
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} disabled={isBusy}>Cancel</Button>
+        <Button onClick={onClose} disabled={isBusy} data-tid="dialog-cancel">Cancel</Button>
         <Button
           color="error"
           variant="contained"
           onClick={() => void handleConfirm()}
           disabled={loading || isBusy}
+          data-tid="dialog-bulk-delete-confirm"
         >
           Delete
         </Button>
@@ -215,12 +219,13 @@ export function BulkHardDeleteDialog({
         </DialogContentText>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} disabled={isBusy}>Cancel</Button>
+        <Button onClick={onClose} disabled={isBusy} data-tid="dialog-cancel">Cancel</Button>
         <Button
           color="error"
           variant="contained"
           onClick={handleConfirm}
           disabled={isBusy}
+          data-tid="dialog-hard-delete-confirm"
         >
           Permanently Delete
         </Button>
@@ -280,12 +285,13 @@ export function EmptyTrashDialog({
         )}
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} disabled={isBusy}>Cancel</Button>
+        <Button onClick={onClose} disabled={isBusy} data-tid="dialog-cancel">Cancel</Button>
         <Button
           color="error"
           variant="contained"
           onClick={() => void handleConfirm()}
           disabled={isBusy}
+          data-tid="dialog-empty-trash-confirm"
         >
           {step === 1 ? 'Continue' : 'Permanently Delete All'}
         </Button>

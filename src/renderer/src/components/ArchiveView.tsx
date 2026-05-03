@@ -81,12 +81,13 @@ export function PermanentDeleteDialog({
         </DialogContentText>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} disabled={isBusy}>Cancel</Button>
+        <Button onClick={onClose} disabled={isBusy} data-tid="dialog-cancel">Cancel</Button>
         <Button
           color="error"
           variant="contained"
           onClick={handleConfirm}
           disabled={isBusy}
+          data-tid="dialog-hard-delete-confirm"
         >
           Permanently Delete
         </Button>

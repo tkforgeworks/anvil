@@ -349,8 +349,8 @@ export default function LootTableEditorPage({ recordId, onClose }: LootTableEdit
         />
 
         <Tabs value={activeTab} onChange={(_, v: number) => setActiveTab(v)}>
-          <Tab label="Overview" />
-          <Tab label="Entries" />
+          <Tab label="Overview" data-tid="tab-loot-table-overview" />
+          <Tab label="Entries" data-tid="tab-loot-table-entries" />
         </Tabs>
       </Box>
 

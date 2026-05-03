@@ -352,9 +352,9 @@ export default function RecipeEditorPage({ recordId, onClose }: RecipeEditorPage
         />
 
         <Tabs value={activeTab} onChange={(_, value: number) => setActiveTab(value)}>
-          <Tab label="Overview" />
-          <Tab label={<span>Details<DirtyDot visible={dirtyTabs.has(1)} /></span>} />
-          <Tab label={<span>Ingredients<DirtyDot visible={dirtyTabs.has(2)} /></span>} />
+          <Tab label="Overview" data-tid="tab-recipe-overview" />
+          <Tab label={<span>Details<DirtyDot visible={dirtyTabs.has(1)} /></span>} data-tid="tab-recipe-details" />
+          <Tab label={<span>Ingredients<DirtyDot visible={dirtyTabs.has(2)} /></span>} data-tid="tab-recipe-ingredients" />
         </Tabs>
       </Box>
 

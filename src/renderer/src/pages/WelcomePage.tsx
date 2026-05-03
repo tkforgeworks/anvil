@@ -137,6 +137,7 @@ export default function WelcomePage(): React.JSX.Element {
               variant="brand"
               onClick={() => setCreateOpen(true)}
               disabled={isBusy}
+              data-tid="welcome-new-project"
             />
             <ActionTile
               icon={<FolderOpenIcon sx={{ fontSize: 18 }} />}
@@ -145,6 +146,7 @@ export default function WelcomePage(): React.JSX.Element {
               subtitle=".anvil project file"
               onClick={() => void openProject()}
               disabled={isBusy}
+              data-tid="welcome-open-file"
             />
             <ActionTile
               icon={<SettingsIcon sx={{ fontSize: 18 }} />}
@@ -153,6 +155,7 @@ export default function WelcomePage(): React.JSX.Element {
               subtitle="Theme, shortcuts, paths"
               onClick={() => setSettingsOpen(true)}
               disabled={isBusy}
+              data-tid="welcome-settings"
             />
           </Stack>
 
@@ -291,10 +294,10 @@ export default function WelcomePage(): React.JSX.Element {
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={closeCreateDialog} disabled={isBusy}>
+          <Button onClick={closeCreateDialog} disabled={isBusy} data-tid="dialog-create-project-cancel">
             Cancel
           </Button>
-          <Button onClick={() => void createProject()} disabled={!canCreate} variant="contained">
+          <Button onClick={() => void createProject()} disabled={!canCreate} variant="contained" data-tid="dialog-create-project-confirm">
             Create
           </Button>
         </DialogActions>
@@ -313,14 +316,16 @@ interface ActionTileProps {
   variant?: 'brand' | 'default'
   onClick: () => void
   disabled?: boolean
+  'data-tid'?: string
 }
 
-function ActionTile({ icon, iconBg, title, subtitle, variant, onClick, disabled }: ActionTileProps) {
+function ActionTile({ icon, iconBg, title, subtitle, variant, onClick, disabled, 'data-tid': dataTid }: ActionTileProps) {
   const isBrand = variant === 'brand'
   return (
     <Paper
       variant="outlined"
       onClick={disabled ? undefined : onClick}
+      data-tid={dataTid}
       sx={{
         flex: 1,
         p: 1.5,

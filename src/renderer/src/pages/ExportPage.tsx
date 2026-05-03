@@ -261,6 +261,7 @@ export default function ExportPage(): React.JSX.Element {
             startIcon={<AddIcon />}
             onClick={openNewTemplate}
             size="small"
+            data-tid="export-new-template"
           >
             New Template
           </Button>
@@ -301,6 +302,7 @@ export default function ExportPage(): React.JSX.Element {
               label="Template / Preset"
               value={selectedPreset}
               onChange={(e) => { setSelectedPreset(e.target.value); setPreview(null) }}
+              data-tid="export-template-select"
             >
               {presets.map((preset) => (
                 <MenuItem key={preset.id} value={preset.id}>
@@ -344,6 +346,7 @@ export default function ExportPage(): React.JSX.Element {
               label="Scope"
               value={scopeMode}
               onChange={(e) => { setScopeMode(e.target.value as ScopeMode); setPreview(null) }}
+              data-tid="export-scope-select"
             >
               <MenuItem value="full">Full Project</MenuItem>
               <MenuItem value="domain">Single Domain</MenuItem>
@@ -420,6 +423,7 @@ export default function ExportPage(): React.JSX.Element {
               startIcon={<PreviewIcon />}
               onClick={() => void handlePreview()}
               disabled={isLoading || !canPreview}
+              data-tid="export-preview"
             >
               {isLoading ? 'Loading...' : 'Preview'}
             </Button>
@@ -428,6 +432,7 @@ export default function ExportPage(): React.JSX.Element {
               startIcon={<ExportIcon />}
               onClick={() => void handleExport()}
               disabled={isLoading || !canPreview}
+              data-tid="export-execute"
             >
               Export to File
             </Button>
@@ -626,11 +631,12 @@ Rarity: {{ item.rarity_id | export_key }}
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setTemplateDialogOpen(false)}>Cancel</Button>
+          <Button onClick={() => setTemplateDialogOpen(false)} data-tid="dialog-template-cancel">Cancel</Button>
           <Button
             variant="contained"
             onClick={() => void handleSaveTemplate()}
             disabled={!templateName.trim()}
+            data-tid="dialog-template-confirm"
           >
             {editingTemplate ? 'Save Changes' : 'Create Template'}
           </Button>

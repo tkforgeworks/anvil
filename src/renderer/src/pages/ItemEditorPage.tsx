@@ -261,9 +261,9 @@ export default function ItemEditorPage({ recordId, onClose }: ItemEditorPageProp
         />
 
         <Tabs value={activeTab} onChange={(_, value: number) => setActiveTab(value)}>
-          <Tab label="Overview" />
-          <Tab label={<span>Details<DirtyDot visible={dirtyTabs.has(1)} /></span>} />
-          <Tab label="Custom Fields" />
+          <Tab label="Overview" data-tid="tab-item-overview" />
+          <Tab label={<span>Details<DirtyDot visible={dirtyTabs.has(1)} /></span>} data-tid="tab-item-details" />
+          <Tab label="Custom Fields" data-tid="tab-item-custom-fields" />
         </Tabs>
       </Box>
 

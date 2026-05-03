@@ -9,6 +9,7 @@ import { buildCustomTheme } from './themes/custom'
 import { useUiStore } from './stores/ui.store'
 import { useSettingsStore } from './stores/settings.store'
 import type { CustomThemeColors } from '../../shared/settings-types'
+import { startFlushing, flushSync } from './telemetry/telemetry-collector'
 import App from './App'
 
 function Root(): React.JSX.Element {
@@ -38,6 +39,11 @@ function Root(): React.JSX.Element {
       </HashRouter>
     </ThemeProvider>
   )
+}
+
+if (__TELEMETRY_ENABLED__) {
+  startFlushing()
+  window.addEventListener('beforeunload', () => flushSync())
 }
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
