@@ -389,7 +389,7 @@ export default function LootTableEditorPage({ recordId, onClose }: LootTableEdit
                 <Typography variant="subtitle1">Entries</Typography>
                 <Typography variant="caption" color="text.secondary">Drop percentages are calculated from the current weights.</Typography>
               </Box>
-              <Button startIcon={<AddIcon />} variant="outlined" size="small" onClick={addEntry} disabled={activeItems.length === 0}>
+              <Button data-tid="loot-table-add-entry" startIcon={<AddIcon />} variant="outlined" size="small" onClick={addEntry} disabled={activeItems.length === 0}>
                 Add Entry
               </Button>
             </Stack>

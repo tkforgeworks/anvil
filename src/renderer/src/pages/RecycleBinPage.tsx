@@ -189,6 +189,7 @@ export default function RecycleBinPage(): React.JSX.Element {
         title="Recycle Bin"
         action={totalCount > 0 ? (
           <Button
+            data-tid="recycle-bin-empty-trash"
             color="error"
             variant="outlined"
             startIcon={<EmptyTrashIcon />}

@@ -132,6 +132,7 @@ export default function ValidationPage(): React.JSX.Element {
         subtitle={lastValidatedAt ? `Last checked: ${formatTimestamp(lastValidatedAt)}` : undefined}
         action={
           <Button
+            data-tid="validation-rerun"
             variant="outlined"
             startIcon={<RefreshIcon />}
             onClick={() => void runValidation()}

@@ -257,6 +257,7 @@ export default function DashboardPage(): React.JSX.Element {
             {QUICK_ADD_DOMAINS.map((d) => (
               <MenuItem
                 key={d.label}
+                data-tid={`dash-quick-add-${d.domain}`}
                 onClick={() => openQuickAdd(d.domain)}
               >
                 {d.label}
@@ -386,6 +387,7 @@ export default function DashboardPage(): React.JSX.Element {
               {QUICK_ADD_DOMAINS.map((d) => (
                 <Chip
                   key={d.label}
+                  data-tid={`dash-quick-add-${d.domain}`}
                   label={d.label}
                   size="small"
                   onClick={() => openQuickAdd(d.domain)}

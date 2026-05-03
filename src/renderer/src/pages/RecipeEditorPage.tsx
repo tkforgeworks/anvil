@@ -428,7 +428,7 @@ export default function RecipeEditorPage({ recordId, onClose }: RecipeEditorPage
         <Stack spacing={2} sx={{ maxWidth: 860 }}>
           <Stack direction="row" justifyContent="space-between" alignItems="center">
             <Typography variant="subtitle1">Ingredients</Typography>
-            <Button startIcon={<AddIcon />} variant="outlined" size="small" onClick={addIngredient} disabled={activeItems.length === 0}>
+            <Button data-tid="recipe-add-ingredient" startIcon={<AddIcon />} variant="outlined" size="small" onClick={addIngredient} disabled={activeItems.length === 0}>
               Add Ingredient
             </Button>
           </Stack>

@@ -62,7 +62,8 @@ export default function AppShell(): React.JSX.Element {
         text = (target as HTMLInputElement).placeholder ||
           target.getAttribute('aria-label') || ''
       } else {
-        text = (target.textContent ?? '').trim().slice(0, 80)
+        const raw = (target.textContent ?? '').trim()
+        text = raw.length > 40 ? '' : raw
       }
 
       recordEvent({
