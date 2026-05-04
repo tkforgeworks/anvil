@@ -7,15 +7,10 @@ export type LogLevel = 'error' | 'warn' | 'info' | 'debug'
 const LEVEL_PRIORITY: Record<LogLevel, number> = { error: 0, warn: 1, info: 2, debug: 3 }
 const LEVEL_TAGS: Record<LogLevel, string> = { error: 'ERROR', warn: 'WARN ', info: 'INFO ', debug: 'DEBUG' }
 
-let logDirectory: string | null = null
 let minLevel: LogLevel = 'info'
 
 export function initLogger(): void {
   minLevel = app.isPackaged ? 'info' : 'debug'
-}
-
-export function setLogDirectory(dir: string | null): void {
-  logDirectory = dir
 }
 
 export function logError(message: string, error?: unknown): void {
@@ -57,7 +52,6 @@ function writeLog(level: LogLevel, message: string): void {
 }
 
 function resolveLogDir(): string | null {
-  if (logDirectory) return logDirectory
   try {
     return join(app.getPath('userData'), 'logs')
   } catch {

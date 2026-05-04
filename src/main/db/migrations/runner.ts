@@ -1,3 +1,4 @@
+import { logError, logInfo } from '../../logging/app-logger'
 import type { DbConnection } from '../connection'
 import * as migration001 from './001_init'
 import * as migration002 from './002_seed_meta_layer'
@@ -66,8 +67,10 @@ export function runMigrations(db: DbConnection): void {
 
     try {
       apply()
+      logInfo(`Migration applied: ${migration.filename}`)
       ranAny = true
     } catch (cause) {
+      logError(`Migration failed: ${migration.filename}`, cause instanceof Error ? cause : new Error(String(cause)))
       throw new MigrationError(migration.filename, cause)
     }
   }
@@ -76,6 +79,7 @@ export function runMigrations(db: DbConnection): void {
     db.prepare('UPDATE project_info SET schema_version = ?, updated_at = datetime(\'now\') WHERE id = 1').run(
       CURRENT_SCHEMA_VERSION,
     )
+    logInfo(`Schema upgraded to v${CURRENT_SCHEMA_VERSION}`)
   }
 }
 

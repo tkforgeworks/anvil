@@ -1,4 +1,4 @@
-import { ipcMain, dialog, BrowserWindow } from 'electron'
+import { dialog, BrowserWindow } from 'electron'
 import { mkdirSync, existsSync } from 'fs'
 import { writeFile, mkdir } from 'fs/promises'
 import { join } from 'path'
@@ -10,6 +10,7 @@ import { getDb } from '../db/connection'
 import { assembleExportContext, type ExportScope } from '../export/context-assembler'
 import { BUILT_IN_PRESETS, renderExport, renderCustomTemplate, type ExportPreset, type RenderResult } from '../export/renderer'
 import { validateProject } from '../validation/engine'
+import { safeHandle } from './safe-handle'
 
 export interface ExportPresetInfo {
   id: string
@@ -81,7 +82,7 @@ function getDefaultExportDir(): string | undefined {
 }
 
 export function registerExportHandlers(): void {
-  ipcMain.handle(
+  safeHandle(
     IPC_CHANNELS.EXPORT_GET_TEMPLATES,
     (): ExportPresetInfo[] => {
       const builtIn = BUILT_IN_PRESETS.map((p: ExportPreset) => ({
@@ -104,12 +105,12 @@ export function registerExportHandlers(): void {
     },
   )
 
-  ipcMain.handle(
+  safeHandle(
     IPC_CHANNELS.EXPORT_LIST_CUSTOM_TEMPLATES,
     (): CustomTemplate[] => getCustomTemplates(),
   )
 
-  ipcMain.handle(
+  safeHandle(
     IPC_CHANNELS.EXPORT_CREATE_TEMPLATE,
     (_event, data: { name: string; description?: string; template_source: string; format?: string }): CustomTemplate => {
       const db = getDb()
@@ -123,7 +124,7 @@ export function registerExportHandlers(): void {
     },
   )
 
-  ipcMain.handle(
+  safeHandle(
     IPC_CHANNELS.EXPORT_UPDATE_TEMPLATE,
     (_event, id: string, data: { name?: string; description?: string; template_source?: string; format?: string }): CustomTemplate => {
       const db = getDb()
@@ -144,7 +145,7 @@ export function registerExportHandlers(): void {
     },
   )
 
-  ipcMain.handle(
+  safeHandle(
     IPC_CHANNELS.EXPORT_DELETE_TEMPLATE,
     (_event, id: string): { success: boolean } => {
       const db = getDb()
@@ -153,7 +154,7 @@ export function registerExportHandlers(): void {
     },
   )
 
-  ipcMain.handle(
+  safeHandle(
     IPC_CHANNELS.EXPORT_PREVIEW,
     (_event, presetId: string, scope: ExportScope): { output: string; files?: { filename: string; content: string }[]; error?: string } => {
       try {
@@ -168,7 +169,7 @@ export function registerExportHandlers(): void {
     },
   )
 
-  ipcMain.handle(
+  safeHandle(
     IPC_CHANNELS.EXPORT_EXECUTE,
     async (_event, presetId: string, scope: ExportScope): Promise<{ success: boolean; error?: string; path?: string }> => {
       try {

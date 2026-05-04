@@ -1,4 +1,5 @@
 import Database from 'better-sqlite3'
+import { logDebug } from '../logging/app-logger'
 
 export type DbConnection = Database.Database
 
@@ -21,6 +22,7 @@ export function openDatabase(filePath: string): DbConnection {
   db.pragma('foreign_keys = ON')
 
   _db = db
+  logDebug(`Database opened: ${filePath}`)
   return db
 }
 
@@ -44,4 +46,5 @@ export function closeDatabase(db: DbConnection): void {
     db.close()
   }
   _db = null
+  logDebug('Database closed')
 }

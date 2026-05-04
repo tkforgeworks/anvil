@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto'
-import { ipcMain } from 'electron'
 import { IPC_CHANNELS } from '../../shared/ipc-channels'
+import { safeHandle } from './safe-handle'
 import { getDb } from '../db/connection'
 import { markProjectDirty } from '../project/project-service'
 import type { ChangeEntry } from '../project/change-accumulator'
@@ -135,7 +135,7 @@ function toMetaStat(row: StatRow): MetaStat {
 }
 
 export function registerMetaHandlers(): void {
-  ipcMain.handle(IPC_CHANNELS.META_LIST_ITEM_CATEGORIES, () => {
+  safeHandle(IPC_CHANNELS.META_LIST_ITEM_CATEGORIES, () => {
     const rows = getDb()
       .prepare(
         `SELECT id, display_name, export_key, description, sort_order
@@ -146,7 +146,7 @@ export function registerMetaHandlers(): void {
     return rows.map(toMetaItemCategory)
   })
 
-  ipcMain.handle(IPC_CHANNELS.META_LIST_RARITIES, () => {
+  safeHandle(IPC_CHANNELS.META_LIST_RARITIES, () => {
     const rows = getDb()
       .prepare(
         `SELECT id, display_name, export_key, color_hex, sort_order
@@ -157,7 +157,7 @@ export function registerMetaHandlers(): void {
     return rows.map(toMetaRarity)
   })
 
-  ipcMain.handle(IPC_CHANNELS.META_LIST_NPC_TYPES, () => {
+  safeHandle(IPC_CHANNELS.META_LIST_NPC_TYPES, () => {
     const rows = getDb()
       .prepare(
         `SELECT id, display_name, export_key, description, sort_order
@@ -168,7 +168,7 @@ export function registerMetaHandlers(): void {
     return rows.map(toMetaNpcType)
   })
 
-  ipcMain.handle(IPC_CHANNELS.META_LIST_CRAFTING_STATIONS, () => {
+  safeHandle(IPC_CHANNELS.META_LIST_CRAFTING_STATIONS, () => {
     const rows = getDb()
       .prepare(
         `SELECT id, display_name, export_key, description, sort_order
@@ -179,7 +179,7 @@ export function registerMetaHandlers(): void {
     return rows.map(toMetaCraftingStation)
   })
 
-  ipcMain.handle(IPC_CHANNELS.META_LIST_CRAFTING_SPECIALIZATIONS, () => {
+  safeHandle(IPC_CHANNELS.META_LIST_CRAFTING_SPECIALIZATIONS, () => {
     const rows = getDb()
       .prepare(
         `SELECT id, display_name, export_key, description, sort_order
@@ -190,7 +190,7 @@ export function registerMetaHandlers(): void {
     return rows.map(toMetaCraftingSpecialization)
   })
 
-  ipcMain.handle(IPC_CHANNELS.META_LIST_STATS, () => {
+  safeHandle(IPC_CHANNELS.META_LIST_STATS, () => {
     const rows = getDb()
       .prepare(
         `SELECT id, display_name, export_key, sort_order
@@ -201,7 +201,7 @@ export function registerMetaHandlers(): void {
     return rows.map(toMetaStat)
   })
 
-  ipcMain.handle(IPC_CHANNELS.META_LIST_DERIVED_STATS, (): DerivedStatDefinition[] => {
+  safeHandle(IPC_CHANNELS.META_LIST_DERIVED_STATS, (): DerivedStatDefinition[] => {
     interface DerivedStatRow {
       id: string; display_name: string; export_key: string
       formula: string; output_type: string; rounding_mode: string; sort_order: number
@@ -224,7 +224,7 @@ export function registerMetaHandlers(): void {
     }))
   })
 
-  ipcMain.handle(IPC_CHANNELS.META_GET_PROJECT_SETTINGS, (): ProjectSettings => {
+  safeHandle(IPC_CHANNELS.META_GET_PROJECT_SETTINGS, (): ProjectSettings => {
     const row = getDb()
       .prepare(`SELECT game_title, max_level, soft_delete_reference_severity FROM project_info LIMIT 1`)
       .get() as ProjectSettingsRow
@@ -237,7 +237,7 @@ export function registerMetaHandlers(): void {
 
   // ─── Project Settings update ─────────────────────────────────────────────────
 
-  ipcMain.handle(
+  safeHandle(
     IPC_CHANNELS.META_SET_PROJECT_SETTINGS,
     (_event, input: Partial<ProjectSettings>): ProjectSettings => {
       const db = getDb()
@@ -266,7 +266,7 @@ export function registerMetaHandlers(): void {
 
   // ─── Stats CRUD ──────────────────────────────────────────────────────────────
 
-  ipcMain.handle(
+  safeHandle(
     IPC_CHANNELS.META_ADD_STAT,
     (_event, input: MetaItemInput): MetaStat => {
       const db = getDb()
@@ -285,7 +285,7 @@ export function registerMetaHandlers(): void {
     },
   )
 
-  ipcMain.handle(
+  safeHandle(
     IPC_CHANNELS.META_UPDATE_STAT,
     (_event, id: string, input: MetaItemInput): MetaStat => {
       const db = getDb()
@@ -299,7 +299,7 @@ export function registerMetaHandlers(): void {
     },
   )
 
-  ipcMain.handle(
+  safeHandle(
     IPC_CHANNELS.META_DELETE_STAT,
     (_event, id: string): MetaDeleteResult => {
       const db = getDb()
@@ -320,7 +320,7 @@ export function registerMetaHandlers(): void {
     },
   )
 
-  ipcMain.handle(
+  safeHandle(
     IPC_CHANNELS.META_REORDER_STATS,
     (_event, items: MetaReorderItem[]): void => {
       const db = getDb()
@@ -338,7 +338,7 @@ export function registerMetaHandlers(): void {
 
   // ─── Rarities CRUD ───────────────────────────────────────────────────────────
 
-  ipcMain.handle(
+  safeHandle(
     IPC_CHANNELS.META_ADD_RARITY,
     (_event, input: MetaRarityInput): MetaRarity => {
       const db = getDb()
@@ -359,7 +359,7 @@ export function registerMetaHandlers(): void {
     },
   )
 
-  ipcMain.handle(
+  safeHandle(
     IPC_CHANNELS.META_UPDATE_RARITY,
     (_event, id: string, input: MetaRarityInput): MetaRarity => {
       const db = getDb()
@@ -375,7 +375,7 @@ export function registerMetaHandlers(): void {
     },
   )
 
-  ipcMain.handle(
+  safeHandle(
     IPC_CHANNELS.META_DELETE_RARITY,
     (_event, id: string): MetaDeleteResult => {
       const db = getDb()
@@ -391,7 +391,7 @@ export function registerMetaHandlers(): void {
     },
   )
 
-  ipcMain.handle(
+  safeHandle(
     IPC_CHANNELS.META_REORDER_RARITIES,
     (_event, items: MetaReorderItem[]): void => {
       const db = getDb()
@@ -409,7 +409,7 @@ export function registerMetaHandlers(): void {
 
   // ─── NPC Types CRUD ──────────────────────────────────────────────────────────
 
-  ipcMain.handle(
+  safeHandle(
     IPC_CHANNELS.META_ADD_NPC_TYPE,
     (_event, input: MetaItemInput): MetaNpcType => {
       const db = getDb()
@@ -430,7 +430,7 @@ export function registerMetaHandlers(): void {
     },
   )
 
-  ipcMain.handle(
+  safeHandle(
     IPC_CHANNELS.META_UPDATE_NPC_TYPE,
     (_event, id: string, input: MetaItemInput): MetaNpcType => {
       const db = getDb()
@@ -446,7 +446,7 @@ export function registerMetaHandlers(): void {
     },
   )
 
-  ipcMain.handle(
+  safeHandle(
     IPC_CHANNELS.META_DELETE_NPC_TYPE,
     (_event, id: string): MetaDeleteResult => {
       const db = getDb()
@@ -462,7 +462,7 @@ export function registerMetaHandlers(): void {
     },
   )
 
-  ipcMain.handle(
+  safeHandle(
     IPC_CHANNELS.META_REORDER_NPC_TYPES,
     (_event, items: MetaReorderItem[]): void => {
       const db = getDb()
@@ -480,7 +480,7 @@ export function registerMetaHandlers(): void {
 
   // ─── Crafting Stations CRUD ──────────────────────────────────────────────────
 
-  ipcMain.handle(
+  safeHandle(
     IPC_CHANNELS.META_ADD_CRAFTING_STATION,
     (_event, input: MetaItemInput): MetaCraftingStation => {
       const db = getDb()
@@ -501,7 +501,7 @@ export function registerMetaHandlers(): void {
     },
   )
 
-  ipcMain.handle(
+  safeHandle(
     IPC_CHANNELS.META_UPDATE_CRAFTING_STATION,
     (_event, id: string, input: MetaItemInput): MetaCraftingStation => {
       const db = getDb()
@@ -517,7 +517,7 @@ export function registerMetaHandlers(): void {
     },
   )
 
-  ipcMain.handle(
+  safeHandle(
     IPC_CHANNELS.META_DELETE_CRAFTING_STATION,
     (_event, id: string): MetaDeleteResult => {
       const db = getDb()
@@ -533,7 +533,7 @@ export function registerMetaHandlers(): void {
     },
   )
 
-  ipcMain.handle(
+  safeHandle(
     IPC_CHANNELS.META_REORDER_CRAFTING_STATIONS,
     (_event, items: MetaReorderItem[]): void => {
       const db = getDb()
@@ -551,7 +551,7 @@ export function registerMetaHandlers(): void {
 
   // ─── Crafting Specializations CRUD ───────────────────────────────────────────
 
-  ipcMain.handle(
+  safeHandle(
     IPC_CHANNELS.META_ADD_CRAFTING_SPECIALIZATION,
     (_event, input: MetaItemInput): MetaCraftingSpecialization => {
       const db = getDb()
@@ -572,7 +572,7 @@ export function registerMetaHandlers(): void {
     },
   )
 
-  ipcMain.handle(
+  safeHandle(
     IPC_CHANNELS.META_UPDATE_CRAFTING_SPECIALIZATION,
     (_event, id: string, input: MetaItemInput): MetaCraftingSpecialization => {
       const db = getDb()
@@ -588,7 +588,7 @@ export function registerMetaHandlers(): void {
     },
   )
 
-  ipcMain.handle(
+  safeHandle(
     IPC_CHANNELS.META_DELETE_CRAFTING_SPECIALIZATION,
     (_event, id: string): MetaDeleteResult => {
       const db = getDb()
@@ -604,7 +604,7 @@ export function registerMetaHandlers(): void {
     },
   )
 
-  ipcMain.handle(
+  safeHandle(
     IPC_CHANNELS.META_REORDER_CRAFTING_SPECIALIZATIONS,
     (_event, items: MetaReorderItem[]): void => {
       const db = getDb()
@@ -622,7 +622,7 @@ export function registerMetaHandlers(): void {
 
   // ─── Derived Stat Definitions CRUD ───────────────────────────────────────────
 
-  ipcMain.handle(
+  safeHandle(
     IPC_CHANNELS.META_ADD_DERIVED_STAT,
     (_event, input: DerivedStatInput): DerivedStatDefinition => {
       const db = getDb()
@@ -648,7 +648,7 @@ export function registerMetaHandlers(): void {
     },
   )
 
-  ipcMain.handle(
+  safeHandle(
     IPC_CHANNELS.META_UPDATE_DERIVED_STAT,
     (_event, id: string, input: DerivedStatInput): DerivedStatDefinition => {
       const db = getDb()
@@ -681,7 +681,7 @@ export function registerMetaHandlers(): void {
     },
   )
 
-  ipcMain.handle(
+  safeHandle(
     IPC_CHANNELS.META_DELETE_DERIVED_STAT,
     (_event, id: string): MetaDeleteResult => {
       const db = getDb()
@@ -697,7 +697,7 @@ export function registerMetaHandlers(): void {
     },
   )
 
-  ipcMain.handle(
+  safeHandle(
     IPC_CHANNELS.META_REORDER_DERIVED_STATS,
     (_event, items: MetaReorderItem[]): void => {
       const db = getDb()

@@ -16,7 +16,7 @@ import { basename, dirname, extname, join, parse } from 'path'
 import { closeDatabase, getDb, openDatabase, type DbConnection } from '../db/connection'
 import { CURRENT_SCHEMA_VERSION, runMigrations } from '../db/migrations/runner'
 import { getAppSettings } from '../settings/app-settings-service'
-import { logError, logInfo, setLogDirectory } from '../logging/app-logger'
+import { logDebug, logError, logInfo } from '../logging/app-logger'
 import { clearChanges, hasNetPendingChanges, recordChange, type ChangeEntry } from './change-accumulator'
 import { createProjectFolder, detectProjectFolder, sanitizeFolderName } from './project-folder'
 import { recordSave } from './save-history-service'
@@ -392,7 +392,10 @@ function startAutoSaveTimer(): void {
   if (!settings.autoSaveEnabled) return
   const intervalMs = settings.autoSaveIntervalMs
   autoSaveTimer = setInterval(() => {
-    if (!activeProject || !isDirty || saveStatus === 'saving' || isRecoveryMode) return
+    if (!activeProject || !isDirty || saveStatus === 'saving' || isRecoveryMode) {
+      logDebug(`Auto-save skipped: ${!activeProject ? 'no project' : !isDirty ? 'not dirty' : saveStatus === 'saving' ? 'already saving' : 'recovery mode'}`)
+      return
+    }
 
     try {
       saveProject(true)
@@ -494,7 +497,6 @@ export async function createProject(
     const project = buildProjectMetadata(db, filePath)
     setCleanState(project)
     isRecoveryMode = false
-    setLogDirectory(project.projectFolder?.logs ?? null)
     startAutoSaveTimer()
     updateRecentProjects(project)
     logInfo(`Project created: ${projectName} (${filePath})`)
@@ -543,15 +545,16 @@ export async function openProject(
     setCleanState(project)
     isRecoveryMode = false
     recoveryMessage = null
-    setLogDirectory(project.projectFolder?.logs ?? null)
     startAutoSaveTimer()
     updateRecentProjects(project)
     logInfo(`Project opened: ${project.projectName} (${activePath})`)
     return getProjectState()
   } catch (error) {
     if (error instanceof ProjectLockError) {
+      logError('Project lock conflict', error)
       throw error
     }
+    logError('Project open failed, entering recovery mode', error)
     return setRecoveryState(selectedPath, error)
   }
 }
@@ -602,6 +605,7 @@ export async function saveProjectAs(owner: BrowserWindow | null): Promise<Projec
     updateRecentProjects(activeProject)
     return getProjectState()
   } catch (error) {
+    logError('Save-as failed', error)
     if (switchedDatabase) {
       try {
         releaseProjectLock()
@@ -624,7 +628,6 @@ export function closeActiveProject(): ProjectStateSnapshot {
   closeExistingDatabase()
   releaseProjectLock()
   setCleanState(null)
-  setLogDirectory(null)
   isRecoveryMode = false
   recoveryMessage = null
   return getProjectState()

@@ -1,9 +1,17 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { registerAllIpcHandlers } from './ipc'
-import { initLogger } from './logging/app-logger'
+import { initLogger, logError, logInfo, logWarn } from './logging/app-logger'
 import { writeTelemetrySessionStart } from './logging/telemetry-writer'
 import { closeActiveProject } from './project/project-service'
+
+process.on('uncaughtException', (error) => {
+  logError('Uncaught exception', error)
+})
+
+process.on('unhandledRejection', (reason) => {
+  logError('Unhandled rejection', reason instanceof Error ? reason : new Error(String(reason)))
+})
 
 function createWindow(): void {
   const win = new BrowserWindow({
@@ -46,12 +54,20 @@ function registerWindowControls(): void {
 
 app.whenReady().then(() => {
   initLogger()
+
+  const originalConsoleError = console.error
+  console.error = (...args: unknown[]) => { logError(args.map(String).join(' ')); originalConsoleError(...args) }
+  const originalConsoleWarn = console.warn
+  console.warn = (...args: unknown[]) => { logWarn(args.map(String).join(' ')); originalConsoleWarn(...args) }
+
+  logInfo('Anvil starting')
   if (__TELEMETRY_ENABLED__) writeTelemetrySessionStart()
   registerAllIpcHandlers()
   registerWindowControls()
   ipcMain.handle('ping', () => 'pong')
 
   createWindow()
+  logInfo('Main window created')
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -67,5 +83,6 @@ app.on('window-all-closed', () => {
 })
 
 app.on('before-quit', () => {
+  logInfo('Anvil shutting down')
   closeActiveProject()
 })

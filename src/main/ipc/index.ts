@@ -14,10 +14,6 @@ import { registerFormulaHandlers } from './formula.handlers'
 import { registerLifecycleHandlers } from './lifecycle.handlers'
 import { registerTelemetryHandlers } from './telemetry.handlers'
 
-/**
- * Registers all IPC handlers for all domains.
- * Called once from the main process entry inside app.whenReady().
- */
 export function registerAllIpcHandlers(): void {
   registerProjectHandlers()
   registerClassesHandlers()

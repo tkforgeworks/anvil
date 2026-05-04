@@ -1,5 +1,5 @@
-import { ipcMain } from 'electron'
 import { IPC_CHANNELS } from '../../shared/ipc-channels'
+import { safeHandle } from './safe-handle'
 import type { BulkOperationInput, LifecycleDomain } from '../../shared/domain-types'
 import { getDb } from '../db/connection'
 import { markProjectDirty } from '../project/project-service'
@@ -22,7 +22,7 @@ function validateDomain(domain: string): asserts domain is LifecycleDomain {
 }
 
 export function registerLifecycleHandlers(): void {
-  ipcMain.handle(
+  safeHandle(
     IPC_CHANNELS.LIFECYCLE_BULK_SOFT_DELETE,
     (_event, input: BulkOperationInput) => {
       validateDomain(input.domain)
@@ -41,7 +41,7 @@ export function registerLifecycleHandlers(): void {
     },
   )
 
-  ipcMain.handle(
+  safeHandle(
     IPC_CHANNELS.LIFECYCLE_BULK_RESTORE,
     (_event, input: BulkOperationInput) => {
       validateDomain(input.domain)
@@ -59,7 +59,7 @@ export function registerLifecycleHandlers(): void {
     },
   )
 
-  ipcMain.handle(
+  safeHandle(
     IPC_CHANNELS.LIFECYCLE_BULK_HARD_DELETE,
     (_event, input: BulkOperationInput) => {
       validateDomain(input.domain)
@@ -73,7 +73,7 @@ export function registerLifecycleHandlers(): void {
     },
   )
 
-  ipcMain.handle(IPC_CHANNELS.LIFECYCLE_EMPTY_TRASH, () => {
+  safeHandle(IPC_CHANNELS.LIFECYCLE_EMPTY_TRASH, () => {
     const db = getDb()
     const domainKeys = Object.keys(DOMAIN_TABLES) as LifecycleDomain[]
     const tx = db.transaction(() => {
@@ -87,7 +87,7 @@ export function registerLifecycleHandlers(): void {
     }
   })
 
-  ipcMain.handle(
+  safeHandle(
     IPC_CHANNELS.LIFECYCLE_COMPUTE_DELETE_IMPACT,
     (_event, input: BulkOperationInput) => {
       validateDomain(input.domain)
@@ -95,7 +95,7 @@ export function registerLifecycleHandlers(): void {
     },
   )
 
-  ipcMain.handle(IPC_CHANNELS.LIFECYCLE_COUNT_DELETED, () => {
+  safeHandle(IPC_CHANNELS.LIFECYCLE_COUNT_DELETED, () => {
     const db = getDb()
     let total = 0
     for (const table of ALL_DOMAIN_TABLES) {

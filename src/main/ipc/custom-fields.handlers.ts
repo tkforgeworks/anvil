@@ -1,5 +1,5 @@
-import { ipcMain } from 'electron'
 import { IPC_CHANNELS } from '../../shared/ipc-channels'
+import { safeHandle } from './safe-handle'
 import type {
   CreateCustomFieldDefinitionInput,
   CustomFieldValue,
@@ -14,14 +14,14 @@ import { markProjectDirty } from '../project/project-service'
 import type { ChangeEntry } from '../project/change-accumulator'
 
 export function registerCustomFieldsHandlers(): void {
-  ipcMain.handle(
+  safeHandle(
     IPC_CHANNELS.CUSTOM_FIELDS_LIST_DEFINITIONS,
     (_event, { scopeType, scopeId }: { scopeType: string; scopeId: string }) => {
       return customFieldDefinitionRepository.listByScope(scopeType, scopeId)
     },
   )
 
-  ipcMain.handle(
+  safeHandle(
     IPC_CHANNELS.CUSTOM_FIELDS_CREATE_DEFINITION,
     (_event, input: CreateCustomFieldDefinitionInput) => {
       const record = customFieldDefinitionRepository.create(input)
@@ -30,7 +30,7 @@ export function registerCustomFieldsHandlers(): void {
     },
   )
 
-  ipcMain.handle(
+  safeHandle(
     IPC_CHANNELS.CUSTOM_FIELDS_UPDATE_DEFINITION,
     (_event, id: string, input: UpdateCustomFieldDefinitionInput) => {
       const record = customFieldDefinitionRepository.update(id, input)
@@ -39,13 +39,13 @@ export function registerCustomFieldsHandlers(): void {
     },
   )
 
-  ipcMain.handle(IPC_CHANNELS.CUSTOM_FIELDS_DELETE_DEFINITION, (_event, id: string) => {
+  safeHandle(IPC_CHANNELS.CUSTOM_FIELDS_DELETE_DEFINITION, (_event, id: string) => {
     const result = customFieldDefinitionRepository.delete(id)
     if (result.deleted) markProjectDirty({ domain: 'custom-fields', recordId: id, recordName: '', subArea: 'basic-info', action: 'delete' })
     return result
   })
 
-  ipcMain.handle(
+  safeHandle(
     IPC_CHANNELS.CUSTOM_FIELDS_GET_VALUES,
     (_event, { domain, recordId }: { domain: 'items' | 'npcs'; recordId: string }) => {
       if (domain === 'items') return itemRepository.getCustomFieldValues(recordId)
@@ -53,7 +53,7 @@ export function registerCustomFieldsHandlers(): void {
     },
   )
 
-  ipcMain.handle(
+  safeHandle(
     IPC_CHANNELS.CUSTOM_FIELDS_SET_VALUES,
     (
       _event,

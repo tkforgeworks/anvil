@@ -1,3 +1,5 @@
+import { logWarn } from '../logging/app-logger'
+
 /**
  * Custom recursive-descent formula parser and evaluator.
  *
@@ -276,11 +278,14 @@ export function evaluateFormula(
     return { value, error: null, isSyntaxError: false }
   } catch (e) {
     if (e instanceof FormulaSyntaxError) {
+      logWarn(`Formula syntax error: ${e.message}`)
       return { value: null, error: e.message, isSyntaxError: true }
     }
     if (e instanceof FormulaRuntimeError) {
+      logWarn(`Formula runtime error: ${e.message}`)
       return { value: null, error: e.message, isSyntaxError: false }
     }
+    logWarn('Formula evaluation failed')
     return { value: null, error: 'Formula evaluation failed', isSyntaxError: false }
   }
 }
