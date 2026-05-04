@@ -284,6 +284,7 @@ export default function RecycleBinPage(): React.JSX.Element {
                             <Stack direction="row" spacing={0.5} justifyContent="flex-end">
                               <Tooltip title="Restore">
                                 <IconButton
+                                  data-tid="recycle-bin-restore"
                                   size="small"
                                   color="primary"
                                   onClick={() => void handleRestore(group.domain, record.id)}

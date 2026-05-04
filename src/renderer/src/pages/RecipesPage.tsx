@@ -339,7 +339,7 @@ export default function RecipesPage(): React.JSX.Element {
                   <TableCell><Typography variant="body2" color="text.secondary">{recipe.craftingSpecializationId ? specializationById.get(recipe.craftingSpecializationId)?.displayName ?? recipe.craftingSpecializationId : '-'}</Typography></TableCell>
                   <TableCell align="right" onClick={(e) => e.stopPropagation()}>
                     <Tooltip title="Edit"><IconButton size="small" onClick={() => openEditor(recipe.id)}><EditIcon fontSize="small" /></IconButton></Tooltip>
-                    <Tooltip title="Duplicate"><IconButton size="small" onClick={() => void handleDuplicate(recipe)}><DuplicateIcon fontSize="small" /></IconButton></Tooltip>
+                    <Tooltip title="Duplicate"><IconButton data-tid="list-row-duplicate" size="small" onClick={() => void handleDuplicate(recipe)}><DuplicateIcon fontSize="small" /></IconButton></Tooltip>
                     <Tooltip title="Delete"><IconButton data-tid="list-row-delete" size="small" color="error" onClick={() => setDeleteTarget(recipe)}><DeleteIcon fontSize="small" /></IconButton></Tooltip>
                   </TableCell>
                 </TableRow>

@@ -325,7 +325,7 @@ export default function ExportPage(): React.JSX.Element {
               {!currentPreset.builtIn && (
                 <>
                   <Tooltip title="Edit template">
-                    <IconButton size="small" onClick={() => void openEditTemplate(currentPreset.id)}>
+                    <IconButton data-tid="export-edit-template" size="small" onClick={() => void openEditTemplate(currentPreset.id)}>
                       <EditIcon fontSize="small" />
                     </IconButton>
                   </Tooltip>

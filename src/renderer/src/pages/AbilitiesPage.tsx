@@ -345,7 +345,7 @@ export default function AbilitiesPage(): React.JSX.Element {
                           </IconButton>
                         </Tooltip>
                         <Tooltip title="Duplicate">
-                          <IconButton size="small" onClick={() => void handleDuplicate(ability)}>
+                          <IconButton data-tid="list-row-duplicate" size="small" onClick={() => void handleDuplicate(ability)}>
                             <DuplicateIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>

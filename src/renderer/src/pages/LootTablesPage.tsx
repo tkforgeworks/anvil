@@ -311,7 +311,7 @@ export default function LootTablesPage(): React.JSX.Element {
                   <TableCell><Typography variant="body2" color="text.secondary">{new Date(table.updatedAt).toLocaleString()}</Typography></TableCell>
                   <TableCell align="right" onClick={(e) => e.stopPropagation()}>
                     <Tooltip title="Edit"><IconButton size="small" onClick={() => openEditor(table.id)}><EditIcon fontSize="small" /></IconButton></Tooltip>
-                    <Tooltip title="Duplicate"><IconButton size="small" onClick={() => void handleDuplicate(table)}><DuplicateIcon fontSize="small" /></IconButton></Tooltip>
+                    <Tooltip title="Duplicate"><IconButton data-tid="list-row-duplicate" size="small" onClick={() => void handleDuplicate(table)}><DuplicateIcon fontSize="small" /></IconButton></Tooltip>
                     <Tooltip title="Delete"><IconButton data-tid="list-row-delete" size="small" color="error" onClick={() => setDeleteTarget(table)}><DeleteIcon fontSize="small" /></IconButton></Tooltip>
                   </TableCell>
                 </TableRow>

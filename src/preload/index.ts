@@ -1,5 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { AnvilBridge } from '../shared/ipc-types'
+import type { TelemetryEvent } from '../shared/telemetry-types'
 import { IPC_CHANNELS } from '../shared/ipc-channels'
 
 // Allowlist of all valid IPC channels, plus the ping verification channel
@@ -20,6 +21,8 @@ const TELEMETRY_EXCLUDED = new Set<string>([
   IPC_CHANNELS.FORMULA_EVALUATE_BATCH,
 ])
 
+const ipcTelemetryBuffer: TelemetryEvent[] = []
+
 const bridge: AnvilBridge = {
   invoke: (channel, ...args) => {
     if (!ALLOWED_CHANNELS.has(channel)) {
@@ -28,11 +31,11 @@ const bridge: AnvilBridge = {
     if (__TELEMETRY_ENABLED__ && !TELEMETRY_EXCLUDED.has(channel)) {
       const start = performance.now()
       return ipcRenderer.invoke(channel, ...args).finally(() => {
-        ipcRenderer.invoke(IPC_CHANNELS.TELEMETRY_FLUSH, [{
+        ipcTelemetryBuffer.push({
           ts: new Date().toISOString(),
           type: 'ipc',
           data: { channel, durationMs: Math.round(performance.now() - start) },
-        }]).catch(() => {})
+        })
       })
     }
     return ipcRenderer.invoke(channel, ...args)
@@ -47,6 +50,8 @@ const bridge: AnvilBridge = {
     ipcRenderer.on(channel, wrapped)
     return () => ipcRenderer.removeListener(channel, wrapped)
   },
+
+  drainIpcTelemetry: () => ipcTelemetryBuffer.splice(0),
 }
 
 contextBridge.exposeInMainWorld('anvil', bridge)

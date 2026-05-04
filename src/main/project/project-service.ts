@@ -17,7 +17,6 @@ import { closeDatabase, getDb, openDatabase, type DbConnection } from '../db/con
 import { CURRENT_SCHEMA_VERSION, runMigrations } from '../db/migrations/runner'
 import { getAppSettings } from '../settings/app-settings-service'
 import { logError, logInfo, setLogDirectory } from '../logging/app-logger'
-import { setTelemetryLogDirectory } from '../logging/telemetry-writer'
 import { clearChanges, hasNetPendingChanges, recordChange, type ChangeEntry } from './change-accumulator'
 import { createProjectFolder, detectProjectFolder, sanitizeFolderName } from './project-folder'
 import { recordSave } from './save-history-service'
@@ -496,7 +495,6 @@ export async function createProject(
     setCleanState(project)
     isRecoveryMode = false
     setLogDirectory(project.projectFolder?.logs ?? null)
-    setTelemetryLogDirectory(project.projectFolder?.logs ?? null, project.projectName)
     startAutoSaveTimer()
     updateRecentProjects(project)
     logInfo(`Project created: ${projectName} (${filePath})`)
@@ -546,7 +544,6 @@ export async function openProject(
     isRecoveryMode = false
     recoveryMessage = null
     setLogDirectory(project.projectFolder?.logs ?? null)
-    setTelemetryLogDirectory(project.projectFolder?.logs ?? null, project.projectName)
     startAutoSaveTimer()
     updateRecentProjects(project)
     logInfo(`Project opened: ${project.projectName} (${activePath})`)
@@ -628,7 +625,6 @@ export function closeActiveProject(): ProjectStateSnapshot {
   releaseProjectLock()
   setCleanState(null)
   setLogDirectory(null)
-  setTelemetryLogDirectory(null)
   isRecoveryMode = false
   recoveryMessage = null
   return getProjectState()

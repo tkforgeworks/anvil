@@ -22,13 +22,21 @@ export function stopFlushing(): void {
 }
 
 export function flushSync(): void {
-  if (buffer.length === 0) return
-  const batch = buffer.splice(0)
+  const batch = collectBatch()
+  if (batch.length === 0) return
   window.anvil.invoke(IPC_CHANNELS.TELEMETRY_FLUSH, batch).catch(() => {})
 }
 
 function flush(): void {
-  if (buffer.length === 0) return
-  const batch = buffer.splice(0)
+  const batch = collectBatch()
+  if (batch.length === 0) return
   window.anvil.invoke(IPC_CHANNELS.TELEMETRY_FLUSH, batch).catch(() => {})
+}
+
+function collectBatch(): TelemetryEvent[] {
+  const ipcEvents = window.anvil.drainIpcTelemetry()
+  const rendererEvents = buffer.splice(0)
+  if (ipcEvents.length === 0) return rendererEvents
+  if (rendererEvents.length === 0) return ipcEvents
+  return [...rendererEvents, ...ipcEvents].sort((a, b) => a.ts.localeCompare(b.ts))
 }

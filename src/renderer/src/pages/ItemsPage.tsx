@@ -428,7 +428,7 @@ export default function ItemsPage(): React.JSX.Element {
                         </IconButton>
                       </Tooltip>
                       <Tooltip title="Duplicate">
-                        <IconButton size="small" onClick={() => void handleDuplicate(item)}>
+                        <IconButton data-tid="list-row-duplicate" size="small" onClick={() => void handleDuplicate(item)}>
                           <DuplicateIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>

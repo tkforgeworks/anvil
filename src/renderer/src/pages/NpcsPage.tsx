@@ -314,7 +314,7 @@ export default function NpcsPage(): React.JSX.Element {
                   <TableCell><Typography variant="body2" color="text.secondary">{new Date(npc.updatedAt).toLocaleString()}</Typography></TableCell>
                   <TableCell align="right" onClick={(e) => e.stopPropagation()}>
                     <Tooltip title="Edit"><IconButton size="small" onClick={() => openEditor(npc.id)}><EditIcon fontSize="small" /></IconButton></Tooltip>
-                    <Tooltip title="Duplicate"><IconButton size="small" onClick={() => void handleDuplicate(npc)}><DuplicateIcon fontSize="small" /></IconButton></Tooltip>
+                    <Tooltip title="Duplicate"><IconButton data-tid="list-row-duplicate" size="small" onClick={() => void handleDuplicate(npc)}><DuplicateIcon fontSize="small" /></IconButton></Tooltip>
                     <Tooltip title="Delete"><IconButton data-tid="list-row-delete" size="small" color="error" onClick={() => setDeleteTarget(npc)}><DeleteIcon fontSize="small" /></IconButton></Tooltip>
                   </TableCell>
                 </TableRow>

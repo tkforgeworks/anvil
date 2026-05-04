@@ -336,7 +336,7 @@ export default function ClassesPage(): React.JSX.Element {
                           </IconButton>
                         </Tooltip>
                         <Tooltip title="Duplicate">
-                          <IconButton size="small" onClick={() => void handleDuplicate(cls)}>
+                          <IconButton data-tid="list-row-duplicate" size="small" onClick={() => void handleDuplicate(cls)}>
                             <DuplicateIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
