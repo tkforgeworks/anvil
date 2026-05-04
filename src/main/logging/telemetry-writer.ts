@@ -2,6 +2,7 @@ import { app } from 'electron'
 import { appendFileSync, existsSync, mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 import type { TelemetryEvent } from '../../shared/telemetry-types'
+import { rotateIfNeeded } from './log-rotation'
 
 export function writeTelemetrySessionStart(): void {
   writeTelemetryBatch([{
@@ -24,9 +25,10 @@ export function writeTelemetryBatch(events: TelemetryEvent[]): void {
 
   try {
     if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
-    const filename = `anvil-telemetry-${new Date().toISOString().slice(0, 10)}.jsonl`
+    const filePath = join(dir, 'anvil-telemetry.jsonl')
     const lines = events.map((e) => JSON.stringify(e)).join('\n') + '\n'
-    appendFileSync(join(dir, filename), lines, 'utf-8')
+    rotateIfNeeded(filePath)
+    appendFileSync(filePath, lines, 'utf-8')
   } catch {
     // telemetry must never crash the app
   }

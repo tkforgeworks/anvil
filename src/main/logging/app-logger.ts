@@ -1,6 +1,7 @@
 import { app } from 'electron'
 import { appendFileSync, existsSync, mkdirSync } from 'node:fs'
 import { join } from 'node:path'
+import { rotateIfNeeded } from './log-rotation'
 
 export type LogLevel = 'error' | 'warn' | 'info' | 'debug'
 
@@ -44,8 +45,9 @@ function writeLog(level: LogLevel, message: string): void {
 
   try {
     if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
-    const filename = `anvil-${now.toISOString().slice(0, 10)}.log`
-    appendFileSync(join(dir, filename), line, 'utf-8')
+    const filePath = join(dir, 'anvil.log')
+    rotateIfNeeded(filePath)
+    appendFileSync(filePath, line, 'utf-8')
   } catch {
     // logging must never crash the app
   }
