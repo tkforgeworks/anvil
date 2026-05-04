@@ -85,7 +85,7 @@ export default function TitleBar(): React.JSX.Element {
           >
             Save
           </Button>
-          <Button color="inherit" size="small" data-tid="titlebar-close" onClick={() => void closeProject()}>
+          <Button color="inherit" size="small" data-tid="titlebar-close" onClick={() => void closeProject()} disabled={!activeProject}>
             Close
           </Button>
           <Divider orientation="vertical" flexItem sx={{ mx: 0.5, borderColor: 'rgba(255,255,255,0.2)' }} />
