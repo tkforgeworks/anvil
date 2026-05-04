@@ -117,26 +117,43 @@ export default function DashboardPage(): React.JSX.Element {
     }
   }, [hydrate, setGlobalIssues])
 
-  const loadMetaData = useCallback(async () => {
-    const [cats, rars, types, sts, specs, items] = await Promise.all([
-      metaApi.listItemCategories(),
-      metaApi.listRarities(),
-      metaApi.listNpcTypes(),
-      metaApi.listCraftingStations(),
-      metaApi.listCraftingSpecializations(),
-      itemsApi.list(),
-    ])
-    setCategories(cats)
-    setRarities(rars)
-    setNpcTypes(types)
-    setStations(sts)
-    setSpecializations(specs)
-    setAllItems(items)
-  }, [])
-
   const openQuickAdd = (domain: QuickAddDomain): void => {
     setQuickAddAnchor(null)
-    void loadMetaData().then(() => setQuickAddDomain(domain))
+    switch (domain) {
+      case 'classes':
+      case 'abilities':
+      case 'lootTables':
+        setQuickAddDomain(domain)
+        break
+      case 'items':
+        void Promise.all([
+          metaApi.listItemCategories(),
+          metaApi.listRarities(),
+        ]).then(([cats, rars]) => {
+          setCategories(cats)
+          setRarities(rars)
+          setQuickAddDomain(domain)
+        })
+        break
+      case 'recipes':
+        void Promise.all([
+          metaApi.listCraftingStations(),
+          metaApi.listCraftingSpecializations(),
+          itemsApi.list(),
+        ]).then(([sts, specs, items]) => {
+          setStations(sts)
+          setSpecializations(specs)
+          setAllItems(items)
+          setQuickAddDomain(domain)
+        })
+        break
+      case 'npcs':
+        void metaApi.listNpcTypes().then((types) => {
+          setNpcTypes(types)
+          setQuickAddDomain(domain)
+        })
+        break
+    }
   }
 
   const handleQuickAddCreated = (): void => {
