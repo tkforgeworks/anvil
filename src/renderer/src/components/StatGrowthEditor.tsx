@@ -226,9 +226,10 @@ function InterpolateHelper({ stats, formulaStatIds, maxLevel, onApply }: Interpo
 
 interface StatGrowthEditorProps {
   classId: string
+  onDirtyChange?: (dirty: boolean) => void
 }
 
-export default function StatGrowthEditor({ classId }: StatGrowthEditorProps): React.JSX.Element {
+export default function StatGrowthEditor({ classId, onDirtyChange }: StatGrowthEditorProps): React.JSX.Element {
   const [stats, setStats] = useState<MetaStat[]>([])
   const [maxLevel, setMaxLevel] = useState(50)
   const [gridValues, setGridValues] = useState<GridValues>({})
@@ -293,6 +294,10 @@ export default function StatGrowthEditor({ classId }: StatGrowthEditorProps): Re
       if (formulaDebounceRef.current) clearTimeout(formulaDebounceRef.current)
     }
   }, [])
+
+  useEffect(() => {
+    onDirtyChange?.(isDirty)
+  }, [isDirty, onDirtyChange])
 
   const handleCellChange = useCallback(
     (statId: string, level: number, value: string) => {

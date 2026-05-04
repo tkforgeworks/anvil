@@ -8,7 +8,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { abilitiesApi } from '../../api/abilities.api'
 import { classesApi } from '../../api/classes.api'
@@ -43,13 +43,18 @@ interface FormSnapshot {
 interface TabPanelProps {
   index: number
   value: number
-  children: React.ReactNode
+  children: ReactNode
 }
 
 function TabPanel({ index, value, children }: TabPanelProps): React.JSX.Element {
+  const [hasBeenActive, setHasBeenActive] = useState(value === index)
+  useEffect(() => {
+    if (value === index) setHasBeenActive(true)
+  }, [value, index])
+
   return (
     <Box role="tabpanel" hidden={value !== index} sx={{ pt: 3 }}>
-      {value === index && children}
+      {hasBeenActive && children}
     </Box>
   )
 }
@@ -82,6 +87,7 @@ export default function ClassEditorPage({ recordId, onClose }: ClassEditorPagePr
   const [allAbilities, setAllAbilities] = useState<AbilityRecord[]>([])
   const [usedBy, setUsedBy] = useState<ClassUsedBy | null>(null)
   const [usedByLoading, setUsedByLoading] = useState(false)
+  const [statGrowthDirty, setStatGrowthDirty] = useState(false)
   const { recordIssues, runValidation } = useRecordValidation('classes', id)
 
   type TabFields = Omit<FormSnapshot, 'displayName' | 'exportKey'>
@@ -267,7 +273,7 @@ export default function ClassEditorPage({ recordId, onClose }: ClassEditorPagePr
         <Tabs value={activeTab} onChange={(_, v: number) => setActiveTab(v)} sx={{ mb: 0 }}>
           <Tab label="Overview" data-tid="tab-class-overview" />
           <Tab label={<span>Details<DirtyDot visible={dirtyTabs.has(1)} /></span>} data-tid="tab-class-details" />
-          <Tab label="Stat Growth" data-tid="tab-class-stat-growth" />
+          <Tab label={<span>Stat Growth<DirtyDot visible={statGrowthDirty} /></span>} data-tid="tab-class-stat-growth" />
           <Tab label="Derived Stats" data-tid="tab-class-derived-stats" />
           <Tab label="Abilities" data-tid="tab-class-abilities" />
         </Tabs>
@@ -331,7 +337,7 @@ export default function ClassEditorPage({ recordId, onClose }: ClassEditorPagePr
       </TabPanel>
 
       <TabPanel index={2} value={activeTab}>
-        <StatGrowthEditor classId={record.id} />
+        <StatGrowthEditor classId={record.id} onDirtyChange={setStatGrowthDirty} />
       </TabPanel>
 
       <TabPanel index={3} value={activeTab}>
