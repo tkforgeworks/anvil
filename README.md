@@ -4,7 +4,7 @@ Anvil is a desktop application for managing RPG game data. It gives game develop
 
 Anvil is game-agnostic — it ships with sensible RPG defaults but allows full schema customization per project.
 
-> **Status:** Project lifecycle is implemented and schema foundation work is underway. Users can create/open `.anvil` projects, see recent projects and dashboard counts, save/Save As with status feedback, and rely on file locking, schema migration, and recovery-mode guards. Domain repository CRUD and full domain editors are still in progress.
+> **Status:** Pre-release (v0.1.x). All six domain editors, the validation engine, export system, and full project lifecycle are implemented and in active testing. See [Releases](https://github.com/tkforgeworks/anvil/releases) for builds.
 
 ---
 
@@ -18,7 +18,11 @@ Anvil is game-agnostic — it ships with sensible RPG defaults but allows full s
 - **NPC Editor** — Manage enemies and NPCs with class-based stat inheritance (additive, multi-class), loot table assignment, and ability assignment
 - **Loot Table Editor** — Define standalone drop tables with integer weight-based probability visualization and item resolution
 - **Cross-Domain Validation** — Continuous referential integrity checks, configurable severity levels, and an export gate that blocks on errors
-- **Export Engine** — Template-based export (Nunjucks) with built-in presets (Nested JSON, Flat JSON, CSV) and selective export with dependency resolution
+- **Export Engine** — Template-based export (Nunjucks) with built-in presets (Nested JSON, Flat JSON, CSV), custom templates, selective export with dependency resolution
+- **Recycle Bin & Bulk Operations** — Soft-delete with restore, bulk actions across domains, per-record and project-wide recycle bin with impact summaries
+- **Undo/Redo** — Per-record undo/redo (Ctrl+Z/Y) across all editor pages
+- **Dashboard** — Project overview with record counts, weekly deltas, save history feed, validation summary, and quick-add
+- **Application & Project Settings** — Theme selection (dark/light/custom), editing mode (modal/full-page), stat/rarity/station/specialization CRUD, custom fields
 
 ### Out of Scope (v1)
 
@@ -59,10 +63,15 @@ anvil/
 │   │   ├── db/
 │   │   │   ├── connection.ts    # SQLite singleton (openDatabase, getDb, closeDatabase)
 │   │   │   └── migrations/      # Sequential migration runner + migration files
-│   │   ├── ipc/                 # Project/domain IPC handlers (some domain create/update paths still stubbed)
-│   │   ├── project/             # Project lifecycle service: create/open/save/Save As/locking/recovery
-│   │   ├── repositories/        # Shared domain repository foundation
-│   │   └── settings/            # Application settings persistence
+│   │   ├── export/              # Context assembler + Nunjucks renderer
+│   │   ├── formula/             # Recursive-descent formula engine (derived stats, stat growth)
+│   │   ├── ipc/                 # IPC handlers for all domains and lifecycle operations
+│   │   ├── lifecycle/           # Cross-domain bulk delete/restore/impact analysis
+│   │   ├── logging/             # Application logger + telemetry writer + log rotation
+│   │   ├── project/             # Project lifecycle: create/open/save/locking/recovery/folder structure
+│   │   ├── repositories/        # Domain repositories (classes, abilities, items, recipes, NPCs, loot tables)
+│   │   ├── settings/            # Application settings persistence
+│   │   └── validation/          # Validation engine — referential integrity, formula, custom field checks
 │   ├── preload/
 │   │   └── index.ts             # contextBridge — exposes window.anvil with channel allowlist
 │   ├── renderer/
@@ -70,9 +79,9 @@ anvil/
 │   │   └── src/
 │   │       ├── main.tsx         # React root — ThemeProvider + HashRouter
 │   │       ├── App.tsx          # Route tree (11 routes)
-│   │       ├── components/      # AppShell, Sidebar, TitleBar
-│   │       ├── pages/           # Welcome, dashboard, and domain placeholder pages
-│   │       ├── stores/          # Zustand stores (ui + 10 domain stores)
+│   │       ├── components/      # Shared UI: AppShell, Sidebar, TitleBar, editors, dialogs
+│   │       ├── pages/           # Welcome, dashboard, settings, and all domain list/editor pages
+│   │       ├── stores/          # Zustand stores (project, ui, lifecycle, settings, domain stores)
 │   │       └── themes/          # MUI dark/light theme objects
 │   └── shared/
 │       ├── ipc-channels.ts      # All IPC channel name constants
@@ -109,23 +118,20 @@ npm run make      # Build and package for current platform
 
 | Phase | Scope | Status |
 |---|---|---|
-| **Phase 1** | Character Classes, Abilities, Items, Crafting Recipes; project lifecycle; formula engine; validation; custom fields | In progress |
-| **Phase 2** | NPC editor, Loot Table editor, export system, archive views, bulk ops, undo/redo | Not started |
+| **Phase 1** | All 6 domain editors, project lifecycle, formula engine, validation, custom fields, export, settings, undo/redo, recycle bin, bulk operations, UI standardization | Complete |
+| **Phase 2** | Multi-class comparison, project templates, data import, advanced search/filter | Planned |
 
-### Completed epics
+---
 
-| Epic | Description |
-|---|---|
-| ANV-4 | Project bootstrap — Electron + electron-vite setup, IPC bridge, SQLite layer, React Router shell, MUI theme, Zustand stores |
-| ANV-5 | Project file and lifecycle management — create/open/recent projects, dashboard, save/Save As, auto-save/status feedback, file locking, non-destructive migration, recovery-mode guards |
+## Roadmap
 
-### Current work
+Planned work for upcoming releases:
 
-| Epic | Description | Status |
-|---|---|---|
-| ANV-6 | Data model and schema foundation | In progress |
-
-ANV-6 currently has migration 001 and migration 002 implemented for the initial schema and default meta-layer seed data. Remaining work is focused on the typed domain repository layer and wiring create/update/delete IPC paths for all six domains.
+- **Multi-class stat comparison view** — Side-by-side stat growth and derived stat comparison across classes
+- **Project templates** — Start new projects from saved templates with pre-configured meta-data
+- **Data import** — Import records from external sources (CSV, JSON)
+- **macOS builds** — Distribution for macOS alongside existing Windows and Linux builds
+- **Additional export presets** — More built-in export template options beyond JSON and CSV
 
 ---
 
