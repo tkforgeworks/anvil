@@ -39,6 +39,14 @@ const config: ForgeConfig = {
       name: '@electron-forge/maker-rpm',
       config: {},
     },
+    {
+      name: '@reforged/maker-appimage',
+      config: {
+        options: {
+          categories: ['Game', 'Utility'],
+        },
+      },
+    },
   ],
 }
 
