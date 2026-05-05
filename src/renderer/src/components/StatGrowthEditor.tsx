@@ -17,7 +17,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import {
   CartesianGrid,
   Legend,
@@ -224,12 +224,17 @@ function InterpolateHelper({ stats, formulaStatIds, maxLevel, onApply }: Interpo
 
 // ─── Main component ────────────────────────────────────────────────────────────
 
+export interface StatGrowthEditorRef {
+  save: () => Promise<void>
+  reload: () => void
+}
+
 interface StatGrowthEditorProps {
   classId: string
   onDirtyChange?: (dirty: boolean) => void
 }
 
-export default function StatGrowthEditor({ classId, onDirtyChange }: StatGrowthEditorProps): React.JSX.Element {
+const StatGrowthEditor = forwardRef<StatGrowthEditorRef, StatGrowthEditorProps>(function StatGrowthEditor({ classId, onDirtyChange }, ref) {
   const [stats, setStats] = useState<MetaStat[]>([])
   const [maxLevel, setMaxLevel] = useState(50)
   const [gridValues, setGridValues] = useState<GridValues>({})
@@ -480,6 +485,11 @@ export default function StatGrowthEditor({ classId, onDirtyChange }: StatGrowthE
     [stats, hiddenStats],
   )
 
+  useImperativeHandle(ref, () => ({
+    save: handleSave,
+    reload: () => void load(),
+  }))
+
   if (isLoading) {
     return <Typography color="text.secondary">Loading stat growth…</Typography>
   }
@@ -491,26 +501,9 @@ export default function StatGrowthEditor({ classId, onDirtyChange }: StatGrowthE
   return (
     <Box>
       {/* Header */}
-      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
-        <Typography variant="subtitle1" fontWeight={500}>
-          Primary Stat Growth — levels 1–{maxLevel}
-        </Typography>
-        <Stack direction="row" alignItems="center" spacing={2}>
-          {savedAt && (
-            <Typography variant="caption" color="success.main">
-              Saved at {savedAt.toLocaleTimeString()}
-            </Typography>
-          )}
-          <Button
-            variant="contained"
-            size="small"
-            onClick={() => void handleSave()}
-            disabled={!isDirty || isSaving}
-          >
-            Save
-          </Button>
-        </Stack>
-      </Stack>
+      <Typography variant="subtitle1" fontWeight={500} sx={{ mb: 2 }}>
+        Primary Stat Growth — levels 1–{maxLevel}
+      </Typography>
 
       {error && (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
@@ -732,7 +725,9 @@ export default function StatGrowthEditor({ classId, onDirtyChange }: StatGrowthE
       </Dialog>
     </Box>
   )
-}
+})
+
+export default StatGrowthEditor
 
 // ─── Memoized row to prevent full-grid re-renders on single-cell edits ─────────
 // Custom comparator: only the values for this specific level matter.

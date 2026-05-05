@@ -19,12 +19,12 @@ import type {
   ClassUsedBy,
 } from '../../../shared/domain-types'
 import AbilityAssignmentPanel, { type AbilityAssignmentRef } from '../components/AbilityAssignmentPanel'
-import DerivedStatsEditor from '../components/DerivedStatsEditor'
+import DerivedStatsEditor, { type DerivedStatsEditorRef } from '../components/DerivedStatsEditor'
 import EditHeader from '../components/EditHeader'
 import type { UsedBySection } from '../components/InspectorRail'
 import OverviewTab from '../components/OverviewTab'
 import SaveBar from '../components/SaveBar'
-import StatGrowthEditor from '../components/StatGrowthEditor'
+import StatGrowthEditor, { type StatGrowthEditorRef } from '../components/StatGrowthEditor'
 import ValidationBanner from '../components/ValidationBanner'
 import { useRecordValidation } from '../hooks/useRecordValidation'
 import { useUndoRedo } from '../hooks/useUndoRedo'
@@ -88,7 +88,12 @@ export default function ClassEditorPage({ recordId, onClose }: ClassEditorPagePr
   const [usedBy, setUsedBy] = useState<ClassUsedBy | null>(null)
   const [usedByLoading, setUsedByLoading] = useState(false)
   const [statGrowthDirty, setStatGrowthDirty] = useState(false)
+  const [derivedStatsDirty, setDerivedStatsDirty] = useState(false)
+  const statGrowthRef = useRef<StatGrowthEditorRef>(null)
+  const derivedStatsRef = useRef<DerivedStatsEditorRef>(null)
   const { recordIssues, runValidation } = useRecordValidation('classes', id)
+
+  const isAnyDirty = isDirty || statGrowthDirty || derivedStatsDirty
 
   type TabFields = Omit<FormSnapshot, 'displayName' | 'exportKey'>
   const baselineRef = useRef<TabFields | null>(null)
@@ -203,22 +208,28 @@ export default function ClassEditorPage({ recordId, onClose }: ClassEditorPagePr
     setSaving(true)
     setError(null)
     try {
-      const updated = await classesApi.update(id, {
-        displayName: displayName.trim(),
-        exportKey: exportKey.trim(),
-        description: description.trim(),
-        resourceMultiplier: parseFloat(resourceMultiplier) || 1,
-      })
-      if (updated) {
-        setRecord(updated)
-        setDirty(false)
-        setSavedAt(new Date())
-        baselineRef.current = {
+      if (isDirty) {
+        const updated = await classesApi.update(id, {
+          displayName: displayName.trim(),
+          exportKey: exportKey.trim(),
           description: description.trim(),
-          resourceMultiplier,
+          resourceMultiplier: parseFloat(resourceMultiplier) || 1,
+        })
+        if (updated) {
+          setRecord(updated)
+          setDirty(false)
+          baselineRef.current = {
+            description: description.trim(),
+            resourceMultiplier,
+          }
         }
-        await runValidation()
       }
+      const subSaves: Promise<void>[] = []
+      if (statGrowthDirty && statGrowthRef.current) subSaves.push(statGrowthRef.current.save())
+      if (derivedStatsDirty && derivedStatsRef.current) subSaves.push(derivedStatsRef.current.save())
+      if (subSaves.length > 0) await Promise.all(subSaves)
+      setSavedAt(new Date())
+      await runValidation()
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Failed to save class.')
     } finally {
@@ -246,7 +257,11 @@ export default function ClassEditorPage({ recordId, onClose }: ClassEditorPagePr
   }
 
   const handleBack = goBack
-  const handleDiscard = (): void => void load()
+  const handleDiscard = (): void => {
+    void load()
+    statGrowthRef.current?.reload()
+    derivedStatsRef.current?.reload()
+  }
 
   return (
     <Box>
@@ -260,7 +275,7 @@ export default function ClassEditorPage({ recordId, onClose }: ClassEditorPagePr
             pushSnapshot({ displayName: value })
           }}
           exportKey={exportKey}
-          isDirty={isDirty}
+          isDirty={isAnyDirty}
           isSaving={isSaving}
           onSave={() => void handleSave()}
           savedAt={savedAt}
@@ -274,7 +289,7 @@ export default function ClassEditorPage({ recordId, onClose }: ClassEditorPagePr
           <Tab label="Overview" data-tid="tab-class-overview" />
           <Tab label={<span>Details<DirtyDot visible={dirtyTabs.has(1)} /></span>} data-tid="tab-class-details" />
           <Tab label={<span>Stat Growth<DirtyDot visible={statGrowthDirty} /></span>} data-tid="tab-class-stat-growth" />
-          <Tab label="Derived Stats" data-tid="tab-class-derived-stats" />
+          <Tab label={<span>Derived Stats<DirtyDot visible={derivedStatsDirty} /></span>} data-tid="tab-class-derived-stats" />
           <Tab label="Abilities" data-tid="tab-class-abilities" />
         </Tabs>
       </Box>
@@ -337,13 +352,15 @@ export default function ClassEditorPage({ recordId, onClose }: ClassEditorPagePr
       </TabPanel>
 
       <TabPanel index={2} value={activeTab}>
-        <StatGrowthEditor classId={record.id} onDirtyChange={setStatGrowthDirty} />
+        <StatGrowthEditor ref={statGrowthRef} classId={record.id} onDirtyChange={setStatGrowthDirty} />
       </TabPanel>
 
       <TabPanel index={3} value={activeTab}>
         <DerivedStatsEditor
+          ref={derivedStatsRef}
           classId={record.id}
           resourceMultiplier={parseFloat(resourceMultiplier) || 1}
+          onDirtyChange={setDerivedStatsDirty}
         />
       </TabPanel>
 
@@ -357,7 +374,7 @@ export default function ClassEditorPage({ recordId, onClose }: ClassEditorPagePr
       </TabPanel>
 
       <SaveBar
-        isDirty={isDirty}
+        isDirty={isAnyDirty}
         isSaving={isSaving}
         onSave={() => void handleSave()}
         onDiscard={handleDiscard}

@@ -22,7 +22,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { classesApi } from '../../api/classes.api'
 import { formulasApi } from '../../api/formulas.api'
 import { metaApi } from '../../api/meta.api'
@@ -394,9 +394,15 @@ function BreakpointTable({
 
 // ─── Main component ────────────────────────────────────────────────────────────
 
+export interface DerivedStatsEditorRef {
+  save: () => Promise<void>
+  reload: () => void
+}
+
 interface DerivedStatsEditorProps {
   classId: string
   resourceMultiplier: number
+  onDirtyChange?: (dirty: boolean) => void
 }
 
 interface EvalState {
@@ -404,10 +410,11 @@ interface EvalState {
   cyclicIds: Set<string>
 }
 
-export default function DerivedStatsEditor({
+const DerivedStatsEditor = forwardRef<DerivedStatsEditorRef, DerivedStatsEditorProps>(function DerivedStatsEditor({
   classId,
   resourceMultiplier,
-}: DerivedStatsEditorProps): React.JSX.Element {
+  onDirtyChange,
+}, ref) {
   const [derivedStats, setDerivedStats] = useState<DerivedStatDefinition[]>([])
   const [stats, setStats] = useState<MetaStat[]>([])
   const [maxLevel, setMaxLevel] = useState(50)
@@ -596,6 +603,7 @@ export default function DerivedStatsEditor({
   )
 
   const handleSave = async (): Promise<void> => {
+    if (hasSyntaxErrors || hasInvalidMetadataKeys) return
     setSaving(true)
     setError(null)
     try {
@@ -620,6 +628,15 @@ export default function DerivedStatsEditor({
     }
   }
 
+  useEffect(() => {
+    onDirtyChange?.(isDirty)
+  }, [isDirty, onDirtyChange])
+
+  useImperativeHandle(ref, () => ({
+    save: handleSave,
+    reload: () => void load(),
+  }))
+
   // ─── Render ───────────────────────────────────────────────────────────────
 
   if (isLoading) {
@@ -635,42 +652,25 @@ export default function DerivedStatsEditor({
   return (
     <Box>
       {/* Header */}
-      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
-        <Stack direction="row" alignItems="center" spacing={2}>
-          <Typography variant="subtitle1" fontWeight={500}>
-            Derived Stats
+      <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 2 }}>
+        <Typography variant="subtitle1" fontWeight={500}>
+          Derived Stats
+        </Typography>
+        <Stack direction="row" alignItems="center" spacing={1}>
+          <Typography variant="caption" color="text.secondary">
+            Preview at level
           </Typography>
-          <Stack direction="row" alignItems="center" spacing={1}>
-            <Typography variant="caption" color="text.secondary">
-              Preview at level
-            </Typography>
-            <TextField
-              size="small"
-              type="number"
-              value={previewLevel}
-              onChange={(e) => {
-                const v = Math.max(1, Math.min(maxLevel, parseInt(e.target.value) || 1))
-                setPreviewLevel(v)
-              }}
-              inputProps={{ min: 1, max: maxLevel, style: { width: 56, textAlign: 'center' } }}
-              sx={{ width: 80 }}
-            />
-          </Stack>
-        </Stack>
-        <Stack direction="row" alignItems="center" spacing={2}>
-          {savedAt && (
-            <Typography variant="caption" color="success.main">
-              Saved at {savedAt.toLocaleTimeString()}
-            </Typography>
-          )}
-          <Button
-            variant="contained"
+          <TextField
             size="small"
-            onClick={() => void handleSave()}
-            disabled={!isDirty || isSaving || hasSyntaxErrors || hasInvalidMetadataKeys}
-          >
-            Save
-          </Button>
+            type="number"
+            value={previewLevel}
+            onChange={(e) => {
+              const v = Math.max(1, Math.min(maxLevel, parseInt(e.target.value) || 1))
+              setPreviewLevel(v)
+            }}
+            inputProps={{ min: 1, max: maxLevel, style: { width: 56, textAlign: 'center' } }}
+            sx={{ width: 80 }}
+          />
         </Stack>
       </Stack>
 
@@ -807,4 +807,6 @@ export default function DerivedStatsEditor({
       </Typography>
     </Box>
   )
-}
+})
+
+export default DerivedStatsEditor
