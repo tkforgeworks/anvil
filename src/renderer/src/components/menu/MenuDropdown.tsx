@@ -8,6 +8,16 @@ import { useProjectStore } from '../../stores/project.store'
 import { useUiStore } from '../../stores/ui.store'
 import MenuRow from './MenuRow'
 
+const KEEP_OPEN = new Set([
+  'zoom-in',
+  'zoom-out',
+  'zoom-reset',
+  'toggle-sidebar',
+  'theme-dark',
+  'theme-light',
+  'theme-custom',
+])
+
 const PROJECT_REQUIRED = new Set([
   'save-as',
   'close-project',
@@ -80,7 +90,7 @@ export default function MenuDropdown(): React.JSX.Element | null {
     if (!item.command) return
     if (item.kind === 'submenu') return
     if (resolveDisabled(item, hasProject, isDirty, isRecoveryMode)) return
-    setMenuOpen(false)
+    if (!KEEP_OPEN.has(item.command)) setMenuOpen(false)
     dispatch(item.command)
   }
 
@@ -88,7 +98,7 @@ export default function MenuDropdown(): React.JSX.Element | null {
     <>
       <Box
         onClick={() => setMenuOpen(false)}
-        sx={{ position: 'fixed', inset: 0, zIndex: 49 }}
+        sx={{ position: 'fixed', inset: 0, zIndex: 1300 }}
       />
       <Box
         role="menu"
@@ -103,7 +113,7 @@ export default function MenuDropdown(): React.JSX.Element | null {
           width: 320,
           pt: '4px',
           pb: '6px',
-          zIndex: 50,
+          zIndex: 1301,
           WebkitAppRegion: 'no-drag',
         }}
       >
