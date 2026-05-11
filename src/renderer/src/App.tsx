@@ -22,12 +22,15 @@ import ExportPage from './pages/ExportPage'
 import SettingsPage from './pages/SettingsPage'
 import WelcomePage from './pages/WelcomePage'
 import { projectApi } from '../api/project.api'
+import useGlobalShortcuts from './menu/useGlobalShortcuts'
 import { useProjectStore } from './stores/project.store'
 
 export default function App(): React.JSX.Element {
   const activeProject = useProjectStore((state) => state.activeProject)
   const hydrate = useProjectStore((state) => state.hydrate)
   const [isLoading, setLoading] = useState(true)
+
+  useGlobalShortcuts()
 
   useEffect(() => {
     let isMounted = true

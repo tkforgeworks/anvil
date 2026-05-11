@@ -1,5 +1,5 @@
 import { Alert, Box, Snackbar } from '@mui/material'
-import { useCallback, useEffect } from 'react'
+import { useEffect } from 'react'
 import { Outlet } from 'react-router-dom'
 import { projectApi } from '../../api/project.api'
 import { useLifecycleStore } from '../stores/lifecycle.store'
@@ -17,33 +17,7 @@ export default function AppShell(): React.JSX.Element {
   const isRecoveryMode = useProjectStore((state) => state.isRecoveryMode)
   const recoveryMessage = useProjectStore((state) => state.recoveryMessage)
   const saveError = useProjectStore((state) => state.saveError)
-  const setSaveStatus = useProjectStore((state) => state.setSaveStatus)
   const setSaveError = useProjectStore((state) => state.setSaveError)
-
-  const saveProject = useCallback(async (): Promise<void> => {
-    if (!activeProject || isRecoveryMode) return
-
-    setSaveStatus('saving')
-    setSaveError(null)
-    try {
-      const snapshot = await projectApi.save()
-      hydrate(snapshot)
-    } catch (cause) {
-      setSaveError(cause instanceof Error ? cause.message : 'Unable to save project.')
-    }
-  }, [activeProject, hydrate, isRecoveryMode, setSaveError, setSaveStatus])
-
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent): void => {
-      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
-        event.preventDefault()
-        void saveProject()
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [saveProject])
 
   useEffect(() => {
     if (!__TELEMETRY_ENABLED__) return undefined
