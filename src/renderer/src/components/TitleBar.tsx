@@ -5,6 +5,8 @@ import CloseIcon from '@mui/icons-material/CloseRounded'
 import { IPC_CHANNELS } from '../../../shared/ipc-channels'
 import { projectApi } from '../../api/project.api'
 import { useProjectStore, type SaveStatus } from '../stores/project.store'
+import HamburgerButton from './menu/HamburgerButton'
+import MenuDropdown from './menu/MenuDropdown'
 
 const noDrag = { WebkitAppRegion: 'no-drag' } as const
 
@@ -54,6 +56,8 @@ export default function TitleBar(): React.JSX.Element {
       sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, WebkitAppRegion: 'drag' }}
     >
       <Toolbar variant="dense">
+        <HamburgerButton />
+        <MenuDropdown />
         <Typography variant="h6" component="div" sx={{ fontWeight: 700, letterSpacing: 0 }}>
           ANVIL
         </Typography>
