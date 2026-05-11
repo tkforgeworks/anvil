@@ -16,6 +16,8 @@ export const projectApi = {
     window.anvil.invoke<ProjectStateSnapshot>(IPC_CHANNELS.PROJECT_GET_STATE),
   removeRecent: (filePath: string) =>
     window.anvil.invoke<ProjectStateSnapshot>(IPC_CHANNELS.PROJECT_REMOVE_RECENT, filePath),
+  clearRecents: () =>
+    window.anvil.invoke<ProjectStateSnapshot>(IPC_CHANNELS.PROJECT_CLEAR_RECENTS),
   getSaveHistory: (limit?: number) =>
     window.anvil.invoke<SaveHistoryEntry[]>(IPC_CHANNELS.PROJECT_GET_SAVE_HISTORY, limit),
   getAutoSaveInfo: () =>

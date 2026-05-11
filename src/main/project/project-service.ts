@@ -110,6 +110,10 @@ function updateRecentProjects(project: ProjectMetadata): RecentProject[] {
   return updated.slice(0, 10)
 }
 
+function clearRecentProjects(): void {
+  writeRecentProjects([])
+}
+
 function getLastModifiedAt(filePath: string): string {
   return statSync(filePath).mtime.toISOString()
 }
@@ -656,6 +660,11 @@ export function removeRecentProject(filePath: string): ProjectStateSnapshot {
     (project) => project.filePath.toLowerCase() !== normalizedPath,
   )
   writeRecentProjects(updated)
+  return getProjectState()
+}
+
+export function clearRecentProjectsList(): ProjectStateSnapshot {
+  clearRecentProjects()
   return getProjectState()
 }
 

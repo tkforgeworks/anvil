@@ -1,12 +1,14 @@
 import { Box } from '@mui/material'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { MENU_DATA, resolveShortcut } from '../../menu/menu-data'
 import type { MenuItem } from '../../menu/types'
 import useCommandDispatch from '../../menu/useCommandDispatch'
 import { useProjectStore } from '../../stores/project.store'
+import { useSettingsStore } from '../../stores/settings.store'
 import { useUiStore } from '../../stores/ui.store'
 import MenuRow from './MenuRow'
+import RecentSubmenu from './RecentSubmenu'
 
 const KEEP_OPEN = new Set([
   'zoom-in',
@@ -39,22 +41,36 @@ const PROJECT_REQUIRED = new Set([
   'nav-loot-tables',
 ])
 
+const RECORD_COUNT_MAP: Record<string, keyof NonNullable<ReturnType<typeof useProjectStore.getState>['activeProject']>['recordCounts']> = {
+  'nav-classes': 'classes',
+  'nav-abilities': 'abilities',
+  'nav-items': 'items',
+  'nav-recipes': 'recipes',
+  'nav-npcs': 'npcs',
+  'nav-loot-tables': 'lootTables',
+}
+
 function resolveDisabled(
   item: MenuItem,
   hasProject: boolean,
   isDirty: boolean,
   isRecoveryMode: boolean,
+  hasCustomTheme: boolean,
 ): boolean {
   if (item.disabled === true) return true
   if (!item.command) return false
   if (item.command === 'new-project') return hasProject
   if (item.command === 'save') return !hasProject || !isDirty || isRecoveryMode
+  if (item.command === 'theme-custom') return !hasCustomTheme
   if (PROJECT_REQUIRED.has(item.command)) return !hasProject
   return false
 }
 
-function resolveChecked(item: MenuItem, sidebarOpen: boolean): boolean {
+function resolveChecked(item: MenuItem, sidebarOpen: boolean, currentTheme: string): boolean {
   if (item.command === 'toggle-sidebar') return sidebarOpen
+  if (item.command === 'theme-dark') return currentTheme === 'dark'
+  if (item.command === 'theme-light') return currentTheme === 'light'
+  if (item.command === 'theme-custom') return currentTheme === 'custom'
   return false
 }
 
@@ -62,11 +78,15 @@ export default function MenuDropdown(): React.JSX.Element | null {
   const menuOpen = useUiStore((s) => s.menuOpen)
   const setMenuOpen = useUiStore((s) => s.setMenuOpen)
   const sidebarOpen = useUiStore((s) => s.sidebarOpen)
+  const theme = useUiStore((s) => s.theme)
   const activeProject = useProjectStore((s) => s.activeProject)
   const isDirty = useProjectStore((s) => s.isDirty)
   const isRecoveryMode = useProjectStore((s) => s.isRecoveryMode)
+  const appSettings = useSettingsStore((s) => s.appSettings)
   const dispatch = useCommandDispatch()
   const [activeTab, setActiveTab] = useState('file')
+  const [hoveredSubmenu, setHoveredSubmenu] = useState<string | null>(null)
+  const submenuTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     if (!menuOpen) return undefined
@@ -81,17 +101,47 @@ export default function MenuDropdown(): React.JSX.Element | null {
     return () => window.removeEventListener('keydown', handleEsc)
   }, [menuOpen, setMenuOpen])
 
+  useEffect(() => {
+    if (!menuOpen) {
+      setHoveredSubmenu(null)
+      setActiveTab('file')
+    }
+  }, [menuOpen])
+
   if (!menuOpen) return null
 
   const hasProject = !!activeProject
+  const hasCustomTheme = !!appSettings?.customThemePath
   const activeSection = MENU_DATA.find((s) => s.id === activeTab) ?? MENU_DATA[0]
 
   const handleItemClick = (item: MenuItem): void => {
     if (!item.command) return
     if (item.kind === 'submenu') return
-    if (resolveDisabled(item, hasProject, isDirty, isRecoveryMode)) return
+    if (resolveDisabled(item, hasProject, isDirty, isRecoveryMode, hasCustomTheme)) return
     if (!KEEP_OPEN.has(item.command)) setMenuOpen(false)
     dispatch(item.command)
+  }
+
+  const handleSubmenuEnter = (id: string | undefined): void => {
+    if (submenuTimerRef.current) clearTimeout(submenuTimerRef.current)
+    if (id) {
+      submenuTimerRef.current = setTimeout(() => setHoveredSubmenu(id), 150)
+    }
+  }
+
+  const handleSubmenuLeave = (): void => {
+    if (submenuTimerRef.current) clearTimeout(submenuTimerRef.current)
+    submenuTimerRef.current = setTimeout(() => setHoveredSubmenu(null), 150)
+  }
+
+  const resolveMeta = (item: MenuItem): string | undefined => {
+    if (!item.command || !activeProject) return undefined
+    const countKey = RECORD_COUNT_MAP[item.command]
+    if (countKey) {
+      const count = activeProject.recordCounts[countKey]
+      return count > 0 ? String(count) : undefined
+    }
+    return undefined
   }
 
   return createPortal(
@@ -157,9 +207,68 @@ export default function MenuDropdown(): React.JSX.Element | null {
 
         <Box sx={{ px: '4px', py: '2px' }}>
           {activeSection.items.map((item, i) => {
+            const isSubmenu = item.kind === 'submenu'
             const shortcut = resolveShortcut(item)
-            const disabled = resolveDisabled(item, hasProject, isDirty, isRecoveryMode)
-            const checked = resolveChecked(item, sidebarOpen)
+            const disabled = resolveDisabled(item, hasProject, isDirty, isRecoveryMode, hasCustomTheme)
+            const checked = resolveChecked(item, sidebarOpen, theme)
+            const meta = resolveMeta(item)
+
+            if (isSubmenu && item.children) {
+              return (
+                <Box
+                  key={item.id ?? `sub-${i}`}
+                  onMouseEnter={() => handleSubmenuEnter(item.id)}
+                  onMouseLeave={handleSubmenuLeave}
+                >
+                  <MenuRow
+                    item={{
+                      kind: 'submenu',
+                      icon: item.icon,
+                      label: item.label,
+                      disabled,
+                    }}
+                    hovered={hoveredSubmenu === item.id}
+                  />
+                  {hoveredSubmenu === item.id && item.children.map((child, ci) => (
+                    <MenuRow
+                      key={child.id ?? `child-${ci}`}
+                      item={{
+                        kind: child.kind ?? 'item',
+                        label: child.label,
+                        checked: resolveChecked(child, sidebarOpen, theme),
+                        disabled: resolveDisabled(child, hasProject, isDirty, isRecoveryMode, hasCustomTheme),
+                      }}
+                      onClick={() => {
+                        if (child.command) {
+                          if (!KEEP_OPEN.has(child.command)) setMenuOpen(false)
+                          dispatch(child.command)
+                        }
+                      }}
+                    />
+                  ))}
+                </Box>
+              )
+            }
+
+            if (isSubmenu && item.id === 'open-recent') {
+              return (
+                <Box
+                  key={item.id}
+                  onMouseEnter={() => handleSubmenuEnter(item.id)}
+                  onMouseLeave={handleSubmenuLeave}
+                >
+                  <MenuRow
+                    item={{
+                      kind: 'submenu',
+                      icon: item.icon,
+                      label: item.label,
+                    }}
+                    hovered={hoveredSubmenu === 'open-recent'}
+                  />
+                  {hoveredSubmenu === 'open-recent' && <RecentSubmenu />}
+                </Box>
+              )
+            }
 
             return (
               <MenuRow
@@ -170,6 +279,7 @@ export default function MenuDropdown(): React.JSX.Element | null {
                   label: item.label,
                   shortcut,
                   sub: item.sub,
+                  meta,
                   disabled,
                   checked,
                   danger: item.danger,

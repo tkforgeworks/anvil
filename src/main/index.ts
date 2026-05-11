@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron'
+import { app, BrowserWindow, ipcMain, shell } from 'electron'
 import { join } from 'path'
 import { registerAllIpcHandlers } from './ipc'
 import { initLogger, logError, logInfo, logWarn } from './logging/app-logger'
@@ -49,6 +49,15 @@ function registerWindowControls(): void {
   })
   ipcMain.handle('window:close', (event) => {
     BrowserWindow.fromWebContents(event.sender)?.close()
+  })
+  ipcMain.handle('shell:open-external', (_event, url: string) => {
+    try {
+      const parsed = new URL(url)
+      if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return
+    } catch {
+      return
+    }
+    void shell.openExternal(url)
   })
 }
 

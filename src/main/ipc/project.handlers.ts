@@ -10,6 +10,7 @@ import {
   getProjectState,
   getWeeklyDeltas,
   openProject,
+  clearRecentProjectsList,
   removeRecentProject,
   saveProject,
   saveProjectAs,
@@ -32,6 +33,7 @@ export function registerProjectHandlers(): void {
   safeHandle(IPC_CHANNELS.PROJECT_REMOVE_RECENT, (_event, filePath: string) =>
     removeRecentProject(filePath),
   )
+  safeHandle(IPC_CHANNELS.PROJECT_CLEAR_RECENTS, () => clearRecentProjectsList())
   safeHandle(IPC_CHANNELS.PROJECT_GET_SAVE_HISTORY, (_event, limit?: number) =>
     getRecentSaves(limit),
   )

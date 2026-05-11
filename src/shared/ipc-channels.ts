@@ -9,6 +9,7 @@ export const IPC_CHANNELS = {
   PROJECT_CLOSE: 'project:close',
   PROJECT_GET_STATE: 'project:get-state',
   PROJECT_REMOVE_RECENT: 'project:remove-recent',
+  PROJECT_CLEAR_RECENTS: 'project:clear-recents',
   PROJECT_GET_SAVE_HISTORY: 'project:get-save-history',
   PROJECT_GET_AUTO_SAVE_INFO: 'project:get-auto-save-info',
   PROJECT_BACKUP: 'project:backup',
@@ -170,6 +171,9 @@ export const IPC_CHANNELS = {
   // Custom field values (EAV read/write)
   CUSTOM_FIELDS_GET_VALUES: 'custom-fields:get-values',
   CUSTOM_FIELDS_SET_VALUES: 'custom-fields:set-values',
+
+  // Shell
+  SHELL_OPEN_EXTERNAL: 'shell:open-external',
 
   // Window controls
   WINDOW_MINIMIZE: 'window:minimize',

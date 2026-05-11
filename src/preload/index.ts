@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from 'electron'
+import { contextBridge, ipcRenderer, webFrame } from 'electron'
 import type { AnvilBridge } from '../shared/ipc-types'
 import type { TelemetryEvent } from '../shared/telemetry-types'
 import { IPC_CHANNELS } from '../shared/ipc-channels'
@@ -52,6 +52,11 @@ const bridge: AnvilBridge = {
   },
 
   drainIpcTelemetry: () => ipcTelemetryBuffer.splice(0),
+
+  zoomIn: () => webFrame.setZoomLevel(webFrame.getZoomLevel() + 0.5),
+  zoomOut: () => webFrame.setZoomLevel(Math.max(webFrame.getZoomLevel() - 0.5, -3)),
+  resetZoom: () => webFrame.setZoomLevel(0),
+  getZoomLevel: () => webFrame.getZoomLevel(),
 }
 
 contextBridge.exposeInMainWorld('anvil', bridge)

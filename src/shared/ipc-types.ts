@@ -5,4 +5,8 @@ export interface AnvilBridge {
   invoke: <T = unknown>(channel: IpcChannel, ...args: unknown[]) => Promise<T>
   on: (channel: IpcChannel, listener: (...args: unknown[]) => void) => () => void
   drainIpcTelemetry: () => TelemetryEvent[]
+  zoomIn: () => void
+  zoomOut: () => void
+  resetZoom: () => void
+  getZoomLevel: () => number
 }

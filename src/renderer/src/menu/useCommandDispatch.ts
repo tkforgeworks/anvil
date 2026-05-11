@@ -1,8 +1,10 @@
 import { useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { projectApi } from '../../api/project.api'
+import { settingsApi } from '../../api/settings.api'
 import { useProjectStore } from '../stores/project.store'
-import { useUiStore } from '../stores/ui.store'
+import { useSettingsStore } from '../stores/settings.store'
+import { useUiStore, type AppTheme } from '../stores/ui.store'
 import { MODAL_IDS } from './constants'
 
 export default function useCommandDispatch(): (command: string) => void {
@@ -81,9 +83,23 @@ export default function useCommandDispatch(): (command: string) => void {
           navigate('/validation')
           break
         case 'zoom-in':
-        case 'zoom-out':
-        case 'zoom-reset':
+          window.anvil.zoomIn()
           break
+        case 'zoom-out':
+          window.anvil.zoomOut()
+          break
+        case 'zoom-reset':
+          window.anvil.resetZoom()
+          break
+        case 'theme-dark':
+        case 'theme-light':
+        case 'theme-custom': {
+          const theme = command.replace('theme-', '') as AppTheme
+          void settingsApi.setApp({ theme }).then((s) => {
+            useSettingsStore.getState().setAppSettings(s)
+          })
+          break
+        }
 
         // Project
         case 'project-settings':
@@ -138,6 +154,13 @@ export default function useCommandDispatch(): (command: string) => void {
           openModal(MODAL_IDS.SHORTCUTS)
           break
         case 'documentation':
+          void window.anvil.invoke('shell:open-external', 'https://anvil.tkforgeworks.com/docs')
+          break
+        case 'report-bug':
+          void window.anvil.invoke('shell:open-external', 'https://anvil.tkforgeworks.com/bugs')
+          break
+        case 'about':
+          openModal(MODAL_IDS.ABOUT)
           break
       }
     },
