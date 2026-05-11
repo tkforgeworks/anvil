@@ -22,6 +22,9 @@ import ExportPage from './pages/ExportPage'
 import SettingsPage from './pages/SettingsPage'
 import WelcomePage from './pages/WelcomePage'
 import { projectApi } from '../api/project.api'
+import AppSettingsModal from './components/settings/AppSettingsModal'
+import ProjectSettingsModal from './components/settings/ProjectSettingsModal'
+import ShortcutsModal from './components/settings/ShortcutsModal'
 import useGlobalShortcuts from './menu/useGlobalShortcuts'
 import { useProjectStore } from './stores/project.store'
 
@@ -49,8 +52,9 @@ export default function App(): React.JSX.Element {
     }
   }, [hydrate])
 
+  let content: React.JSX.Element
   if (isLoading) {
-    return (
+    content = (
       <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
         <TitleBar />
         <Box sx={{ flex: 1, display: 'grid', placeItems: 'center' }}>
@@ -58,10 +62,8 @@ export default function App(): React.JSX.Element {
         </Box>
       </Box>
     )
-  }
-
-  if (!activeProject) {
-    return (
+  } else if (!activeProject) {
+    content = (
       <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
         <TitleBar />
         <Box sx={{ flex: 1, overflow: 'auto' }}>
@@ -69,29 +71,38 @@ export default function App(): React.JSX.Element {
         </Box>
       </Box>
     )
+  } else {
+    content = (
+      <Routes>
+        <Route path="/" element={<AppShell />}>
+          <Route index element={<DashboardPage />} />
+          <Route path="classes" element={<ClassesPage />} />
+          <Route path="classes/:id" element={<ClassEditorPage />} />
+          <Route path="abilities" element={<AbilitiesPage />} />
+          <Route path="abilities/:id" element={<AbilityEditorPage />} />
+          <Route path="items" element={<ItemsPage />} />
+          <Route path="items/:id" element={<ItemEditorPage />} />
+          <Route path="recipes" element={<RecipesPage />} />
+          <Route path="recipes/:id" element={<RecipeEditorPage />} />
+          <Route path="npcs" element={<NpcsPage />} />
+          <Route path="npcs/:id" element={<NpcEditorPage />} />
+          <Route path="loot-tables" element={<LootTablesPage />} />
+          <Route path="loot-tables/:id" element={<LootTableEditorPage />} />
+          <Route path="validation" element={<ValidationPage />} />
+          <Route path="recycle-bin" element={<RecycleBinPage />} />
+          <Route path="export" element={<ExportPage />} />
+          <Route path="settings" element={<SettingsPage />} />
+        </Route>
+      </Routes>
+    )
   }
 
   return (
-    <Routes>
-      <Route path="/" element={<AppShell />}>
-        <Route index element={<DashboardPage />} />
-        <Route path="classes" element={<ClassesPage />} />
-        <Route path="classes/:id" element={<ClassEditorPage />} />
-        <Route path="abilities" element={<AbilitiesPage />} />
-        <Route path="abilities/:id" element={<AbilityEditorPage />} />
-        <Route path="items" element={<ItemsPage />} />
-        <Route path="items/:id" element={<ItemEditorPage />} />
-        <Route path="recipes" element={<RecipesPage />} />
-        <Route path="recipes/:id" element={<RecipeEditorPage />} />
-        <Route path="npcs" element={<NpcsPage />} />
-        <Route path="npcs/:id" element={<NpcEditorPage />} />
-        <Route path="loot-tables" element={<LootTablesPage />} />
-        <Route path="loot-tables/:id" element={<LootTableEditorPage />} />
-        <Route path="validation" element={<ValidationPage />} />
-        <Route path="recycle-bin" element={<RecycleBinPage />} />
-        <Route path="export" element={<ExportPage />} />
-        <Route path="settings" element={<SettingsPage />} />
-      </Route>
-    </Routes>
+    <>
+      {content}
+      <AppSettingsModal />
+      <ProjectSettingsModal />
+      <ShortcutsModal />
+    </>
   )
 }

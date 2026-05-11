@@ -25,7 +25,8 @@ import { useNavigate } from 'react-router-dom'
 import { projectApi } from '../../api/project.api'
 import type { ProjectTemplateId, RecentProject } from '../../../shared/project-types'
 import { useProjectStore } from '../stores/project.store'
-import AppSettingsDialog from '../components/AppSettingsDialog'
+import { MODAL_IDS } from '../menu/constants'
+import { useUiStore } from '../stores/ui.store'
 import { ProjectInitialsMark } from '../components/ProjectInitialsMark'
 import { RelativeTimestamp } from '../components/RelativeTimestamp'
 import { FileSizeDisplay } from '../components/FileSizeDisplay'
@@ -58,7 +59,7 @@ export default function WelcomePage(): React.JSX.Element {
   const [templateId, setTemplateId] = useState<ProjectTemplateId>('blank')
   const [error, setError] = useState<string | null>(null)
   const [isBusy, setBusy] = useState(false)
-  const [settingsOpen, setSettingsOpen] = useState(false)
+  const openModal = useUiStore((s) => s.openModal)
 
   const openProject = async (filePath?: string): Promise<void> => {
     setBusy(true)
@@ -153,7 +154,7 @@ export default function WelcomePage(): React.JSX.Element {
               iconBg="action.hover"
               title="Settings"
               subtitle="Theme, shortcuts, paths"
-              onClick={() => setSettingsOpen(true)}
+              onClick={() => openModal(MODAL_IDS.APP_SETTINGS)}
               disabled={isBusy}
               data-tid="welcome-settings"
             />
@@ -303,7 +304,6 @@ export default function WelcomePage(): React.JSX.Element {
         </DialogActions>
       </Dialog>
 
-      <AppSettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </Box>
   )
 }

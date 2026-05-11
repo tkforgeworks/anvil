@@ -89,7 +89,7 @@ interface RaritySectionProps {
   onRefresh: () => void
 }
 
-function RaritySection({ rarities, onRefresh }: RaritySectionProps): React.JSX.Element {
+export function RaritySection({ rarities, onRefresh }: RaritySectionProps): React.JSX.Element {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<MetaRarity | null>(null)
   const [displayName, setDisplayName] = useState('')
@@ -320,7 +320,7 @@ interface DerivedStatSectionProps {
   onRefresh: () => void
 }
 
-function DerivedStatSection({ derivedStats, onRefresh }: DerivedStatSectionProps): React.JSX.Element {
+export function DerivedStatSection({ derivedStats, onRefresh }: DerivedStatSectionProps): React.JSX.Element {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<DerivedStatDefinition | null>(null)
   const [displayName, setDisplayName] = useState('')
@@ -917,7 +917,7 @@ interface CustomFieldsSectionProps {
   npcTypes: MetaNpcType[]
 }
 
-function CustomFieldsSection({ itemCategories, npcTypes }: CustomFieldsSectionProps): React.JSX.Element {
+export function CustomFieldsSection({ itemCategories, npcTypes }: CustomFieldsSectionProps): React.JSX.Element {
   const [selectedScope, setSelectedScope] = useState<{
     type: CustomFieldScope
     id: string
