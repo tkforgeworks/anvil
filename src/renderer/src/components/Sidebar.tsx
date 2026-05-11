@@ -22,7 +22,6 @@ import {
   CheckCircle as ValidationIcon,
   Delete as RecycleBinIcon,
   FileUpload as ExportIcon,
-  Settings as SettingsIcon,
   ChevronLeft as CollapseIcon,
   ChevronRight as ExpandIcon,
 } from '@mui/icons-material'
@@ -170,7 +169,6 @@ export default function Sidebar(): React.JSX.Element {
     { label: 'Validation', to: '/validation', icon: <ValidationIcon fontSize="small" />, badge: issueCount, badgeColor: hasErrors ? 'error.main' : 'warning.main', tid: 'nav-validation' },
     { label: 'Recycle Bin', to: '/recycle-bin', icon: <RecycleBinIcon fontSize="small" />, badge: trashCount, badgeColor: 'text.secondary', tid: 'nav-recycle-bin' },
     { label: 'Export', to: '/export', icon: <ExportIcon fontSize="small" />, tid: 'nav-export' },
-    { label: 'Settings', to: '/settings', icon: <SettingsIcon fontSize="small" />, tid: 'nav-settings' },
   ]
 
   const dashboardButton = (

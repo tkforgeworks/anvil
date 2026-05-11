@@ -19,7 +19,6 @@ import LootTableEditorPage from './pages/LootTableEditorPage'
 import ValidationPage from './pages/ValidationPage'
 import RecycleBinPage from './pages/RecycleBinPage'
 import ExportPage from './pages/ExportPage'
-import SettingsPage from './pages/SettingsPage'
 import WelcomePage from './pages/WelcomePage'
 import { projectApi } from '../api/project.api'
 import AppSettingsModal from './components/settings/AppSettingsModal'
@@ -91,7 +90,6 @@ export default function App(): React.JSX.Element {
           <Route path="validation" element={<ValidationPage />} />
           <Route path="recycle-bin" element={<RecycleBinPage />} />
           <Route path="export" element={<ExportPage />} />
-          <Route path="settings" element={<SettingsPage />} />
         </Route>
       </Routes>
     )
