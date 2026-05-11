@@ -59,7 +59,7 @@ function renderForPresetOrTemplate(
 
   const builtIn = BUILT_IN_PRESETS.find((p) => p.id === presetId)
   if (builtIn) {
-    return renderExport(presetId, context)
+    return renderExport(presetId, context, scope)
   }
 
   const template = db.prepare(

@@ -1,5 +1,5 @@
 import nunjucks from 'nunjucks'
-import type { ExportContext } from './context-assembler'
+import type { ExportContext, ExportScope } from './context-assembler'
 
 const env = new nunjucks.Environment(null, { autoescape: false, throwOnUndefined: true })
 
@@ -32,12 +32,12 @@ export interface RenderResult {
   files?: { filename: string; content: string }[]
 }
 
-export function renderExport(presetId: string, context: ExportContext): RenderResult {
+export function renderExport(presetId: string, context: ExportContext, scope: ExportScope): RenderResult {
   switch (presetId) {
     case 'nested-json':
-      return { output: renderNestedJson(context) }
+      return { output: renderNestedJson(context, scope) }
     case 'flat-json':
-      return { output: renderFlatJson(context) }
+      return { output: renderFlatJson(context, scope) }
     case 'csv':
       return renderCsv(context)
     default:
@@ -70,7 +70,7 @@ function resolveKey(lookup: Map<string, string>, id: string | null | undefined):
   return lookup.get(id) ?? id
 }
 
-function renderNestedJson(context: ExportContext): string {
+function renderNestedJson(context: ExportContext, scope: ExportScope): string {
   const metaLookup = new Map<string, Record<string, unknown>>()
   for (const [domainKey, records] of Object.entries(context.meta)) {
     for (const record of records as Record<string, unknown>[]) {
@@ -95,9 +95,9 @@ function renderNestedJson(context: ExportContext): string {
     return metaLookup.get(`${domain}:${id}`) ?? null
   }
 
-  const output = {
-    project: context.project,
-    meta: context.meta,
+  const isScoped = scope.mode !== 'full'
+
+  const transformed: Record<string, Record<string, unknown>[]> = {
     classes: context.classes.map((c) => ({
       ...c,
       abilities: (c.abilities as { ability_id: string }[]).map((a) => ({
@@ -143,14 +143,22 @@ function renderNestedJson(context: ExportContext): string {
     })),
   }
 
-  return JSON.stringify(output, null, 2)
+  if (isScoped) {
+    const output: Record<string, unknown> = {}
+    for (const [key, records] of Object.entries(transformed)) {
+      if (records.length > 0) output[key] = records
+    }
+    return JSON.stringify(output, null, 2)
+  }
+
+  return JSON.stringify({ project: context.project, meta: context.meta, ...transformed }, null, 2)
 }
 
-function renderFlatJson(context: ExportContext): string {
+function renderFlatJson(context: ExportContext, scope: ExportScope): string {
   const lookup = buildExportKeyLookup(context)
+  const isScoped = scope.mode !== 'full'
 
-  const output = {
-    project: context.project,
+  const transformed: Record<string, Record<string, unknown>[]> = {
     classes: context.classes.map((c) => ({
       ...c,
       abilities: (c.abilities as { ability_id: string; sort_order: number }[]).map((a) => ({
@@ -201,7 +209,15 @@ function renderFlatJson(context: ExportContext): string {
     })),
   }
 
-  return JSON.stringify(output, null, 2)
+  if (isScoped) {
+    const output: Record<string, unknown> = {}
+    for (const [key, records] of Object.entries(transformed)) {
+      if (records.length > 0) output[key] = records
+    }
+    return JSON.stringify(output, null, 2)
+  }
+
+  return JSON.stringify({ project: context.project, ...transformed }, null, 2)
 }
 
 function renderCsv(context: ExportContext): RenderResult {
