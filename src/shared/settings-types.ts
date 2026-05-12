@@ -21,4 +21,5 @@ export interface AppSettings {
   defaultSaveLocation: string | null
   customThemePath: string | null
   customThemeColors: CustomThemeColors | null
+  customShortcuts: Record<string, string> | null
 }

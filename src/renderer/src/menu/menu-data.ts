@@ -1,5 +1,6 @@
 import { MODAL_IDS } from './constants'
-import { getShortcutKeys } from './shortcuts'
+import { getEffectiveShortcutKeys } from './shortcuts'
+import { useSettingsStore } from '../stores/settings.store'
 import type { MenuItem, MenuSection } from './types'
 
 function item(
@@ -160,6 +161,9 @@ export const MENU_DATA: MenuSection[] = [
 ]
 
 export function resolveShortcut(item: MenuItem): string | undefined {
-  if (item.shortcutId) return getShortcutKeys(item.shortcutId)
+  if (item.shortcutId) {
+    const custom = useSettingsStore.getState().appSettings?.customShortcuts ?? null
+    return getEffectiveShortcutKeys(item.shortcutId, custom)
+  }
   return undefined
 }

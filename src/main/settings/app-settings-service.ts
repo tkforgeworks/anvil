@@ -12,6 +12,7 @@ const DEFAULT_APP_SETTINGS: AppSettings = {
   defaultSaveLocation: null,
   customThemePath: null,
   customThemeColors: null,
+  customShortcuts: null,
 }
 
 const HEX_COLOR_RE = /^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$/
@@ -61,7 +62,20 @@ function normalizeSettings(settings: Partial<AppSettings>): AppSettings {
         ? settings.customThemePath
         : null,
     customThemeColors: normalizeCustomThemeColors(settings.customThemeColors),
+    customShortcuts: normalizeCustomShortcuts(settings.customShortcuts),
   }
+}
+
+function normalizeCustomShortcuts(raw: unknown): Record<string, string> | null {
+  if (!raw || typeof raw !== 'object') return null
+  const obj = raw as Record<string, unknown>
+  const result: Record<string, string> = {}
+  for (const [key, value] of Object.entries(obj)) {
+    if (typeof value === 'string' && value.length > 0) {
+      result[key] = value
+    }
+  }
+  return Object.keys(result).length > 0 ? result : null
 }
 
 export function getAppSettings(): AppSettings {

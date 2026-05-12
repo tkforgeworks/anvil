@@ -1,16 +1,17 @@
 import { useEffect } from 'react'
+import { useSettingsStore } from '../stores/settings.store'
 import { useUiStore } from '../stores/ui.store'
-import { SHORTCUTS } from './shortcuts'
+import { getEffectiveShortcuts } from './shortcuts'
 import useCommandDispatch from './useCommandDispatch'
 
-interface KeyCombo {
+export interface KeyCombo {
   key: string
   ctrl: boolean
   shift: boolean
   alt: boolean
 }
 
-function parseKeys(keys: string): KeyCombo {
+export function parseKeys(keys: string): KeyCombo {
   const parts = keys.split('+')
   return {
     ctrl: parts.includes('Ctrl'),
@@ -20,7 +21,7 @@ function parseKeys(keys: string): KeyCombo {
   }
 }
 
-function matchesEvent(combo: KeyCombo, e: KeyboardEvent): boolean {
+export function matchesEvent(combo: KeyCombo, e: KeyboardEvent): boolean {
   const ctrlOrMeta = e.ctrlKey || e.metaKey
   if (combo.ctrl !== ctrlOrMeta) return false
   if (combo.shift !== e.shiftKey) return false
@@ -40,10 +41,17 @@ function matchesEvent(combo: KeyCombo, e: KeyboardEvent): boolean {
   return false
 }
 
-const parsedShortcuts = SHORTCUTS.map((s) => ({
-  ...s,
-  combo: parseKeys(s.keys),
-}))
+export function formatKeyCombo(e: KeyboardEvent): string {
+  const parts: string[] = []
+  if (e.ctrlKey || e.metaKey) parts.push('Ctrl')
+  if (e.shiftKey) parts.push('Shift')
+  if (e.altKey) parts.push('Alt')
+  const key = e.key
+  if (!['Control', 'Shift', 'Alt', 'Meta'].includes(key)) {
+    parts.push(key.length === 1 ? key.toUpperCase() : key)
+  }
+  return parts.join('+')
+}
 
 function isInputFocused(): boolean {
   const el = document.activeElement
@@ -56,8 +64,15 @@ function isInputFocused(): boolean {
 
 export default function useGlobalShortcuts(): void {
   const dispatch = useCommandDispatch()
+  const customShortcuts = useSettingsStore((s) => s.appSettings?.customShortcuts ?? null)
 
   useEffect(() => {
+    const effective = getEffectiveShortcuts(customShortcuts)
+    const parsedShortcuts = effective.map((s) => ({
+      ...s,
+      combo: parseKeys(s.keys),
+    }))
+
     const handleKeyDown = (e: KeyboardEvent): void => {
       const { menuOpen, activeModalId } = useUiStore.getState()
 
@@ -89,5 +104,5 @@ export default function useGlobalShortcuts(): void {
 
     window.addEventListener('keydown', handleKeyDown, true)
     return () => window.removeEventListener('keydown', handleKeyDown, true)
-  }, [dispatch])
+  }, [dispatch, customShortcuts])
 }

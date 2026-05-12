@@ -1,7 +1,8 @@
 import CloseIcon from '@mui/icons-material/CloseRounded'
 import { Box, Dialog, DialogContent, DialogTitle, IconButton, Stack, Typography } from '@mui/material'
 import { MODAL_IDS } from '../../menu/constants'
-import { SHORTCUTS } from '../../menu/shortcuts'
+import { getEffectiveShortcuts } from '../../menu/shortcuts'
+import { useSettingsStore } from '../../stores/settings.store'
 import { useUiStore } from '../../stores/ui.store'
 
 const GROUP_ORDER = ['File', 'Navigation', 'Editing', 'View', 'Project', 'Help'] as const
@@ -18,11 +19,13 @@ const BG_INPUT = '#1d273c'
 export default function ShortcutsModal(): React.JSX.Element | null {
   const activeModalId = useUiStore((s) => s.activeModalId)
   const closeModal = useUiStore((s) => s.closeModal)
+  const customShortcuts = useSettingsStore((s) => s.appSettings?.customShortcuts ?? null)
 
   if (activeModalId !== MODAL_IDS.SHORTCUTS) return null
 
-  const grouped = new Map<string, typeof SHORTCUTS>()
-  for (const s of SHORTCUTS) {
+  const shortcuts = getEffectiveShortcuts(customShortcuts)
+  const grouped = new Map<string, typeof shortcuts>()
+  for (const s of shortcuts) {
     const list = grouped.get(s.group) ?? []
     list.push(s)
     grouped.set(s.group, list)

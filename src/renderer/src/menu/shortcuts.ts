@@ -42,3 +42,18 @@ const shortcutMap = new Map(SHORTCUTS.map((s) => [s.id, s]))
 export function getShortcutKeys(id: string): string | undefined {
   return shortcutMap.get(id)?.keys
 }
+
+export function getEffectiveShortcuts(custom: Record<string, string> | null | undefined): ShortcutEntry[] {
+  if (!custom) return SHORTCUTS
+  return SHORTCUTS.map((s) => {
+    const override = custom[s.id]
+    return override ? { ...s, keys: override } : s
+  })
+}
+
+export function getEffectiveShortcutKeys(id: string, custom: Record<string, string> | null | undefined): string | undefined {
+  if (custom?.[id]) return custom[id]
+  return shortcutMap.get(id)?.keys
+}
+
+export const SHORTCUT_IDS = new Set(SHORTCUTS.map((s) => s.id))

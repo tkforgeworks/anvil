@@ -2,6 +2,7 @@ import {
   ContentCopy as CopyIcon,
   ExpandMore as ExpandIcon,
   FolderOpen as FolderIcon,
+  RestartAlt as ResetIcon,
   Upload as UploadIcon,
 } from '@mui/icons-material'
 import {
@@ -29,10 +30,13 @@ import {
   Typography,
 } from '@mui/material'
 import CloseIcon from '@mui/icons-material/CloseRounded'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { settingsApi } from '../../../api/settings.api'
 import type { AppSettings } from '../../../../shared/settings-types'
 import { MODAL_IDS } from '../../menu/constants'
+import { SHORTCUTS, getEffectiveShortcuts } from '../../menu/shortcuts'
+import type { ShortcutEntry } from '../../menu/types'
+import { formatKeyCombo } from '../../menu/useGlobalShortcuts'
 import { useSettingsStore } from '../../stores/settings.store'
 import { useUiStore } from '../../stores/ui.store'
 
@@ -153,6 +157,190 @@ function CustomThemeGuide(): React.JSX.Element {
   )
 }
 
+const SHORTCUT_GROUPS = ['File', 'Navigation', 'Editing', 'View', 'Project', 'Help'] as const
+
+function ShortcutsTab({
+  appSettings,
+  updateSetting,
+  saving,
+}: {
+  appSettings: AppSettings
+  updateSetting: (patch: Partial<AppSettings>) => Promise<void>
+  saving: boolean
+}): React.JSX.Element {
+  const [capturingId, setCapturingId] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  const effective = getEffectiveShortcuts(appSettings.customShortcuts)
+  const defaultMap = new Map(SHORTCUTS.map((s) => [s.id, s]))
+
+  const grouped = new Map<string, ShortcutEntry[]>()
+  for (const s of effective) {
+    const list = grouped.get(s.group) ?? []
+    list.push(s)
+    grouped.set(s.group, list)
+  }
+
+  const hasAnyOverride = appSettings.customShortcuts && Object.keys(appSettings.customShortcuts).length > 0
+
+  const handleCapture = useCallback(
+    (e: KeyboardEvent) => {
+      if (!capturingId) return
+      if (['Control', 'Shift', 'Alt', 'Meta'].includes(e.key)) return
+
+      e.preventDefault()
+      e.stopPropagation()
+
+      if (e.key === 'Escape') {
+        setCapturingId(null)
+        setError(null)
+        return
+      }
+
+      const hasModifier = e.ctrlKey || e.metaKey || e.shiftKey || e.altKey
+      if (!hasModifier) {
+        if (!e.key.startsWith('F') || !/^F\d+$/.test(e.key)) {
+          setError('Shortcut must include Ctrl, Shift, or Alt')
+          return
+        }
+      }
+
+      const combo = formatKeyCombo(e)
+
+      for (const s of effective) {
+        if (s.id !== capturingId && s.keys === combo) {
+          setError(`Conflicts with "${s.label}"`)
+          return
+        }
+      }
+
+      const defaultKeys = defaultMap.get(capturingId)?.keys
+      const newCustom = { ...(appSettings.customShortcuts ?? {}) }
+      if (combo === defaultKeys) {
+        delete newCustom[capturingId]
+      } else {
+        newCustom[capturingId] = combo
+      }
+      void updateSetting({
+        customShortcuts: Object.keys(newCustom).length > 0 ? newCustom : null,
+      })
+      setCapturingId(null)
+      setError(null)
+    },
+    [capturingId, effective, appSettings.customShortcuts, updateSetting, defaultMap],
+  )
+
+  useEffect(() => {
+    if (!capturingId) return
+    window.addEventListener('keydown', handleCapture, true)
+    return () => window.removeEventListener('keydown', handleCapture, true)
+  }, [capturingId, handleCapture])
+
+  const resetOne = (id: string): void => {
+    const newCustom = { ...(appSettings.customShortcuts ?? {}) }
+    delete newCustom[id]
+    void updateSetting({
+      customShortcuts: Object.keys(newCustom).length > 0 ? newCustom : null,
+    })
+  }
+
+  const resetAll = (): void => {
+    void updateSetting({ customShortcuts: null })
+  }
+
+  return (
+    <Stack spacing={2}>
+      <Stack direction="row" justifyContent="space-between" alignItems="center">
+        <Typography variant="subtitle2">Keyboard Shortcuts</Typography>
+        {hasAnyOverride && (
+          <Button
+            size="small"
+            startIcon={<ResetIcon />}
+            onClick={resetAll}
+            disabled={saving}
+          >
+            Reset All
+          </Button>
+        )}
+      </Stack>
+
+      <Typography variant="caption" color="text.secondary">
+        Click a binding to re-assign it. Press Escape to cancel.
+      </Typography>
+
+      {error && (
+        <Alert severity="error" onClose={() => setError(null)} sx={{ py: 0 }}>
+          {error}
+        </Alert>
+      )}
+
+      {SHORTCUT_GROUPS.map((group) => {
+        const entries = grouped.get(group)
+        if (!entries?.length) return null
+        return (
+          <Box key={group}>
+            <Typography
+              variant="overline"
+              sx={{ fontWeight: 700, letterSpacing: '0.08em', color: 'text.secondary', mb: 0.5, display: 'block' }}
+            >
+              {group}
+            </Typography>
+            {entries.map((s) => {
+              const isCapturing = capturingId === s.id
+              const isOverridden = appSettings.customShortcuts?.[s.id] != null
+              return (
+                <Stack
+                  key={s.id}
+                  direction="row"
+                  alignItems="center"
+                  spacing={1}
+                  sx={{ py: 0.5, borderBottom: 1, borderColor: 'divider' }}
+                >
+                  <Typography variant="body2" sx={{ flex: 1 }}>
+                    {s.label}
+                  </Typography>
+                  <Box
+                    tabIndex={0}
+                    onClick={() => {
+                      setCapturingId(s.id)
+                      setError(null)
+                    }}
+                    sx={{
+                      fontFamily: '"JetBrains Mono", monospace',
+                      fontSize: '12px',
+                      px: 1,
+                      py: '2px',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      minWidth: 80,
+                      textAlign: 'center',
+                      border: 1,
+                      borderColor: isCapturing ? 'primary.main' : 'divider',
+                      bgcolor: isCapturing ? 'action.selected' : 'action.hover',
+                      color: isOverridden ? 'primary.main' : 'text.primary',
+                      fontWeight: isOverridden ? 600 : 400,
+                      '&:hover': { borderColor: 'primary.main' },
+                    }}
+                  >
+                    {isCapturing ? 'Press keys…' : s.keys}
+                  </Box>
+                  {isOverridden && (
+                    <Tooltip title={`Reset to ${defaultMap.get(s.id)?.keys}`}>
+                      <IconButton size="small" onClick={() => resetOne(s.id)} disabled={saving}>
+                        <ResetIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                </Stack>
+              )
+            })}
+          </Box>
+        )
+      })}
+    </Stack>
+  )
+}
+
 export default function AppSettingsModal(): React.JSX.Element | null {
   const activeModalId = useUiStore((s) => s.activeModalId)
   const closeModal = useUiStore((s) => s.closeModal)
@@ -226,6 +414,7 @@ export default function AppSettingsModal(): React.JSX.Element | null {
         <Tab label="General" />
         <Tab label="Appearance" />
         <Tab label="Editor" />
+        <Tab label="Shortcuts" />
       </Tabs>
 
       <DialogContent sx={{ pt: 3, minHeight: 300 }}>
@@ -320,7 +509,7 @@ export default function AppSettingsModal(): React.JSX.Element | null {
               )}
             </Box>
           </Stack>
-        ) : (
+        ) : tab === 2 ? (
           <Stack spacing={3} sx={{ maxWidth: 500 }}>
             <Box>
               <Typography variant="subtitle2" gutterBottom>Preferred Editing Mode</Typography>
@@ -344,6 +533,8 @@ export default function AppSettingsModal(): React.JSX.Element | null {
               </FormControl>
             </Box>
           </Stack>
+        ) : (
+          <ShortcutsTab appSettings={appSettings} updateSetting={updateSetting} saving={saving} />
         )}
       </DialogContent>
     </Dialog>
