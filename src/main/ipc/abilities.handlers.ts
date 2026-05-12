@@ -37,8 +37,9 @@ export function registerAbilitiesHandlers(): void {
   })
 
   safeHandle(IPC_CHANNELS.ABILITIES_HARD_DELETE, (_event, id: string) => {
+    const record = abilityRepository.get(id)
     abilityRepository.hardDelete(id)
-    markProjectDirty({ domain: 'abilities', recordId: id, recordName: id, subArea: 'basic-info', action: 'hard-delete' })
+    markProjectDirty({ domain: 'abilities', recordId: id, recordName: record?.displayName ?? id, subArea: 'basic-info', action: 'hard-delete' })
   })
 
   safeHandle(IPC_CHANNELS.ABILITIES_DUPLICATE, (_event, id: string) => {

@@ -2,7 +2,8 @@ import { dialog, BrowserWindow } from 'electron'
 import { mkdirSync, existsSync } from 'fs'
 import { writeFile, mkdir } from 'fs/promises'
 import { join } from 'path'
-import { logError, logInfo } from '../logging/app-logger'
+import { logDebug, logError, logInfo } from '../logging/app-logger'
+import { anonymizePath } from '../logging/log-format'
 import { getProjectState } from '../project/project-service'
 import { randomUUID } from 'crypto'
 import { IPC_CHANNELS } from '../../shared/ipc-channels'
@@ -120,6 +121,8 @@ export function registerExportHandlers(): void {
         `INSERT INTO custom_templates (id, name, description, template_source, format, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?)`,
       ).run(id, data.name, data.description ?? '', data.template_source, data.format ?? 'text', now, now)
+      logInfo('Export template created')
+      logDebug(`Export template created: ${data.name}`)
       return db.prepare('SELECT * FROM custom_templates WHERE id = ?').get(id) as CustomTemplate
     },
   )
@@ -141,6 +144,8 @@ export function registerExportHandlers(): void {
         data.format ?? existing.format,
         id,
       )
+      logInfo('Export template updated')
+      logDebug(`Export template updated: ${data.name ?? existing.name}`)
       return db.prepare('SELECT * FROM custom_templates WHERE id = ?').get(id) as CustomTemplate
     },
   )
@@ -150,6 +155,8 @@ export function registerExportHandlers(): void {
     (_event, id: string): { success: boolean } => {
       const db = getDb()
       db.prepare('DELETE FROM custom_templates WHERE id = ?').run(id)
+      logInfo('Export template deleted')
+      logDebug(`Export template deleted: ${id}`)
       return { success: true }
     },
   )
@@ -174,7 +181,11 @@ export function registerExportHandlers(): void {
     async (_event, presetId: string, scope: ExportScope): Promise<{ success: boolean; error?: string; path?: string }> => {
       try {
         const gate = runValidationGate()
-        if (gate.blocked) return { success: false, error: gate.error }
+        if (gate.blocked) {
+          logInfo('Export blocked by validation errors')
+          logDebug(`Export blocked: ${gate.error}`)
+          return { success: false, error: gate.error }
+        }
 
         const result = renderForPresetOrTemplate(presetId, scope)
         const win = BrowserWindow.getFocusedWindow()
@@ -198,7 +209,8 @@ export function registerExportHandlers(): void {
           for (const file of result.files) {
             await writeFile(join(folder, file.filename), file.content, 'utf-8')
           }
-          logInfo(`Export completed: ${result.files.length} files to ${folder}`)
+          logInfo('Export completed')
+          logDebug(`Export completed: ${result.files.length} files to ${anonymizePath(folder)}`)
           return { success: true, path: folder }
         }
 
@@ -224,7 +236,8 @@ export function registerExportHandlers(): void {
         }
 
         await writeFile(dialogResult.filePath, result.output, 'utf-8')
-        logInfo(`Export completed: ${dialogResult.filePath}`)
+        logInfo('Export completed')
+        logDebug(`Export completed: ${anonymizePath(dialogResult.filePath)}`)
         return { success: true, path: dialogResult.filePath }
       } catch (cause) {
         logError('Export failed', cause)

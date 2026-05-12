@@ -17,7 +17,8 @@ import { closeDatabase, getDb, openDatabase, type DbConnection } from '../db/con
 import { CURRENT_SCHEMA_VERSION, runMigrations } from '../db/migrations/runner'
 import { getAppSettings } from '../settings/app-settings-service'
 import { logDebug, logError, logInfo } from '../logging/app-logger'
-import { clearChanges, hasNetPendingChanges, recordChange, type ChangeEntry } from './change-accumulator'
+import { anonymizePath, formatBulkDebug, formatBulkInfo, formatChangeDebug, formatChangeInfo } from '../logging/log-format'
+import { clearChanges, hasNetPendingChanges, recordChange, type ChangeEntry, type ChangeAction, type DomainKey } from './change-accumulator'
 import { createProjectFolder, detectProjectFolder, sanitizeFolderName } from './project-folder'
 import { recordSave } from './save-history-service'
 import type {
@@ -388,6 +389,7 @@ function stopAutoSaveTimer(): void {
 
   clearInterval(autoSaveTimer)
   autoSaveTimer = null
+  logDebug('Auto-save timer stopped')
 }
 
 function startAutoSaveTimer(): void {
@@ -395,6 +397,7 @@ function startAutoSaveTimer(): void {
   const settings = getAppSettings()
   if (!settings.autoSaveEnabled) return
   const intervalMs = settings.autoSaveIntervalMs
+  logDebug(`Auto-save timer started (${intervalMs}ms interval)`)
   autoSaveTimer = setInterval(() => {
     if (!activeProject || !isDirty || saveStatus === 'saving' || isRecoveryMode) {
       logDebug(`Auto-save skipped: ${!activeProject ? 'no project' : !isDirty ? 'not dirty' : saveStatus === 'saving' ? 'already saving' : 'recovery mode'}`)
@@ -503,7 +506,8 @@ export async function createProject(
     isRecoveryMode = false
     startAutoSaveTimer()
     updateRecentProjects(project)
-    logInfo(`Project created: ${projectName} (${filePath})`)
+    logInfo('Project created')
+    logDebug(`Project created: ${projectName} (${anonymizePath(filePath)})`)
     return getProjectState()
   } catch (error) {
     logError('Project creation failed', error)
@@ -551,7 +555,8 @@ export async function openProject(
     recoveryMessage = null
     startAutoSaveTimer()
     updateRecentProjects(project)
-    logInfo(`Project opened: ${project.projectName} (${activePath})`)
+    logInfo('Project opened')
+    logDebug(`Project opened: ${project.projectName} (${anonymizePath(activePath)})`)
     return getProjectState()
   } catch (error) {
     if (error instanceof ProjectLockError) {
@@ -575,7 +580,8 @@ export function saveProject(isAutoSave = false): ProjectStateSnapshot {
     recordSave(isAutoSave)
     setCleanState(buildProjectMetadata(db, activeProject.filePath))
     updateRecentProjects(activeProject)
-    logInfo(`${isAutoSave ? 'Auto-save' : 'Manual save'} completed: ${activeProject.projectName}`)
+    logInfo(`${isAutoSave ? 'Auto-save' : 'Manual save'} completed`)
+    logDebug(`${isAutoSave ? 'Auto-save' : 'Manual save'} completed: ${activeProject.projectName}`)
     return getProjectState()
   } catch (error) {
     logError('Save failed', error)
@@ -607,6 +613,8 @@ export async function saveProjectAs(owner: BrowserWindow | null): Promise<Projec
     isRecoveryMode = false
     startAutoSaveTimer()
     updateRecentProjects(activeProject)
+    logInfo('Project saved to new location')
+    logDebug(`Project saved to new location: ${anonymizePath(targetPath)}`)
     return getProjectState()
   } catch (error) {
     logError('Save-as failed', error)
@@ -627,7 +635,9 @@ export async function saveProjectAs(owner: BrowserWindow | null): Promise<Projec
 }
 
 export function closeActiveProject(): ProjectStateSnapshot {
+  const closingName = activeProject?.projectName
   logInfo('Project closed')
+  logDebug(`Project closed: ${closingName ?? 'unknown'}`)
   stopAutoSaveTimer()
   closeExistingDatabase()
   releaseProjectLock()
@@ -640,11 +650,31 @@ export function closeActiveProject(): ProjectStateSnapshot {
 export function markProjectDirty(change?: ChangeEntry): ProjectStateSnapshot {
   if (!activeProject || isRecoveryMode) return getProjectState()
 
-  if (change) recordChange(change)
+  if (change) {
+    recordChange(change)
+    logInfo(formatChangeInfo(change))
+    logDebug(formatChangeDebug(change))
+  }
   const hasChanges = hasNetPendingChanges()
   isDirty = hasChanges
   saveStatus = hasChanges ? 'unsaved' : 'saved'
   saveError = null
+  return getProjectState()
+}
+
+export function markProjectDirtyBulk(domain: DomainKey, action: ChangeAction, ids: string[]): ProjectStateSnapshot {
+  if (!activeProject || isRecoveryMode) return getProjectState()
+
+  for (const id of ids) {
+    recordChange({ domain, recordId: id, recordName: '', subArea: 'basic-info', action })
+  }
+  const hasChanges = hasNetPendingChanges()
+  isDirty = hasChanges
+  saveStatus = hasChanges ? 'unsaved' : 'saved'
+  saveError = null
+
+  logInfo(formatBulkInfo(domain, action, ids.length))
+  logDebug(formatBulkDebug(domain, action, ids))
   return getProjectState()
 }
 
@@ -708,6 +738,8 @@ export async function backupProject(owner: BrowserWindow | null): Promise<{ succ
   if (result.canceled || !result.filePath) return { success: false }
 
   copyFileSync(activeProject.filePath, result.filePath)
+  logInfo('Project backup created')
+  logDebug(`Project backup created: ${anonymizePath(result.filePath)}`)
   return { success: true }
 }
 

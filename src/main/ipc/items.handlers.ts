@@ -37,8 +37,9 @@ export function registerItemsHandlers(): void {
   })
 
   safeHandle(IPC_CHANNELS.ITEMS_HARD_DELETE, (_event, id: string) => {
+    const record = itemRepository.get(id)
     itemRepository.hardDelete(id)
-    markProjectDirty({ domain: 'items', recordId: id, recordName: id, subArea: 'basic-info', action: 'hard-delete' })
+    markProjectDirty({ domain: 'items', recordId: id, recordName: record?.displayName ?? id, subArea: 'basic-info', action: 'hard-delete' })
   })
 
   safeHandle(IPC_CHANNELS.ITEMS_DUPLICATE, (_event, id: string) => {
