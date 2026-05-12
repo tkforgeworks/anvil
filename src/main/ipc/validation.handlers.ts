@@ -6,11 +6,15 @@ import { getDb } from '../db/connection'
 import { validateProject } from '../validation/engine'
 
 let lastIssues: ValidationIssue[] = []
+let lastIssueCount = -1
 
 export function registerValidationHandlers(): void {
   safeHandle(IPC_CHANNELS.VALIDATION_RUN, (): ValidationIssue[] => {
     lastIssues = validateProject(getDb())
-    logDebug(`Validation completed: ${lastIssues.length} issues`)
+    if (lastIssues.length !== lastIssueCount) {
+      logDebug(`Validation completed: ${lastIssues.length} issues`)
+      lastIssueCount = lastIssues.length
+    }
     return lastIssues
   })
   safeHandle(IPC_CHANNELS.VALIDATION_GET_ISSUES, (): ValidationIssue[] => lastIssues)

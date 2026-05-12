@@ -635,9 +635,10 @@ export async function saveProjectAs(owner: BrowserWindow | null): Promise<Projec
 }
 
 export function closeActiveProject(): ProjectStateSnapshot {
-  const closingName = activeProject?.projectName
+  if (!activeProject) return getProjectState()
+  const closingName = activeProject.projectName
   logInfo('Project closed')
-  logDebug(`Project closed: ${closingName ?? 'unknown'}`)
+  logDebug(`Project closed: ${closingName}`)
   stopAutoSaveTimer()
   closeExistingDatabase()
   releaseProjectLock()
