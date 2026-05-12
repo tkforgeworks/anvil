@@ -256,6 +256,7 @@ export default function MenuDropdown(): React.JSX.Element | null {
                   key={item.id}
                   onMouseEnter={() => handleSubmenuEnter(item.id)}
                   onMouseLeave={handleSubmenuLeave}
+                  sx={{ position: 'relative' }}
                 >
                   <MenuRow
                     item={{

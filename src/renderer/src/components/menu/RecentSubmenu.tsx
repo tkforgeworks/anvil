@@ -28,7 +28,7 @@ export default function RecentSubmenu(): React.JSX.Element {
     <Box
       sx={{
         position: 'absolute',
-        top: 32,
+        top: 0,
         left: 320,
         bgcolor: '#14203a',
         border: '1px solid #2a3553',
