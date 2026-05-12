@@ -37,7 +37,7 @@ import { useProjectStore } from '../../stores/project.store'
 import { useUiStore } from '../../stores/ui.store'
 import MetaListSection from '../MetaListSection'
 import { CustomFieldsSection, DerivedStatSection, RaritySection } from '../ProjectSettingsTab'
-import SaveBar from '../SaveBar'
+import { WarningAmber as WarningAmberIcon } from '@mui/icons-material'
 
 const TAB_INDEX: Record<string, number> = { 'custom-fields': 3 }
 
@@ -347,13 +347,26 @@ export default function ProjectSettingsModal(): React.JSX.Element | null {
             <CustomFieldsSection itemCategories={itemCategories} npcTypes={npcTypes} />
           )}
 
-          <SaveBar
-            isDirty={settingsDirty}
-            isSaving={isSaving}
-            onSave={() => void saveSettings()}
-            onDiscard={discardSettings}
-          />
         </DialogContent>
+
+        {settingsDirty && (
+          <Stack
+            direction="row"
+            alignItems="center"
+            spacing={2}
+            sx={{ px: 3, py: 1.5, borderTop: 2, borderTopColor: 'warning.main' }}
+          >
+            <WarningAmberIcon color="warning" />
+            <Typography variant="body2">You have unsaved changes</Typography>
+            <Box sx={{ flex: 1 }} />
+            <Button variant="outlined" color="inherit" onClick={discardSettings} disabled={isSaving}>
+              Discard
+            </Button>
+            <Button variant="contained" onClick={() => void saveSettings()} disabled={isSaving}>
+              Save
+            </Button>
+          </Stack>
+        )}
       </Dialog>
 
       <Dialog open={showDiscardPrompt} onClose={() => setShowDiscardPrompt(false)} maxWidth="xs">
