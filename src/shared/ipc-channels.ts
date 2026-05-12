@@ -174,6 +174,10 @@ export const IPC_CHANNELS = {
 
   // Shell
   SHELL_OPEN_EXTERNAL: 'shell:open-external',
+  SHELL_OPEN_PATH: 'shell:open-path',
+
+  // App info
+  APP_GET_LOG_PATH: 'app:get-log-path',
 
   // Window controls
   WINDOW_MINIMIZE: 'window:minimize',

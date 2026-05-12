@@ -59,6 +59,13 @@ function registerWindowControls(): void {
     }
     void shell.openExternal(url)
   })
+  ipcMain.handle('shell:open-path', (_event, filePath: string) => {
+    if (typeof filePath !== 'string' || !filePath) return
+    void shell.openPath(filePath)
+  })
+  ipcMain.handle('app:get-log-path', () => {
+    return join(app.getPath('userData'), 'logs')
+  })
 }
 
 app.whenReady().then(() => {

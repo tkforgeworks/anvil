@@ -24,6 +24,7 @@ import { projectApi } from '../api/project.api'
 import AppSettingsModal from './components/settings/AppSettingsModal'
 import ProjectSettingsModal from './components/settings/ProjectSettingsModal'
 import ShortcutsModal from './components/settings/ShortcutsModal'
+import AboutModal from './components/settings/AboutModal'
 import useGlobalShortcuts from './menu/useGlobalShortcuts'
 import { useProjectStore } from './stores/project.store'
 
@@ -101,6 +102,7 @@ export default function App(): React.JSX.Element {
       <AppSettingsModal />
       <ProjectSettingsModal />
       <ShortcutsModal />
+      <AboutModal />
     </>
   )
 }
