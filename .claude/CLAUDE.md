@@ -49,6 +49,19 @@ Six first-class data domains, each with full CRUD, soft-delete, custom fields (w
 
 ---
 
+## CI & Release Workflow
+
+Two GitHub Actions workflows in `.github/workflows/`:
+
+- **`ci.yml`** — triggers on `pull_request` to master. Runs `validate` job (typecheck, test, build). This is the required status check for branch protection.
+- **`release.yml`** — triggers on `push` to master (i.e., after PR merge). Reads version from `package.json`, checks if a `v{version}` tag already exists. If not → generates release notes, builds artifacts on Windows + Linux, creates a GitHub Release (which also creates the tag). If the tag exists → skips silently.
+
+**Release scripts** (`scripts/rc-tag.js`, `scripts/release-tag.js`): create a `release/v{version}` branch, bump `package.json` (no local git tags), push, and auto-create a PR via `gh pr create`. Run with `npm run rc:patch` / `npm run release:patch` etc.
+
+**Branch protection required** — the workflow assumes direct pushes to master don't happen. Configure in GitHub repo settings: require PR, require `validate` status check.
+
+---
+
 ## Known Technical Debt
 
 **better-sqlite3 ABI — test vs. Electron binary**

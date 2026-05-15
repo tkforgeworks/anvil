@@ -11,6 +11,12 @@ function git(cmd) {
 function findPreviousTag() {
   try {
     const tags = git('tag --sort=-v:refname').split('\n').filter(Boolean)
+    const releaseVersion = process.env.RELEASE_VERSION
+    if (releaseVersion) {
+      const idx = tags.indexOf(releaseVersion)
+      if (idx >= 0 && idx < tags.length - 1) return tags[idx + 1]
+      return tags.length > 0 ? tags[0] : null
+    }
     const current = process.env.GITHUB_REF_NAME || tags[0]
     const idx = tags.indexOf(current)
     return idx >= 0 && idx < tags.length - 1 ? tags[idx + 1] : tags.length > 1 ? tags[1] : null
@@ -30,7 +36,7 @@ function getCommits(since) {
 }
 
 function isReleaseBump(msg) {
-  return /^Release candidate/i.test(msg) || /^\d+\.\d+\.\d+/i.test(msg)
+  return /^Release\b/i.test(msg) || /^\d+\.\d+\.\d+/i.test(msg)
 }
 
 function isFix(msg) {
