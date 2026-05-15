@@ -82,7 +82,7 @@ export function hasNetPendingChanges(): boolean {
   return false
 }
 
-const DOMAIN_LABELS: Record<DomainKey, { singular: string; plural: string }> = {
+export const DOMAIN_LABELS: Record<DomainKey, { singular: string; plural: string }> = {
   'classes': { singular: 'class', plural: 'classes' },
   'abilities': { singular: 'ability', plural: 'abilities' },
   'items': { singular: 'item', plural: 'items' },
@@ -93,7 +93,7 @@ const DOMAIN_LABELS: Record<DomainKey, { singular: string; plural: string }> = {
   'custom-fields': { singular: 'custom field', plural: 'custom fields' },
 }
 
-const SUB_AREA_LABELS: Record<SubArea, string> = {
+export const SUB_AREA_LABELS: Record<SubArea, string> = {
   'basic-info': '',
   'stat-growth': 'Stat growth',
   'stat-growth-formulas': 'Stat growth formulas',
@@ -106,7 +106,7 @@ const SUB_AREA_LABELS: Record<SubArea, string> = {
   'custom-fields': 'Custom fields',
 }
 
-const ACTION_LABELS: Partial<Record<ChangeAction, string>> = {
+export const ACTION_LABELS: Partial<Record<ChangeAction, string>> = {
   'create': 'created',
   'delete': 'deleted',
   'restore': 'restored',

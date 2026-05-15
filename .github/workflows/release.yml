@@ -1,0 +1,90 @@
+name: Release
+
+on:
+  push:
+    branches: [master]
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  check-release:
+    runs-on: ubuntu-latest
+    outputs:
+      should-release: ${{ steps.check.outputs.should-release }}
+      version: ${{ steps.check.outputs.version }}
+      is-prerelease: ${{ steps.check.outputs.is-prerelease }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: check
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          TAG="v${VERSION}"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists — skipping release"
+            echo "should-release=false" >> $GITHUB_OUTPUT
+          else
+            echo "Tag $TAG does not exist — will release"
+            echo "should-release=true" >> $GITHUB_OUTPUT
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+            if echo "$VERSION" | grep -qE '(rc|alpha|beta)'; then
+              echo "is-prerelease=true" >> $GITHUB_OUTPUT
+            else
+              echo "is-prerelease=false" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+  release-notes:
+    if: needs.check-release.outputs.should-release == 'true'
+    needs: check-release
+    runs-on: ubuntu-latest
+    outputs:
+      body: ${{ steps.notes.outputs.body }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - id: notes
+        run: |
+          BODY=$(node scripts/generate-release-notes.js)
+          echo "body<<EOF" >> $GITHUB_OUTPUT
+          echo "$BODY" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        env:
+          JIRA_BASE_URL: ${{ vars.JIRA_BASE_URL }}
+          RELEASE_VERSION: v${{ needs.check-release.outputs.version }}
+
+  release:
+    if: needs.check-release.outputs.should-release == 'true'
+    needs: [check-release, release-notes]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install Linux build dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libfuse2 rpm
+      - run: npm ci
+      - run: npm run make
+        env:
+          VITE_TELEMETRY_ENABLED: ${{ needs.check-release.outputs.is-prerelease }}
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ needs.check-release.outputs.version }}
+          files: dist/make/**/*
+          body: ${{ needs.release-notes.outputs.body }}
+          prerelease: ${{ needs.check-release.outputs.is-prerelease }}

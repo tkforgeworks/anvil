@@ -2,8 +2,9 @@ import { IPC_CHANNELS } from '../../shared/ipc-channels'
 import { safeHandle } from './safe-handle'
 import type { BulkOperationInput, LifecycleDomain } from '../../shared/domain-types'
 import { getDb } from '../db/connection'
-import { markProjectDirty } from '../project/project-service'
-import type { ChangeEntry } from '../project/change-accumulator'
+import { markProjectDirty, markProjectDirtyBulk } from '../project/project-service'
+import { recordChange } from '../project/change-accumulator'
+import { logDebug, logInfo } from '../logging/app-logger'
 import { computeDeleteImpact } from '../lifecycle/impact'
 
 const DOMAIN_TABLES: Record<LifecycleDomain, string> = {
@@ -35,9 +36,7 @@ export function registerLifecycleHandlers(): void {
              updated_at = datetime('now')
          WHERE id IN (${placeholders}) AND deleted_at IS NULL`,
       ).run(...input.ids)
-      for (const id of input.ids) {
-        markProjectDirty({ domain: input.domain, recordId: id, recordName: '', subArea: 'basic-info', action: 'delete' })
-      }
+      markProjectDirtyBulk(input.domain, 'delete', input.ids)
     },
   )
 
@@ -53,9 +52,7 @@ export function registerLifecycleHandlers(): void {
          SET deleted_at = NULL, updated_at = datetime('now')
          WHERE id IN (${placeholders}) AND deleted_at IS NOT NULL`,
       ).run(...input.ids)
-      for (const id of input.ids) {
-        markProjectDirty({ domain: input.domain, recordId: id, recordName: '', subArea: 'basic-info', action: 'restore' })
-      }
+      markProjectDirtyBulk(input.domain, 'restore', input.ids)
     },
   )
 
@@ -67,9 +64,7 @@ export function registerLifecycleHandlers(): void {
       const db = getDb()
       const placeholders = input.ids.map(() => '?').join(', ')
       db.prepare(`DELETE FROM ${table} WHERE id IN (${placeholders})`).run(...input.ids)
-      for (const id of input.ids) {
-        markProjectDirty({ domain: input.domain, recordId: id, recordName: '', subArea: 'basic-info', action: 'hard-delete' })
-      }
+      markProjectDirtyBulk(input.domain, 'hard-delete', input.ids)
     },
   )
 
@@ -83,8 +78,11 @@ export function registerLifecycleHandlers(): void {
     })
     tx()
     for (const domain of domainKeys) {
-      markProjectDirty({ domain, recordId: 'all', recordName: '', subArea: 'basic-info', action: 'hard-delete' })
+      recordChange({ domain, recordId: 'all', recordName: '', subArea: 'basic-info', action: 'hard-delete' })
     }
+    markProjectDirty()
+    logInfo('Trash emptied')
+    logDebug('Trash emptied across all domains')
   })
 
   safeHandle(

@@ -42,8 +42,9 @@ export function registerNpcsHandlers(): void {
   })
 
   safeHandle(IPC_CHANNELS.NPCS_HARD_DELETE, (_event, id: string) => {
+    const record = npcRepository.get(id)
     npcRepository.hardDelete(id)
-    markProjectDirty({ domain: 'npcs', recordId: id, recordName: id, subArea: 'basic-info', action: 'hard-delete' })
+    markProjectDirty({ domain: 'npcs', recordId: id, recordName: record?.displayName ?? id, subArea: 'basic-info', action: 'hard-delete' })
   })
 
   safeHandle(IPC_CHANNELS.NPCS_DUPLICATE, (_event, id: string) => {

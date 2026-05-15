@@ -1,6 +1,7 @@
 import { app, BrowserWindow, ipcMain, shell } from 'electron'
 import { join } from 'path'
 import { registerAllIpcHandlers } from './ipc'
+import { isAlreadyLoggedError } from './ipc/safe-handle'
 import { initLogger, logError, logInfo, logWarn } from './logging/app-logger'
 import { writeTelemetrySessionStart } from './logging/telemetry-writer'
 import { closeActiveProject } from './project/project-service'
@@ -72,7 +73,7 @@ app.whenReady().then(() => {
   initLogger()
 
   const originalConsoleError = console.error
-  console.error = (...args: unknown[]) => { logError(args.map(String).join(' ')); originalConsoleError(...args) }
+  console.error = (...args: unknown[]) => { if (!args.some(isAlreadyLoggedError)) logError(args.map(String).join(' ')); originalConsoleError(...args) }
   const originalConsoleWarn = console.warn
   console.warn = (...args: unknown[]) => { logWarn(args.map(String).join(' ')); originalConsoleWarn(...args) }
 

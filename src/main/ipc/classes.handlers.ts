@@ -46,8 +46,9 @@ export function registerClassesHandlers(): void {
   })
 
   safeHandle(IPC_CHANNELS.CLASSES_HARD_DELETE, (_event, id: string) => {
+    const record = classRepository.get(id)
     classRepository.hardDelete(id)
-    markProjectDirty({ domain: 'classes', recordId: id, recordName: id, subArea: 'basic-info', action: 'hard-delete' })
+    markProjectDirty({ domain: 'classes', recordId: id, recordName: record?.displayName ?? id, subArea: 'basic-info', action: 'hard-delete' })
   })
 
   safeHandle(IPC_CHANNELS.CLASSES_DUPLICATE, (_event, id: string) => {

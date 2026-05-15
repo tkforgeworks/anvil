@@ -1,7 +1,8 @@
 import { BrowserWindow, dialog } from 'electron'
 import { IPC_CHANNELS } from '../../shared/ipc-channels'
 import type { AppSettings } from '../../shared/settings-types'
-import { logInfo } from '../logging/app-logger'
+import { logDebug, logInfo } from '../logging/app-logger'
+import { formatSettingsDebug } from '../logging/log-format'
 import { restartAutoSaveTimer } from '../project/project-service'
 import { getAppSettings, parseCustomThemeFile, setAppSettings } from '../settings/app-settings-service'
 import { safeHandle } from './safe-handle'
@@ -13,6 +14,7 @@ export function registerSettingsHandlers(): void {
     const updatedSettings = setAppSettings(settings)
     restartAutoSaveTimer()
     logInfo('App settings updated')
+    logDebug(`App settings updated: ${formatSettingsDebug(settings)}`)
     return updatedSettings
   })
 

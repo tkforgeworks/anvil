@@ -1,7 +1,7 @@
 {
   "name": "anvil",
   "productName": "Anvil",
-  "version": "0.1.2-rc.8",
+  "version": "0.1.3",
   "description": "RPG Data Management Tool",
   "author": "TKForgeWorks",
   "repository": {
@@ -20,9 +20,9 @@
     "typecheck": "tsc --noEmit -p tsconfig.main.json && tsc --noEmit -p tsconfig.renderer.json",
     "rebuild": "electron-rebuild -f -w better-sqlite3",
     "test": "node scripts/test.js",
-    "release:patch": "npm version patch && git push && git push --tags",
-    "release:minor": "npm version minor && git push && git push --tags",
-    "release:major": "npm version major && git push && git push --tags",
+    "release:patch": "node scripts/release-tag.js patch",
+    "release:minor": "node scripts/release-tag.js minor",
+    "release:major": "node scripts/release-tag.js major",
     "rc:patch": "node scripts/rc-tag.js patch",
     "rc:minor": "node scripts/rc-tag.js minor",
     "rc:major": "node scripts/rc-tag.js major"

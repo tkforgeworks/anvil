@@ -37,8 +37,9 @@ export function registerRecipesHandlers(): void {
   })
 
   safeHandle(IPC_CHANNELS.RECIPES_HARD_DELETE, (_event, id: string) => {
+    const record = recipeRepository.get(id)
     recipeRepository.hardDelete(id)
-    markProjectDirty({ domain: 'recipes', recordId: id, recordName: id, subArea: 'basic-info', action: 'hard-delete' })
+    markProjectDirty({ domain: 'recipes', recordId: id, recordName: record?.displayName ?? id, subArea: 'basic-info', action: 'hard-delete' })
   })
 
   safeHandle(IPC_CHANNELS.RECIPES_DUPLICATE, (_event, id: string) => {

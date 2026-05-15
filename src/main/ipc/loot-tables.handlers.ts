@@ -48,8 +48,9 @@ export function registerLootTablesHandlers(): void {
   })
 
   safeHandle(IPC_CHANNELS.LOOT_TABLES_HARD_DELETE, (_event, id: string) => {
+    const record = lootTableRepository.get(id)
     lootTableRepository.hardDelete(id)
-    markProjectDirty({ domain: 'loot-tables', recordId: id, recordName: id, subArea: 'basic-info', action: 'hard-delete' })
+    markProjectDirty({ domain: 'loot-tables', recordId: id, recordName: record?.displayName ?? id, subArea: 'basic-info', action: 'hard-delete' })
   })
 
   safeHandle(IPC_CHANNELS.LOOT_TABLES_DUPLICATE, (_event, id: string) => {
