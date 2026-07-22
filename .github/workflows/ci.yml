@@ -1,11 +1,13 @@
 name: CI
 
 on:
+  push:
+    branches-ignore: [master]
   pull_request:
     branches: [master]
 
 concurrency:
-  group: pr-${{ github.event.number }}
+  group: ci-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -18,6 +20,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: npm audit --omit=dev
       - run: npm run typecheck
       - run: npm test
       - run: npm run build

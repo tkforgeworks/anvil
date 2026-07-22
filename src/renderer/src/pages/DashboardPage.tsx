@@ -176,15 +176,17 @@ export default function DashboardPage(): React.JSX.Element {
     }
   }, [refreshProjectState])
 
+  const nextSaveAt = autoSaveInfo?.nextSaveAt ?? null
+
   useEffect(() => {
     if (countdownRef.current) clearInterval(countdownRef.current)
-    if (!autoSaveInfo?.nextSaveAt) {
+    if (!nextSaveAt) {
       setCountdown(null)
       return
     }
 
     const tick = () => {
-      const remaining = new Date(autoSaveInfo.nextSaveAt!).getTime() - Date.now()
+      const remaining = new Date(nextSaveAt).getTime() - Date.now()
       if (remaining <= 0) {
         setCountdown('saving...')
       } else {
@@ -196,7 +198,7 @@ export default function DashboardPage(): React.JSX.Element {
     tick()
     countdownRef.current = setInterval(tick, 1000)
     return () => { if (countdownRef.current) clearInterval(countdownRef.current) }
-  }, [autoSaveInfo])
+  }, [nextSaveAt])
 
   const handleBackup = async () => {
     await projectApi.backup()
