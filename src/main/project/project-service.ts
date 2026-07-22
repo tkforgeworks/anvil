@@ -53,6 +53,7 @@ let recoveryMessage: string | null = null
 let saveStatus: ProjectSaveStatus = 'saved'
 let saveError: string | null = null
 let autoSaveTimer: NodeJS.Timeout | null = null
+let nextAutoSaveAt: number | null = null
 let activeLock: { filePath: string; lockPath: string; fd: number } | null = null
 
 function recentProjectsPath(): string {
@@ -389,6 +390,7 @@ function stopAutoSaveTimer(): void {
 
   clearInterval(autoSaveTimer)
   autoSaveTimer = null
+  nextAutoSaveAt = null
   logDebug('Auto-save timer stopped')
 }
 
@@ -398,7 +400,9 @@ function startAutoSaveTimer(): void {
   if (!settings.autoSaveEnabled) return
   const intervalMs = settings.autoSaveIntervalMs
   logDebug(`Auto-save timer started (${intervalMs}ms interval)`)
+  nextAutoSaveAt = Date.now() + intervalMs
   autoSaveTimer = setInterval(() => {
+    nextAutoSaveAt = Date.now() + intervalMs
     if (!activeProject || !isDirty || saveStatus === 'saving' || isRecoveryMode) {
       logDebug(`Auto-save skipped: ${!activeProject ? 'no project' : !isDirty ? 'not dirty' : saveStatus === 'saving' ? 'already saving' : 'recovery mode'}`)
       return
@@ -715,10 +719,10 @@ export function getProjectState(): ProjectStateSnapshot {
 
 export function getAutoSaveInfo(): { enabled: boolean; intervalMs: number; nextSaveAt: string | null } {
   const settings = getAppSettings()
-  if (!settings.autoSaveEnabled || !autoSaveTimer || !activeProject) {
+  if (!settings.autoSaveEnabled || !autoSaveTimer || !activeProject || nextAutoSaveAt === null) {
     return { enabled: settings.autoSaveEnabled, intervalMs: settings.autoSaveIntervalMs, nextSaveAt: null }
   }
-  return { enabled: true, intervalMs: settings.autoSaveIntervalMs, nextSaveAt: new Date(Date.now() + settings.autoSaveIntervalMs).toISOString() }
+  return { enabled: true, intervalMs: settings.autoSaveIntervalMs, nextSaveAt: new Date(nextAutoSaveAt).toISOString() }
 }
 
 export async function backupProject(owner: BrowserWindow | null): Promise<{ success: boolean }> {
