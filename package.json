@@ -25,7 +25,8 @@
     "release:major": "node scripts/release-tag.js major",
     "rc:patch": "node scripts/rc-tag.js patch",
     "rc:minor": "node scripts/rc-tag.js minor",
-    "rc:major": "node scripts/rc-tag.js major"
+    "rc:major": "node scripts/rc-tag.js major",
+    "release:final": "node scripts/release-tag.js final"
   },
   "dependencies": {
     "@emotion/react": "^11.13.3",
@@ -44,11 +45,11 @@
     "@electron-forge/cli": "^7.5.0",
     "@electron-forge/maker-deb": "^7.5.0",
     "@electron-forge/maker-rpm": "^7.5.0",
-    "@reforged/maker-appimage": "^5.2.0",
     "@electron-forge/maker-squirrel": "^7.5.0",
     "@electron-forge/maker-zip": "^7.5.0",
     "@electron-forge/shared-types": "^7.5.0",
     "@electron/rebuild": "^3.6.0",
+    "@reforged/maker-appimage": "^5.2.0",
     "@types/better-sqlite3": "^7.6.13",
     "@types/nunjucks": "^3.2.6",
     "@types/react": "^18.3.5",

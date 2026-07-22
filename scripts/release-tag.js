@@ -5,8 +5,8 @@ const { readFileSync } = require('fs')
 const { resolve } = require('path')
 
 const bumpType = process.argv[2]
-if (!['patch', 'minor', 'major'].includes(bumpType)) {
-  console.error('Usage: node scripts/release-tag.js <patch|minor|major>')
+if (!['patch', 'minor', 'major', 'final'].includes(bumpType)) {
+  console.error('Usage: node scripts/release-tag.js <patch|minor|major|final>')
   process.exit(1)
 }
 
@@ -26,16 +26,28 @@ function ghPrExists(branch) {
 }
 
 const pkg = JSON.parse(readFileSync(resolve(__dirname, '..', 'package.json'), 'utf8'))
-const currentVersion = pkg.version.replace(/-rc\.\d+$/, '')
-const parts = currentVersion.split('.').map(Number)
 
+// 'final' promotes the current RC to its stable version (0.1.4-rc.2 → 0.1.4)
+// so the stable tag shares its base with the RC tags and release notes can
+// report the RC range it rolls up. patch/minor/major are for direct stable
+// releases with no RC phase.
 let nextVersion
-if (bumpType === 'major') {
-  nextVersion = `${parts[0] + 1}.0.0`
-} else if (bumpType === 'minor') {
-  nextVersion = `${parts[0]}.${parts[1] + 1}.0`
+if (bumpType === 'final') {
+  if (!/-rc\.\d+$/.test(pkg.version)) {
+    console.error(`Current version ${pkg.version} is not a release candidate — nothing to finalize`)
+    process.exit(1)
+  }
+  nextVersion = pkg.version.replace(/-rc\.\d+$/, '')
 } else {
-  nextVersion = `${parts[0]}.${parts[1]}.${parts[2] + 1}`
+  const currentVersion = pkg.version.replace(/-rc\.\d+$/, '')
+  const parts = currentVersion.split('.').map(Number)
+  if (bumpType === 'major') {
+    nextVersion = `${parts[0] + 1}.0.0`
+  } else if (bumpType === 'minor') {
+    nextVersion = `${parts[0]}.${parts[1] + 1}.0`
+  } else {
+    nextVersion = `${parts[0]}.${parts[1]}.${parts[2] + 1}`
+  }
 }
 
 const branchName = `release/v${nextVersion}`
