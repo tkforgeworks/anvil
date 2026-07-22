@@ -37,38 +37,24 @@ jobs:
             fi
           fi
 
+  # TK ForgeWorks standard release-notes generation — canonical script and
+  # workflow live in tkforgeworks/.github. release-version is passed
+  # explicitly because this workflow runs before the tag is created.
   release-notes:
     if: needs.check-release.outputs.should-release == 'true'
     needs: check-release
-    runs-on: ubuntu-latest
-    outputs:
-      body: ${{ steps.notes.outputs.body }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - id: notes
-        run: |
-          BODY=$(node scripts/generate-release-notes.js)
-          echo "body<<EOF" >> $GITHUB_OUTPUT
-          echo "$BODY" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-        env:
-          JIRA_BASE_URL: ${{ vars.JIRA_BASE_URL }}
-          RELEASE_VERSION: v${{ needs.check-release.outputs.version }}
+    uses: tkforgeworks/.github/.github/workflows/release-notes.yml@main
+    with:
+      ticket-prefix: ANV
+      release-version: v${{ needs.check-release.outputs.version }}
 
-  release:
+  build:
     if: needs.check-release.outputs.should-release == 'true'
-    needs: [check-release, release-notes]
+    needs: check-release
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [windows-latest, ubuntu-latest]
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -82,9 +68,35 @@ jobs:
       - run: npm run make
         env:
           VITE_TELEMETRY_ENABLED: ${{ needs.check-release.outputs.is-prerelease }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ matrix.os }}
+          path: dist/make/**/*
+
+  publish:
+    if: needs.check-release.outputs.should-release == 'true'
+    needs: [check-release, release-notes, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      # Immutable releases lock assets at publish time, so the release is
+      # created as a draft with assets attached, then flipped to published.
+      # Publishing creates the v{version} tag at the triggering commit.
       - uses: softprops/action-gh-release@v2
+        id: draft
         with:
           tag_name: v${{ needs.check-release.outputs.version }}
-          files: dist/make/**/*
+          target_commitish: ${{ github.sha }}
+          files: dist/**/*
           body: ${{ needs.release-notes.outputs.body }}
+          draft: true
           prerelease: ${{ needs.check-release.outputs.is-prerelease }}
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X PATCH repos/${{ github.repository }}/releases/${{ steps.draft.outputs.id }} -F draft=false
