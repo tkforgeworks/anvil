@@ -71,7 +71,11 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: dist-${{ matrix.os }}
-          path: dist/make/**/*
+          path: |
+            release/*.exe
+            release/*.AppImage
+            release/*.deb
+            release/*.rpm
 
   publish:
     if: needs.check-release.outputs.should-release == 'true'

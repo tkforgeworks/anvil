@@ -4,7 +4,6 @@
     "src/main/**/*",
     "src/preload/**/*",
     "src/shared/**/*",
-    "forge.config.ts",
     "electron.vite.config.ts"
   ],
   "compilerOptions": {

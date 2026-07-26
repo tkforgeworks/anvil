@@ -10,7 +10,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { lootTablesApi } from '../../../api/loot-tables.api'
 import type { LootTableRecord } from '../../../../shared/domain-types'
 import { slugify } from '../../utils/slugify'
@@ -27,6 +27,7 @@ export function CreateLootTableDialog({ open, onClose, onCreated }: CreateLootTa
   const [exportKeyTouched, setExportKeyTouched] = useState(false)
   const [isBusy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const displayNameRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (!open) return
@@ -59,12 +60,20 @@ export function CreateLootTableDialog({ open, onClose, onCreated }: CreateLootTa
   }
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth="sm"
+      // autoFocus races the MUI FocusTrap init; re-focus after the transition so
+      // keyboard focus reliably lands in the field (ANV-111)
+      TransitionProps={{ onEntered: () => displayNameRef.current?.focus() }}
+    >
       <DialogTitle>New Loot Table</DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ pt: 1 }}>
           {error && <Alert severity="error">{error}</Alert>}
-          <TextField label="Display Name" value={displayName} onChange={(e) => handleDisplayNameChange(e.target.value)} required autoFocus fullWidth />
+          <TextField label="Display Name" value={displayName} onChange={(e) => handleDisplayNameChange(e.target.value)} required autoFocus fullWidth inputRef={displayNameRef} />
           <TextField
             label="Export Key"
             value={exportKey}
