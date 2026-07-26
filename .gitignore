@@ -12,6 +12,7 @@ node_modules/
 .vite/
 out/
 dist/
+release/
 
 # Native module build artifacts
 build/Release/

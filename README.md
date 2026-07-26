@@ -44,7 +44,7 @@ No sprite/asset management, dialogue branching logic, combat simulation, multipl
 | Template engine | Nunjucks |
 | Charting | Recharts |
 | Bundler | Vite (`electron-vite` 5) |
-| Packager | Electron Forge 7 |
+| Packager | electron-builder 26 (NSIS installer on Windows; AppImage/deb/rpm on Linux) |
 
 ---
 
@@ -88,7 +88,6 @@ anvil/
 │       ├── ipc-types.ts         # AnvilBridge interface (shared main/renderer contract)
 │       └── domain-types.ts      # Base domain record types
 ├── electron.vite.config.ts      # electron-vite build config (main/preload/renderer targets)
-├── forge.config.ts              # Electron Forge packaging config
 ├── tsconfig.json                # Root tsconfig (references main + renderer)
 ├── tsconfig.main.json           # Main/preload TypeScript config (Node target)
 ├── tsconfig.renderer.json       # Renderer TypeScript config (DOM target)
