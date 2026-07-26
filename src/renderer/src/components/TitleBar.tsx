@@ -83,19 +83,24 @@ export default function TitleBar(): React.JSX.Element {
           <Button
             color="inherit"
             size="small"
+            tabIndex={-1}
             data-tid="titlebar-save"
             onClick={() => void saveProject()}
             disabled={!activeProject || isRecoveryMode || !isDirty}
           >
             Save
           </Button>
-          <Button color="inherit" size="small" data-tid="titlebar-close" onClick={() => void closeProject()} disabled={!activeProject}>
+          <Button color="inherit" size="small" tabIndex={-1} data-tid="titlebar-close" onClick={() => void closeProject()} disabled={!activeProject}>
             Close
           </Button>
           <Divider orientation="vertical" flexItem sx={{ mx: 0.5, borderColor: 'rgba(255,255,255,0.2)' }} />
+          {/* Title bar controls stay out of tab order (like a native title bar) so a
+              failed dialog focus trap can never land keyboard focus on window
+              controls — spacebar must not close the window (ANV-111). */}
           <IconButton
             color="inherit"
             size="small"
+            tabIndex={-1}
             onClick={() => void window.anvil.invoke(IPC_CHANNELS.WINDOW_MINIMIZE)}
           >
             <MinimizeIcon fontSize="small" />
@@ -103,6 +108,7 @@ export default function TitleBar(): React.JSX.Element {
           <IconButton
             color="inherit"
             size="small"
+            tabIndex={-1}
             onClick={() => void window.anvil.invoke(IPC_CHANNELS.WINDOW_MAXIMIZE)}
           >
             <MaximizeIcon fontSize="small" />
@@ -110,6 +116,7 @@ export default function TitleBar(): React.JSX.Element {
           <IconButton
             color="inherit"
             size="small"
+            tabIndex={-1}
             onClick={() => void window.anvil.invoke(IPC_CHANNELS.WINDOW_CLOSE)}
             sx={{ '&:hover': { bgcolor: 'error.dark' } }}
           >
