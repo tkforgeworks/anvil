@@ -16,7 +16,7 @@
     "build": "electron-vite build",
     "preview": "electron-vite preview",
     "package": "electron-vite build && electron-builder --dir",
-    "make": "electron-vite build && electron-builder",
+    "make": "electron-vite build && electron-builder --publish never",
     "typecheck": "tsc --noEmit -p tsconfig.main.json && tsc --noEmit -p tsconfig.renderer.json",
     "rebuild": "electron-rebuild -f -w better-sqlite3",
     "test": "node scripts/test.js",
