@@ -1,7 +1,7 @@
 {
   "name": "anvil",
   "productName": "Anvil",
-  "version": "0.1.4-rc.3",
+  "version": "0.1.4",
   "description": "RPG Data Management Tool",
   "author": "TKForgeWorks",
   "repository": {
