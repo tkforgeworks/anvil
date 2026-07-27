@@ -7,35 +7,20 @@ import {
   Box,
   Button,
   Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  FormControl,
-  InputLabel,
-  MenuItem,
   Paper,
-  Select,
   Stack,
-  TextField,
   Typography,
 } from '@mui/material'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { projectApi } from '../../api/project.api'
-import type { ProjectTemplateId, RecentProject } from '../../../shared/project-types'
+import type { RecentProject } from '../../../shared/project-types'
 import { useProjectStore } from '../stores/project.store'
 import { MODAL_IDS } from '../menu/constants'
 import { useUiStore } from '../stores/ui.store'
 import { ProjectInitialsMark } from '../components/ProjectInitialsMark'
 import { RelativeTimestamp } from '../components/RelativeTimestamp'
 import { FileSizeDisplay } from '../components/FileSizeDisplay'
-
-const TEMPLATE_OPTIONS: { value: ProjectTemplateId; label: string }[] = [
-  { value: 'blank', label: 'Blank' },
-  { value: 'fantasy-rpg', label: 'Fantasy RPG' },
-  { value: 'sci-fi-rpg', label: 'Sci-Fi RPG' },
-]
 
 function countSummary(project: RecentProject): string {
   const c = project.recordCounts
@@ -53,10 +38,6 @@ export default function WelcomePage(): React.JSX.Element {
   const navigate = useNavigate()
   const hydrate = useProjectStore((state) => state.hydrate)
   const recentProjects = useProjectStore((state) => state.recentProjects)
-  const [isCreateOpen, setCreateOpen] = useState(false)
-  const [projectName, setProjectName] = useState('')
-  const [gameTitle, setGameTitle] = useState('')
-  const [templateId, setTemplateId] = useState<ProjectTemplateId>('blank')
   const [error, setError] = useState<string | null>(null)
   const [isBusy, setBusy] = useState(false)
   const openModal = useUiStore((s) => s.openModal)
@@ -75,37 +56,10 @@ export default function WelcomePage(): React.JSX.Element {
     }
   }
 
-  const createProject = async (): Promise<void> => {
-    setBusy(true)
-    setError(null)
-    try {
-      const snapshot = await projectApi.create({ projectName, gameTitle, templateId })
-      hydrate(snapshot)
-      if (snapshot.activeProject) {
-        setCreateOpen(false)
-        navigate('/')
-      }
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Unable to create project.')
-    } finally {
-      setBusy(false)
-    }
-  }
-
   const removeRecentProject = async (filePath: string): Promise<void> => {
     const snapshot = await projectApi.removeRecent(filePath)
     hydrate(snapshot)
   }
-
-  const closeCreateDialog = (): void => {
-    setCreateOpen(false)
-    setProjectName('')
-    setGameTitle('')
-    setTemplateId('blank')
-    setError(null)
-  }
-
-  const canCreate = projectName.trim().length > 0 && gameTitle.trim().length > 0 && !isBusy
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', bgcolor: 'background.default' }}>
@@ -136,7 +90,7 @@ export default function WelcomePage(): React.JSX.Element {
               title="New project"
               subtitle="Blank or from template"
               variant="brand"
-              onClick={() => setCreateOpen(true)}
+              onClick={() => openModal(MODAL_IDS.NEW_PROJECT)}
               disabled={isBusy}
               data-tid="welcome-new-project"
             />
@@ -258,52 +212,6 @@ export default function WelcomePage(): React.JSX.Element {
           </Typography>
         </Box>
       </Box>
-
-      {/* Create Project Dialog */}
-      <Dialog open={isCreateOpen} onClose={closeCreateDialog} fullWidth maxWidth="sm">
-        <DialogTitle>Create New Project</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ pt: 1 }}>
-            <TextField
-              label="Project Name"
-              value={projectName}
-              onChange={(event) => setProjectName(event.target.value)}
-              autoFocus
-              required
-            />
-            <TextField
-              label="Game Title"
-              value={gameTitle}
-              onChange={(event) => setGameTitle(event.target.value)}
-              required
-            />
-            <FormControl>
-              <InputLabel id="project-template-label">Template</InputLabel>
-              <Select
-                labelId="project-template-label"
-                label="Template"
-                value={templateId}
-                onChange={(event) => setTemplateId(event.target.value as ProjectTemplateId)}
-              >
-                {TEMPLATE_OPTIONS.map((option) => (
-                  <MenuItem key={option.value} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={closeCreateDialog} disabled={isBusy} data-tid="dialog-create-project-cancel">
-            Cancel
-          </Button>
-          <Button onClick={() => void createProject()} disabled={!canCreate} variant="contained" data-tid="dialog-create-project-confirm">
-            Create
-          </Button>
-        </DialogActions>
-      </Dialog>
-
     </Box>
   )
 }

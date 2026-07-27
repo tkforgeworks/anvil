@@ -22,9 +22,7 @@ export default function useCommandDispatch(): (command: string) => void {
         // File
         case 'new-project':
           if (project) return
-          void projectApi
-            .create({ projectName: '', gameTitle: '', templateId: 'blank' })
-            .catch(() => {})
+          openModal(MODAL_IDS.NEW_PROJECT)
           break
         case 'open-project':
           void projectApi
