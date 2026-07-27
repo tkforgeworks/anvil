@@ -21,6 +21,7 @@ import RecycleBinPage from './pages/RecycleBinPage'
 import ExportPage from './pages/ExportPage'
 import WelcomePage from './pages/WelcomePage'
 import { projectApi } from '../api/project.api'
+import CreateProjectModal from './components/CreateProjectModal'
 import AppSettingsModal from './components/settings/AppSettingsModal'
 import ProjectSettingsModal from './components/settings/ProjectSettingsModal'
 import ShortcutsModal from './components/settings/ShortcutsModal'
@@ -99,6 +100,7 @@ export default function App(): React.JSX.Element {
   return (
     <>
       {content}
+      <CreateProjectModal />
       <AppSettingsModal />
       <ProjectSettingsModal />
       <ShortcutsModal />
