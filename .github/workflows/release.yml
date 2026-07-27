@@ -45,7 +45,7 @@ jobs:
     needs: check-release
     uses: tkforgeworks/.github/.github/workflows/release-notes.yml@main
     with:
-      ticket-prefix: ANV
+      ticket-prefix: ANVL
       release-version: v${{ needs.check-release.outputs.version }}
 
   build:
