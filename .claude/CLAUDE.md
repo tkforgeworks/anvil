@@ -62,7 +62,14 @@ Two GitHub Actions workflows in `.github/workflows/`:
 
 **Commit subjects are the changelog contract.** Notes are built from commit subjects since the previous tag (previous *stable* tag for stable releases, so final notes span all RCs). Version-bump and merge commits are filtered out. Subjects starting with `Fix` or `ANVL-N: Fix ...` land under "Bug Fixes", everything else under "Changes"; `ANVL-N` keys become Jira links. Write commit subjects as user-readable changelog lines, prefixed with the ticket key when there is one.
 
-**Jira project migrated (July 2026):** the Anvil Jira project is now the team-managed *Software* project with key **ANVL** (has Releases/fix versions). The old business-type ANV project was migrated out — all 137 issues were bulk-moved and renumbered (e.g. ANV-136 → ANVL-123, ANV-113 → ANVL-10); old `ANV-###` URLs redirect to the moved issues. Use `ANVL-N` keys in all new commit subjects and tickets. Fix versions track release scope: tag open tickets with their target version (e.g. 0.1.5).
+**Jira project migrated (July 2026):** the Anvil Jira project is now the team-managed *Software* project with key **ANVL** (has Releases/fix versions). The old business-type ANV project was migrated out — all 137 issues were bulk-moved and renumbered (e.g. ANV-136 → ANVL-123, ANV-113 → ANVL-10); old `ANV-###` URLs redirect to the moved issues. Use `ANVL-N` keys in all new commit subjects and tickets.
+
+**Fix-version categorization convention:** every open ticket gets a fix version at creation, chosen from three buckets:
+- **Current release** (e.g. `0.1.5`) — in scope for the release cycle underway.
+- **Next / future work** (e.g. `0.1.6`) — deferred items, typically identified during RC testing, that won't make the current release. When a release ships, this bucket becomes the next current release.
+- **`1.0.0`** — big-picture items collected for the major release; no near-term cycle assignment.
+
+Tickets found during an RC run are triaged into one of these rather than left unversioned. The Releases page in Jira (project ANVL) is the release-planning view.
 
 ### Release process (RC → stable)
 
