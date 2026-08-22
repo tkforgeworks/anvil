@@ -1,8 +1,15 @@
 name: Release
 
+# Tagless release pipeline (shared TK ForgeWorks standard, mirrored in
+# claude-observability-gui): version bumps are ordinary commits, this workflow
+# triggers on branch pushes and self-gates on whether the version's tag already
+# exists, and the tag is created server-side when the GitHub release is
+# published. RC prereleases are cut from v*/main version branches as they are
+# pushed; the stable release is cut only when the version branch merges to
+# master.
 on:
   push:
-    branches: [master]
+    branches: [master, 'v*/main']
 
 concurrency:
   group: release
@@ -16,25 +23,36 @@ jobs:
       version: ${{ steps.check.outputs.version }}
       is-prerelease: ${{ steps.check.outputs.is-prerelease }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - id: check
         run: |
           VERSION=$(node -p "require('./package.json').version")
           TAG="v${VERSION}"
+          BRANCH="${{ github.ref_name }}"
+          IS_RC=false
+          if echo "$VERSION" | grep -qE '(rc|alpha|beta)'; then
+            IS_RC=true
+          fi
           if git rev-parse "$TAG" >/dev/null 2>&1; then
             echo "Tag $TAG already exists — skipping release"
+            echo "should-release=false" >> $GITHUB_OUTPUT
+          elif [ "$BRANCH" = "master" ] && [ "$IS_RC" = "true" ]; then
+            # An RC version should never merge to master — run release:final on
+            # the version branch first.
+            echo "RC version $VERSION on master — skipping release"
+            echo "should-release=false" >> $GITHUB_OUTPUT
+          elif [ "$BRANCH" != "master" ] && [ "$IS_RC" = "false" ]; then
+            # The release:final bump pushes a stable version to the version
+            # branch before its PR merges; the stable release is cut on master.
+            echo "Stable version $VERSION on $BRANCH — releasing on merge to master, skipping"
             echo "should-release=false" >> $GITHUB_OUTPUT
           else
             echo "Tag $TAG does not exist — will release"
             echo "should-release=true" >> $GITHUB_OUTPUT
             echo "version=$VERSION" >> $GITHUB_OUTPUT
-            if echo "$VERSION" | grep -qE '(rc|alpha|beta)'; then
-              echo "is-prerelease=true" >> $GITHUB_OUTPUT
-            else
-              echo "is-prerelease=false" >> $GITHUB_OUTPUT
-            fi
+            echo "is-prerelease=$IS_RC" >> $GITHUB_OUTPUT
           fi
 
   # TK ForgeWorks standard release-notes generation — canonical script and
@@ -56,8 +74,8 @@ jobs:
       matrix:
         os: [windows-latest, ubuntu-latest]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -68,7 +86,7 @@ jobs:
       - run: npm run make
         env:
           VITE_TELEMETRY_ENABLED: ${{ needs.check-release.outputs.is-prerelease }}
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: dist-${{ matrix.os }}
           path: |
@@ -84,14 +102,14 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           path: dist
           merge-multiple: true
       # Immutable releases lock assets at publish time, so the release is
       # created as a draft with assets attached, then flipped to published.
       # Publishing creates the v{version} tag at the triggering commit.
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v3
         id: draft
         with:
           tag_name: v${{ needs.check-release.outputs.version }}
