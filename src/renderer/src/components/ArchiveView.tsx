@@ -198,7 +198,9 @@ export function ArchiveTable<T extends BaseRecord>({
       />
 
       {records.length === 0 ? (
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant="body2" sx={{
+          color: "text.secondary"
+        }}>
           {emptyMessage ?? 'No archived records.'}
         </Typography>
       ) : (
@@ -230,22 +232,36 @@ export function ArchiveTable<T extends BaseRecord>({
                   />
                 </TableCell>
                 <TableCell>
-                  <Typography variant="body2" fontWeight={500} color="text.secondary">
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontWeight: 500,
+                      color: "text.secondary"
+                    }}>
                     {record.displayName}
                   </Typography>
                 </TableCell>
                 <TableCell>
-                  <Typography variant="body2" color="text.secondary" fontFamily="monospace">
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: "text.secondary",
+                      fontFamily: "monospace"
+                    }}>
                     {record.exportKey}
                   </Typography>
                 </TableCell>
                 <TableCell>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" sx={{
+                    color: "text.secondary"
+                  }}>
                     {formatDeletedAt(record.deletedAt)}
                   </Typography>
                 </TableCell>
                 <TableCell align="right">
-                  <Stack direction="row" spacing={0.5} justifyContent="flex-end">
+                  <Stack direction="row" spacing={0.5} sx={{
+                    justifyContent: "flex-end"
+                  }}>
                     <Tooltip title="Restore">
                       <IconButton size="small" color="primary" onClick={() => void handleRestore(record.id)}>
                         <RestoreIcon fontSize="small" />
@@ -278,5 +294,5 @@ export function ArchiveTable<T extends BaseRecord>({
         onConfirm={() => void handleBulkHardDelete()}
       />
     </>
-  )
+  );
 }

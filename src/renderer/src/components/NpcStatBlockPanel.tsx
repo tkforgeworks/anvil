@@ -55,11 +55,13 @@ export default function NpcStatBlockPanel({
   if (stats.length === 0) {
     return (
       <Paper variant="outlined" sx={{ p: 3, textAlign: 'center' }}>
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant="body2" sx={{
+          color: "text.secondary"
+        }}>
           No stats defined in project settings.
         </Typography>
       </Paper>
-    )
+    );
   }
 
   const sorted = [...stats].sort((a, b) => a.sortOrder - b.sortOrder)
@@ -97,7 +99,13 @@ export default function NpcStatBlockPanel({
                   </Typography>
                 </TableCell>
                 <TableCell align="right">
-                  <Stack direction="row" spacing={0.5} alignItems="center" justifyContent="flex-end">
+                  <Stack
+                    direction="row"
+                    spacing={0.5}
+                    sx={{
+                      alignItems: "center",
+                      justifyContent: "flex-end"
+                    }}>
                     <TextField
                       type="number"
                       size="small"
@@ -112,20 +120,22 @@ export default function NpcStatBlockPanel({
                           if (!Number.isNaN(parsed)) onOverrideChange(stat.id, parsed)
                         }
                       }}
-                      inputProps={{
-                        style: {
-                          width: 70,
-                          textAlign: 'right',
-                          fontFamily: 'monospace',
-                          fontWeight: hasOverride ? 700 : 400,
-                        },
-                      }}
                       sx={
                         hasOverride
                           ? { '& .MuiOutlinedInput-notchedOutline': { borderWidth: 2, borderColor: 'warning.main' } }
                           : undefined
                       }
                       disabled={disabled}
+                      slotProps={{
+                        htmlInput: {
+                          style: {
+                            width: 70,
+                            textAlign: 'right',
+                            fontFamily: 'monospace',
+                            fontWeight: hasOverride ? 700 : 400,
+                          },
+                        }
+                      }}
                     />
                     <Tooltip title={hasOverride ? 'Revert to inherited' : 'No override'}>
                       <span>
@@ -152,10 +162,10 @@ export default function NpcStatBlockPanel({
                   </Box>
                 </TableCell>
               </TableRow>
-            )
+            );
           })}
         </TableBody>
       </Table>
     </TableContainer>
-  )
+  );
 }

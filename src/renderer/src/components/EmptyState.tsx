@@ -35,11 +35,18 @@ export default function EmptyState({
           {icon}
         </Box>
       )}
-      <Typography variant="h6" color="text.secondary">
+      <Typography variant="h6" sx={{
+        color: "text.secondary"
+      }}>
         {title}
       </Typography>
       {body && (
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+        <Typography
+          variant="body2"
+          sx={{
+            color: "text.secondary",
+            mt: 1
+          }}>
           {body}
         </Typography>
       )}
@@ -49,5 +56,5 @@ export default function EmptyState({
         </Button>
       )}
     </Box>
-  )
+  );
 }

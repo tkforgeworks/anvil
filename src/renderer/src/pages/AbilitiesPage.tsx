@@ -25,7 +25,7 @@ import {
   Typography,
 } from '@mui/material'
 import { useCallback, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import { abilitiesApi } from '../../api/abilities.api'
 import { lifecycleApi } from '../../api/lifecycle.api'
 import type { AbilityRecord } from '../../../shared/domain-types'
@@ -307,31 +307,39 @@ export default function AbilitiesPage(): React.JSX.Element {
                         />
                       </TableCell>
                       <TableCell>
-                        <Typography variant="body2" fontWeight={500}>
+                        <Typography variant="body2" sx={{
+                          fontWeight: 500
+                        }}>
                           {ability.displayName}
                         </Typography>
                       </TableCell>
                       <TableCell>
-                        <Typography variant="body2" color="text.secondary" fontFamily="monospace">
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            color: "text.secondary",
+                            fontFamily: "monospace"
+                          }}>
                           {ability.exportKey}
                         </Typography>
                       </TableCell>
                       <TableCell>
-                        <Typography variant="body2" color="text.secondary">
+                        <Typography variant="body2" sx={{
+                          color: "text.secondary"
+                        }}>
                           {ability.abilityType || '—'}
                         </Typography>
                       </TableCell>
                       <TableCell>
                         <Typography
                           variant="body2"
-                          color="text.secondary"
                           sx={{
+                            color: "text.secondary",
                             maxWidth: 260,
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
+                            whiteSpace: 'nowrap'
+                          }}>
                           {ability.description || '—'}
                         </Typography>
                       </TableCell>
@@ -402,5 +410,5 @@ export default function AbilitiesPage(): React.JSX.Element {
         )}
       </EditorModal>
     </Box>
-  )
+  );
 }

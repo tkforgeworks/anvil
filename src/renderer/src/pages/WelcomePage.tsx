@@ -12,7 +12,7 @@ import {
   Typography,
 } from '@mui/material'
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import { projectApi } from '../../api/project.api'
 import type { RecentProject } from '../../../shared/project-types'
 import { useProjectStore } from '../stores/project.store'
@@ -72,7 +72,12 @@ export default function WelcomePage(): React.JSX.Element {
               Anvil
             </Box>
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "text.secondary",
+              mb: 3
+            }}>
             Pick a project, or start a new world.
           </Typography>
 
@@ -115,18 +120,30 @@ export default function WelcomePage(): React.JSX.Element {
           </Stack>
 
           {/* Recent projects header */}
-          <Stack direction="row" alignItems="baseline" justifyContent="space-between" sx={{ mb: 1 }}>
+          <Stack
+            direction="row"
+            sx={{
+              alignItems: "baseline",
+              justifyContent: "space-between",
+              mb: 1
+            }}>
             <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
               Recent projects
             </Typography>
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="caption" sx={{
+              color: "text.secondary"
+            }}>
               Sorted by last save · stored locally
             </Typography>
           </Stack>
 
           {/* Recents list */}
           {recentProjects.length === 0 ? (
-            <Typography color="text.secondary" sx={{ py: 3 }}>
+            <Typography
+              sx={{
+                color: "text.secondary",
+                py: 3
+              }}>
               No recent projects yet. Create a new project or open an existing .anvil file.
             </Typography>
           ) : (
@@ -150,18 +167,28 @@ export default function WelcomePage(): React.JSX.Element {
                 >
                   <ProjectInitialsMark name={project.projectName} size={34} />
                   <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Stack direction="row" spacing={1} alignItems="baseline">
+                    <Stack direction="row" spacing={1} sx={{
+                      alignItems: "baseline"
+                    }}>
                       <Typography variant="body2" sx={{ fontWeight: 600 }} noWrap>
                         {project.projectName}
                       </Typography>
                       {project.isArchived && (
                         <Chip label="archived" size="small" variant="outlined" sx={{ height: 18, fontSize: '0.65rem' }} />
                       )}
-                      <Typography variant="caption" color="text.secondary" noWrap>
+                      <Typography variant="caption" noWrap sx={{
+                        color: "text.secondary"
+                      }}>
                         · {countSummary(project) || 'empty project'}
                       </Typography>
                     </Stack>
-                    <Stack direction="row" spacing={0.75} alignItems="center" sx={{ mt: 0.25 }}>
+                    <Stack
+                      direction="row"
+                      spacing={0.75}
+                      sx={{
+                        alignItems: "center",
+                        mt: 0.25
+                      }}>
                       <Box
                         sx={{
                           width: 6,
@@ -171,18 +198,30 @@ export default function WelcomePage(): React.JSX.Element {
                           flexShrink: 0,
                         }}
                       />
-                      <Typography variant="caption" color="text.secondary">
+                      <Typography variant="caption" sx={{
+                        color: "text.secondary"
+                      }}>
                         Last saved{' '}
                         <RelativeTimestamp timestamp={project.lastModifiedAt} variant="caption" inline />
                       </Typography>
                       {!project.exists && (
-                        <Typography variant="caption" color="error.main" sx={{ ml: 1 }}>
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: "error.main",
+                            ml: 1
+                          }}>
                           · File missing
                         </Typography>
                       )}
                     </Stack>
                   </Box>
-                  <Stack alignItems="flex-end" spacing={0.25} sx={{ flexShrink: 0 }}>
+                  <Stack
+                    spacing={0.25}
+                    sx={{
+                      alignItems: "flex-end",
+                      flexShrink: 0
+                    }}>
                     <FileSizeDisplay bytes={project.fileSize} />
                     <Button
                       size="small"
@@ -205,15 +244,18 @@ export default function WelcomePage(): React.JSX.Element {
           {/* Footer */}
           <Typography
             variant="caption"
-            color="text.secondary"
-            sx={{ display: 'block', textAlign: 'center', mt: 3 }}
-          >
+            sx={{
+              color: "text.secondary",
+              display: 'block',
+              textAlign: 'center',
+              mt: 3
+            }}>
             <strong>Local-first:</strong> all projects live on disk. No accounts, no sync.
           </Typography>
         </Box>
       </Box>
     </Box>
-  )
+  );
 }
 
 interface ActionTileProps {

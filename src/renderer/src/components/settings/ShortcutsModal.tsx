@@ -37,12 +37,14 @@ export default function ShortcutsModal(): React.JSX.Element | null {
       onClose={closeModal}
       maxWidth="md"
       fullWidth
-      PaperProps={{
-        sx: {
-          bgcolor: PANEL_BG,
-          border: `1px solid ${RULE}`,
-          backgroundImage: 'none',
-        },
+      slotProps={{
+        paper: {
+          sx: {
+            bgcolor: PANEL_BG,
+            border: `1px solid ${RULE}`,
+            backgroundImage: 'none',
+          },
+        }
       }}
     >
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', borderBottom: `1px solid ${RULE_SOFT}` }}>
@@ -83,10 +85,12 @@ export default function ShortcutsModal(): React.JSX.Element | null {
                   <Stack
                     key={s.id}
                     direction="row"
-                    justifyContent="space-between"
-                    alignItems="center"
-                    sx={{ py: 0.5, borderBottom: `1px dashed ${RULE_SOFT}` }}
-                  >
+                    sx={{
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      py: 0.5,
+                      borderBottom: `1px dashed ${RULE_SOFT}`
+                    }}>
                     <Typography variant="body2" sx={{ color: TEXT }}>{s.label}</Typography>
                     <Box
                       component="span"
@@ -108,7 +112,7 @@ export default function ShortcutsModal(): React.JSX.Element | null {
                   </Stack>
                 ))}
               </Box>
-            )
+            );
           })}
         </Box>
 
@@ -120,5 +124,5 @@ export default function ShortcutsModal(): React.JSX.Element | null {
         </Typography>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

@@ -32,7 +32,7 @@ function slugify(value: string): string {
   return value
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '_')
-    .replace(/^_|_$/g, '')
+    .replace(/^_|_$/g, '');
 }
 
 interface MetaListItem {
@@ -160,11 +160,22 @@ export default function MetaListSection({
 
   return (
     <Box>
-      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
+      <Stack
+        direction="row"
+        sx={{
+          alignItems: "center",
+          justifyContent: "space-between",
+          mb: 1
+        }}>
         <Box>
           <Typography variant="subtitle2">{title}</Typography>
           {description && (
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+            <Typography
+              variant="caption"
+              sx={{
+                color: "text.secondary",
+                display: 'block'
+              }}>
               {description}
             </Typography>
           )}
@@ -183,7 +194,9 @@ export default function MetaListSection({
       )}
 
       {items.length === 0 ? (
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant="body2" sx={{
+          color: "text.secondary"
+        }}>
           None defined.
         </Typography>
       ) : (
@@ -279,7 +292,9 @@ export default function MetaListSection({
                 input: {
                   startAdornment: exportKey ? undefined : (
                     <InputAdornment position="start">
-                      <Typography variant="caption" color="text.secondary">auto</Typography>
+                      <Typography variant="caption" sx={{
+                        color: "text.secondary"
+                      }}>auto</Typography>
                     </InputAdornment>
                   ),
                 },
@@ -295,5 +310,5 @@ export default function MetaListSection({
         </DialogActions>
       </Dialog>
     </Box>
-  )
+  );
 }

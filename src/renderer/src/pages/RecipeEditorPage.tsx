@@ -30,7 +30,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useUndoRedo } from '../hooks/useUndoRedo'
 import { useTabDirtyTracking } from '../hooks/useTabDirtyTracking'
 import DirtyDot from '../components/DirtyDot'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router'
 import { itemsApi } from '../../api/items.api'
 import { metaApi } from '../../api/meta.api'
 import { recipesApi } from '../../api/recipes.api'
@@ -304,9 +304,11 @@ export default function RecipeEditorPage({ recordId, onClose }: RecipeEditorPage
   if (isLoading) {
     return (
       <Box sx={{ p: 4 }}>
-        <Typography color="text.secondary">Loading...</Typography>
+        <Typography sx={{
+          color: "text.secondary"
+        }}>Loading...</Typography>
       </Box>
-    )
+    );
   }
 
   if (!record) {
@@ -376,10 +378,12 @@ export default function RecipeEditorPage({ recordId, onClose }: RecipeEditorPage
               setExportKey(e.target.value)
               pushSnapshot({ exportKey: e.target.value })
             }}
-            inputProps={{ style: { fontFamily: '"JetBrains Mono", monospace', fontSize: '0.85rem' } }}
             placeholder="export-key"
             helperText="Export key — used in exported files"
             sx={{ maxWidth: 360 }}
+            slotProps={{
+              htmlInput: { style: { fontFamily: '"JetBrains Mono", monospace', fontSize: '0.85rem' } }
+            }}
           />
           <Stack direction="row" spacing={2}>
             <Autocomplete
@@ -396,8 +400,10 @@ export default function RecipeEditorPage({ recordId, onClose }: RecipeEditorPage
               type="number"
               value={outputQuantity}
               onChange={(e) => { setOutputQuantity(e.target.value); pushSnapshot({ outputQuantity: e.target.value }) }}
-              inputProps={{ min: 1, step: 1 }}
               sx={{ width: 180 }}
+              slotProps={{
+                htmlInput: { min: 1, step: 1 }
+              }}
             />
           </Stack>
 
@@ -426,7 +432,12 @@ export default function RecipeEditorPage({ recordId, onClose }: RecipeEditorPage
 
       <TabPanel index={2} value={activeTab}>
         <Stack spacing={2} sx={{ maxWidth: 860 }}>
-          <Stack direction="row" justifyContent="space-between" alignItems="center">
+          <Stack
+            direction="row"
+            sx={{
+              justifyContent: "space-between",
+              alignItems: "center"
+            }}>
             <Typography variant="subtitle1">Ingredients</Typography>
             <Button data-tid="recipe-add-ingredient" startIcon={<AddIcon />} variant="outlined" size="small" onClick={addIngredient} disabled={activeItems.length === 0}>
               Add Ingredient
@@ -434,7 +445,9 @@ export default function RecipeEditorPage({ recordId, onClose }: RecipeEditorPage
           </Stack>
           {activeItems.length === 0 && <Alert severity="info">Create an active item before adding ingredients.</Alert>}
           {ingredients.length === 0 ? (
-            <Typography variant="body2" color="text.secondary">No ingredients yet.</Typography>
+            <Typography variant="body2" sx={{
+              color: "text.secondary"
+            }}>No ingredients yet.</Typography>
           ) : (
             <Table size="small">
               <TableHead>
@@ -471,7 +484,12 @@ export default function RecipeEditorPage({ recordId, onClose }: RecipeEditorPage
                             />
                           )}
                         />
-                        {isDeleted && <Typography variant="caption" color="warning.main" sx={{ textDecoration: 'line-through' }}>{item?.displayName}</Typography>}
+                        {isDeleted && <Typography
+                          variant="caption"
+                          sx={{
+                            color: "warning.main",
+                            textDecoration: 'line-through'
+                          }}>{item?.displayName}</Typography>}
                       </TableCell>
                       <TableCell>
                         <TextField
@@ -479,8 +497,10 @@ export default function RecipeEditorPage({ recordId, onClose }: RecipeEditorPage
                           size="small"
                           value={ingredient.quantity}
                           onChange={(e) => setIngredientAt(index, { quantity: Math.max(1, parseInt(e.target.value, 10) || 1) })}
-                          inputProps={{ min: 1, step: 1 }}
                           fullWidth
+                          slotProps={{
+                            htmlInput: { min: 1, step: 1 }
+                          }}
                         />
                       </TableCell>
                       <TableCell align="right">
@@ -489,7 +509,7 @@ export default function RecipeEditorPage({ recordId, onClose }: RecipeEditorPage
                         <Tooltip title="Remove"><IconButton size="small" color="error" onClick={() => removeIngredient(index)}><DeleteIcon fontSize="small" /></IconButton></Tooltip>
                       </TableCell>
                     </TableRow>
-                  )
+                  );
                 })}
               </TableBody>
             </Table>
@@ -504,5 +524,5 @@ export default function RecipeEditorPage({ recordId, onClose }: RecipeEditorPage
         onDiscard={handleDiscard}
       />
     </Box>
-  )
+  );
 }

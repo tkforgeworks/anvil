@@ -58,7 +58,7 @@ function slugify(value: string): string {
   return value
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '_')
-    .replace(/^_|_$/g, '')
+    .replace(/^_|_$/g, '');
 }
 
 const FIELD_TYPE_LABELS: Record<CustomFieldType, string> = {
@@ -166,10 +166,21 @@ export function RaritySection({ rarities, onRefresh }: RaritySectionProps): Reac
 
   return (
     <Box>
-      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
+      <Stack
+        direction="row"
+        sx={{
+          alignItems: "center",
+          justifyContent: "space-between",
+          mb: 1
+        }}>
         <Box>
           <Typography variant="subtitle2">Rarities</Typography>
-          <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+          <Typography
+            variant="caption"
+            sx={{
+              color: "text.secondary",
+              display: 'block'
+            }}>
             Rarity tiers used by items. Each has a display color shown in list views.
           </Typography>
         </Box>
@@ -185,7 +196,9 @@ export function RaritySection({ rarities, onRefresh }: RaritySectionProps): Reac
       )}
 
       {rarities.length === 0 ? (
-        <Typography variant="body2" color="text.secondary">None defined.</Typography>
+        <Typography variant="body2" sx={{
+          color: "text.secondary"
+        }}>None defined.</Typography>
       ) : (
         <Table size="small">
           <TableHead>
@@ -260,13 +273,17 @@ export function RaritySection({ rarities, onRefresh }: RaritySectionProps): Reac
                 input: {
                   startAdornment: exportKey ? undefined : (
                     <InputAdornment position="start">
-                      <Typography variant="caption" color="text.secondary">auto</Typography>
+                      <Typography variant="caption" sx={{
+                        color: "text.secondary"
+                      }}>auto</Typography>
                     </InputAdornment>
                   ),
                 },
               }}
             />
-            <Stack direction="row" spacing={1.5} alignItems="center">
+            <Stack direction="row" spacing={1.5} sx={{
+              alignItems: "center"
+            }}>
               <TextField
                 label="Color (hex)"
                 value={colorHex}
@@ -297,7 +314,7 @@ export function RaritySection({ rarities, onRefresh }: RaritySectionProps): Reac
         </DialogActions>
       </Dialog>
     </Box>
-  )
+  );
 }
 
 // ─── Derived stat section ────────────────────────────────────────────────────
@@ -405,10 +422,21 @@ export function DerivedStatSection({ derivedStats, onRefresh }: DerivedStatSecti
 
   return (
     <Box>
-      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
+      <Stack
+        direction="row"
+        sx={{
+          alignItems: "center",
+          justifyContent: "space-between",
+          mb: 1
+        }}>
         <Box>
           <Typography variant="subtitle2">Derived Stat Definitions</Typography>
-          <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+          <Typography
+            variant="caption"
+            sx={{
+              color: "text.secondary",
+              display: 'block'
+            }}>
             Calculated stats with formulas referencing primary stats. Per-class overrides are managed in the class editor.
           </Typography>
         </Box>
@@ -424,7 +452,9 @@ export function DerivedStatSection({ derivedStats, onRefresh }: DerivedStatSecti
       )}
 
       {derivedStats.length === 0 ? (
-        <Typography variant="body2" color="text.secondary">None defined.</Typography>
+        <Typography variant="body2" sx={{
+          color: "text.secondary"
+        }}>None defined.</Typography>
       ) : (
         <Table size="small">
           <TableHead>
@@ -512,7 +542,9 @@ export function DerivedStatSection({ derivedStats, onRefresh }: DerivedStatSecti
                 input: {
                   startAdornment: exportKey ? undefined : (
                     <InputAdornment position="start">
-                      <Typography variant="caption" color="text.secondary">auto</Typography>
+                      <Typography variant="caption" sx={{
+                        color: "text.secondary"
+                      }}>auto</Typography>
                     </InputAdornment>
                   ),
                 },
@@ -564,7 +596,7 @@ export function DerivedStatSection({ derivedStats, onRefresh }: DerivedStatSecti
         </DialogActions>
       </Dialog>
     </Box>
-  )
+  );
 }
 
 // ─── Custom field definition dialog ──────────────────────────────────────────
@@ -696,7 +728,12 @@ function FieldDialog({ open, editing, scopeType, scopeId, onClose, onSaved }: Fi
               )}
             </Select>
             {editing && (
-              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
+              <Typography
+                variant="caption"
+                sx={{
+                  color: "text.secondary",
+                  mt: 0.5
+                }}>
                 Field type cannot be changed after creation.
               </Typography>
             )}
@@ -720,9 +757,16 @@ function FieldDialog({ open, editing, scopeType, scopeId, onClose, onSaved }: Fi
                   Add
                 </Button>
               </Stack>
-              <Stack direction="row" flexWrap="wrap" gap={1}>
+              <Stack
+                direction="row"
+                sx={{
+                  flexWrap: "wrap",
+                  gap: 1
+                }}>
                 {enumOptions.length === 0 && (
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" sx={{
+                    color: "text.secondary"
+                  }}>
                     No options defined. Add at least one.
                   </Typography>
                 )}
@@ -774,7 +818,7 @@ function FieldDialog({ open, editing, scopeType, scopeId, onClose, onSaved }: Fi
         </Button>
       </DialogActions>
     </Dialog>
-  )
+  );
 }
 
 // ─── Custom field definition list for a scope ───────────────────────────────
@@ -836,7 +880,12 @@ function FieldList({ scopeType, scopeId }: FieldListProps): React.JSX.Element {
       )}
 
       {definitions.length === 0 ? (
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        <Typography
+          variant="body2"
+          sx={{
+            color: "text.secondary",
+            mb: 2
+          }}>
           No custom fields defined.
         </Typography>
       ) : (
@@ -894,7 +943,7 @@ function FieldList({ scopeType, scopeId }: FieldListProps): React.JSX.Element {
         onSaved={() => void loadDefinitions()}
       />
     </Box>
-  )
+  );
 }
 
 // ─── Custom fields scope selector ────────────────────────────────────────────
@@ -934,7 +983,13 @@ export function CustomFieldsSection({
   return (
     <Box>
       <Typography variant="subtitle2" sx={{ mb: 0.5 }}>Custom Fields</Typography>
-      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
+      <Typography
+        variant="caption"
+        sx={{
+          color: "text.secondary",
+          display: 'block',
+          mb: 2
+        }}>
         Manage item categories and NPC types, and define custom fields for each. Select a
         category or type to edit its fields.
       </Typography>
@@ -977,9 +1032,17 @@ export function CustomFieldsSection({
         <Box sx={{ flex: 1 }}>
           {selectedScope && selectedItem ? (
             <>
-              <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
+              <Stack
+                direction="row"
+                sx={{
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  mb: 2
+                }}>
                 <Typography variant="h6">{selectedItem.displayName}</Typography>
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="caption" sx={{
+                  color: "text.secondary"
+                }}>
                   {selectedScope.type === 'item_category' ? 'Item Category' : 'NPC Type'}
                 </Typography>
               </Stack>
@@ -990,13 +1053,15 @@ export function CustomFieldsSection({
               />
             </>
           ) : (
-            <Typography color="text.secondary">
+            <Typography sx={{
+              color: "text.secondary"
+            }}>
               Select a category or type on the left to manage its custom fields.
             </Typography>
           )}
         </Box>
       </Box>
     </Box>
-  )
+  );
 }
 

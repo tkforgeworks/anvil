@@ -50,12 +50,14 @@ export default function AboutModal(): React.JSX.Element | null {
       onClose={closeModal}
       maxWidth="xs"
       fullWidth
-      PaperProps={{
-        sx: {
-          bgcolor: PANEL_BG,
-          border: `1px solid ${RULE}`,
-          backgroundImage: 'none',
-        },
+      slotProps={{
+        paper: {
+          sx: {
+            bgcolor: PANEL_BG,
+            border: `1px solid ${RULE}`,
+            backgroundImage: 'none',
+          },
+        }
       }}
     >
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', borderBottom: `1px solid ${RULE_SOFT}` }}>
@@ -123,7 +125,13 @@ export default function AboutModal(): React.JSX.Element | null {
 
         <Box sx={{ height: '1px', bgcolor: RULE_SOFT, my: 2 }} />
 
-        <Stack direction="row" spacing={2} alignItems="center" sx={{ py: 0.5 }}>
+        <Stack
+          direction="row"
+          spacing={2}
+          sx={{
+            alignItems: "center",
+            py: 0.5
+          }}>
           <Typography sx={{ fontSize: '13px', color: TEXT_SOFT, width: 72, flexShrink: 0 }}>
             Logs
           </Typography>
@@ -150,5 +158,5 @@ export default function AboutModal(): React.JSX.Element | null {
         </Typography>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

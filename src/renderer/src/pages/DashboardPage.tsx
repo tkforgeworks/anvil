@@ -23,7 +23,7 @@ import {
   Typography,
 } from '@mui/material'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import { itemsApi } from '../../api/items.api'
 import { metaApi } from '../../api/meta.api'
 import { projectApi } from '../../api/project.api'
@@ -231,7 +231,9 @@ export default function DashboardPage(): React.JSX.Element {
       >
         <ProjectInitialsMark name={activeProject.projectName} size={56} />
         <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Stack direction="row" spacing={1} alignItems="center">
+          <Stack direction="row" spacing={1} sx={{
+            alignItems: "center"
+          }}>
             <Typography variant="h6" sx={{ fontWeight: 700, color: '#fff' }} noWrap>
               {activeProject.projectName}
             </Typography>
@@ -299,7 +301,13 @@ export default function DashboardPage(): React.JSX.Element {
               sx={{ display: 'block', textAlign: 'left', width: '100%' }}
             >
               <Paper variant="outlined" sx={{ p: 1.25 }}>
-                <Stack direction="row" spacing={0.75} alignItems="center" sx={{ mb: 0.5 }}>
+                <Stack
+                  direction="row"
+                  spacing={0.75}
+                  sx={{
+                    alignItems: "center",
+                    mb: 0.5
+                  }}>
                   <Icon sx={{ fontSize: 16, color: 'primary.main' }} />
                   <Typography variant="caption" sx={{ textTransform: 'uppercase', fontWeight: 500, letterSpacing: 0.5 }}>
                     {label}
@@ -308,12 +316,14 @@ export default function DashboardPage(): React.JSX.Element {
                 <Typography variant="h5" sx={{ fontWeight: 700, color: 'primary.main' }}>
                   {count}
                 </Typography>
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="caption" sx={{
+                  color: "text.secondary"
+                }}>
                   {delta > 0 ? `+${delta} this wk` : delta < 0 ? `${delta} this wk` : 'stable'}
                 </Typography>
               </Paper>
             </ButtonBase>
-          )
+          );
         })}
       </Box>
 
@@ -321,19 +331,34 @@ export default function DashboardPage(): React.JSX.Element {
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '2fr 1fr' }, gap: 1.25 }}>
         {/* Save History */}
         <Paper variant="outlined" sx={{ p: 1.5 }}>
-          <Stack direction="row" spacing={0.75} alignItems="center" sx={{ mb: 1 }}>
+          <Stack
+            direction="row"
+            spacing={0.75}
+            sx={{
+              alignItems: "center",
+              mb: 1
+            }}>
             <HistoryIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
             <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Save history</Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ ml: 'auto' }}>
+            <Typography
+              variant="caption"
+              sx={{
+                color: "text.secondary",
+                ml: 'auto'
+              }}>
               last {saveHistory.length} saves
             </Typography>
           </Stack>
           {saveHistory.length === 0 ? (
-            <Typography variant="body2" color="text.secondary">No saves recorded yet.</Typography>
+            <Typography variant="body2" sx={{
+              color: "text.secondary"
+            }}>No saves recorded yet.</Typography>
           ) : (
             <Stack spacing={0.75}>
               {saveHistory.map((entry) => (
-                <Stack key={entry.id} direction="row" spacing={1} alignItems="center">
+                <Stack key={entry.id} direction="row" spacing={1} sx={{
+                  alignItems: "center"
+                }}>
                   <Box
                     sx={{
                       width: 28,
@@ -353,7 +378,9 @@ export default function DashboardPage(): React.JSX.Element {
                       {entry.description || (entry.isAutoSave ? 'Auto-save' : 'Manual save')}
                     </Typography>
                     {entry.description && (
-                      <Typography variant="caption" color="text.secondary" noWrap>
+                      <Typography variant="caption" noWrap sx={{
+                        color: "text.secondary"
+                      }}>
                         {entry.isAutoSave ? 'Auto-save' : 'Manual save'}
                       </Typography>
                     )}
@@ -377,7 +404,9 @@ export default function DashboardPage(): React.JSX.Element {
             }}
             onClick={() => navigate('/validation')}
           >
-            <Stack direction="row" spacing={0.75} alignItems="center">
+            <Stack direction="row" spacing={0.75} sx={{
+              alignItems: "center"
+            }}>
               <WarningIcon sx={{ fontSize: 16, color: totalIssues > 0 ? 'warning.main' : 'text.secondary' }} />
               <Typography
                 variant="subtitle2"
@@ -387,7 +416,13 @@ export default function DashboardPage(): React.JSX.Element {
               </Typography>
             </Stack>
             {totalIssues > 0 && (
-              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.25, display: 'block' }}>
+              <Typography
+                variant="caption"
+                sx={{
+                  color: "text.secondary",
+                  mt: 0.25,
+                  display: 'block'
+                }}>
                 {[
                   errorCount > 0 && `${errorCount} ${errorCount === 1 ? 'error' : 'errors'}`,
                   warningCount > 0 && `${warningCount} ${warningCount === 1 ? 'warning' : 'warnings'}`,
@@ -398,11 +433,22 @@ export default function DashboardPage(): React.JSX.Element {
 
           {/* Quick Add */}
           <Paper variant="outlined" sx={{ p: 1.5 }}>
-            <Stack direction="row" spacing={0.75} alignItems="center" sx={{ mb: 1 }}>
+            <Stack
+              direction="row"
+              spacing={0.75}
+              sx={{
+                alignItems: "center",
+                mb: 1
+              }}>
               <AddIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
               <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Quick add</Typography>
             </Stack>
-            <Stack direction="row" flexWrap="wrap" gap={0.75}>
+            <Stack
+              direction="row"
+              sx={{
+                flexWrap: "wrap",
+                gap: 0.75
+              }}>
               {QUICK_ADD_DOMAINS.map((d) => (
                 <Chip
                   key={d.label}
@@ -425,7 +471,9 @@ export default function DashboardPage(): React.JSX.Element {
               borderColor: autoSaveInfo?.enabled === false ? 'warning.main' : undefined,
             }}
           >
-            <Stack direction="row" spacing={0.75} alignItems="center">
+            <Stack direction="row" spacing={0.75} sx={{
+              alignItems: "center"
+            }}>
               <ScheduleIcon sx={{ fontSize: 16, color: autoSaveInfo?.enabled === false ? 'warning.main' : 'text.secondary' }} />
               <Typography
                 variant="subtitle2"
@@ -434,7 +482,13 @@ export default function DashboardPage(): React.JSX.Element {
                 Auto-save {autoSaveInfo?.enabled === false ? 'disabled' : ''}
               </Typography>
             </Stack>
-            <Typography variant="caption" color="text.secondary" sx={{ mt: 0.25, display: 'block' }}>
+            <Typography
+              variant="caption"
+              sx={{
+                color: "text.secondary",
+                mt: 0.25,
+                display: 'block'
+              }}>
               {autoSaveInfo?.enabled === false
                 ? 'Remember to save manually. Enable in Settings → Application.'
                 : `Every ${autoSaveInfo ? Math.round(autoSaveInfo.intervalMs / 60000) : '?'} min${countdown ? ` · next save in ${countdown}` : ''}`}
@@ -451,5 +505,5 @@ export default function DashboardPage(): React.JSX.Element {
       <CreateNpcDialog open={quickAddDomain === 'npcs'} npcTypes={npcTypes} onClose={() => setQuickAddDomain(null)} onCreated={handleQuickAddCreated} />
       <CreateLootTableDialog open={quickAddDomain === 'lootTables'} onClose={() => setQuickAddDomain(null)} onCreated={handleQuickAddCreated} />
     </Stack>
-  )
+  );
 }

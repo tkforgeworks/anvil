@@ -83,14 +83,18 @@ export function CreateClassDialog({ open, onClose, onCreated }: CreateClassDialo
             onChange={(e) => handleExportKeyChange(e.target.value)}
             fullWidth
             helperText="Used in exported files. Auto-generated from the display name."
-            InputProps={{
-              startAdornment: exportKey ? undefined : (
-                <InputAdornment position="start">
-                  <Typography variant="caption" color="text.disabled">
-                    auto
-                  </Typography>
-                </InputAdornment>
-              ),
+            slotProps={{
+              input: {
+                startAdornment: exportKey ? undefined : (
+                  <InputAdornment position="start">
+                    <Typography variant="caption" sx={{
+                      color: "text.disabled"
+                    }}>
+                      auto
+                    </Typography>
+                  </InputAdornment>
+                ),
+              }
             }}
           />
         </Stack>
@@ -109,5 +113,5 @@ export function CreateClassDialog({ open, onClose, onCreated }: CreateClassDialo
         </Button>
       </DialogActions>
     </Dialog>
-  )
+  );
 }

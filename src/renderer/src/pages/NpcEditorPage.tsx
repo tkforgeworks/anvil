@@ -15,7 +15,7 @@ import {
 } from '@mui/material'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useUndoRedo } from '../hooks/useUndoRedo'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router'
 import { abilitiesApi } from '../../api/abilities.api'
 import { classesApi } from '../../api/classes.api'
 import { itemsApi } from '../../api/items.api'
@@ -297,9 +297,11 @@ export default function NpcEditorPage({ recordId, onClose }: NpcEditorPageProps 
   if (isLoading) {
     return (
       <Box sx={{ p: 4 }}>
-        <Typography color="text.secondary">Loading...</Typography>
+        <Typography sx={{
+          color: "text.secondary"
+        }}>Loading...</Typography>
       </Box>
-    )
+    );
   }
 
   if (!record) {
@@ -365,10 +367,12 @@ export default function NpcEditorPage({ recordId, onClose }: NpcEditorPageProps 
               setExportKey(e.target.value)
               pushSnapshot({ exportKey: e.target.value })
             }}
-            inputProps={{ style: { fontFamily: '"JetBrains Mono", monospace', fontSize: '0.85rem' } }}
             placeholder="export-key"
             helperText="Export key — used in exported files"
             sx={{ maxWidth: 360 }}
+            slotProps={{
+              htmlInput: { style: { fontFamily: '"JetBrains Mono", monospace', fontSize: '0.85rem' } }
+            }}
           />
           <FormControl fullWidth required sx={{ maxWidth: 760 }} error={issuesForField('npcTypeId').length > 0}>
             <InputLabel id="npc-type-label">NPC Type</InputLabel>
@@ -385,7 +389,12 @@ export default function NpcEditorPage({ recordId, onClose }: NpcEditorPageProps 
             <Typography variant="subtitle1" gutterBottom>
               Classes
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            <Typography
+              variant="body2"
+              sx={{
+                color: "text.secondary",
+                mb: 2
+              }}>
               Assign one or more character classes at specified levels. Stat values from all assigned classes combine additively.
             </Typography>
             {deletedAssignedClasses.length > 0 && (
@@ -409,7 +418,12 @@ export default function NpcEditorPage({ recordId, onClose }: NpcEditorPageProps 
             <Typography variant="subtitle1" gutterBottom>
               Stat Block
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            <Typography
+              variant="body2"
+              sx={{
+                color: "text.secondary",
+                mb: 2
+              }}>
               Inherited values are summed from assigned classes at their levels. Enter an override to replace the inherited value for any stat.
             </Typography>
             <NpcStatBlockPanel
@@ -428,7 +442,12 @@ export default function NpcEditorPage({ recordId, onClose }: NpcEditorPageProps 
             <Typography variant="subtitle1" gutterBottom>
               Abilities
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            <Typography
+              variant="body2"
+              sx={{
+                color: "text.secondary",
+                mb: 2
+              }}>
               Assign abilities this NPC has access to. Changes are saved immediately.
             </Typography>
             <AbilityAssignmentPanel
@@ -445,7 +464,12 @@ export default function NpcEditorPage({ recordId, onClose }: NpcEditorPageProps 
             <Typography variant="subtitle1" gutterBottom>
               Loot Table
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            <Typography
+              variant="body2"
+              sx={{
+                color: "text.secondary",
+                mb: 2
+              }}>
               Assign a loot table that drops when this NPC is defeated. The entries below are read-only.
             </Typography>
             <LootTableAssignmentPanel
@@ -463,7 +487,12 @@ export default function NpcEditorPage({ recordId, onClose }: NpcEditorPageProps 
             <Typography variant="subtitle1" gutterBottom>
               Type Fields
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            <Typography
+              variant="body2"
+              sx={{
+                color: "text.secondary",
+                mb: 2
+              }}>
               {typeById.get(npcTypeId)?.displayName ?? 'Selected NPC type'}
             </Typography>
             <CustomFieldsPanel
@@ -484,5 +513,5 @@ export default function NpcEditorPage({ recordId, onClose }: NpcEditorPageProps 
         onDiscard={handleDiscard}
       />
     </Box>
-  )
+  );
 }

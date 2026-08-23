@@ -13,7 +13,7 @@ import {
   Typography,
 } from '@mui/material'
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import { projectApi } from '../../api/project.api'
 import type { ProjectTemplateId } from '../../../shared/project-types'
 import { MODAL_IDS } from '../menu/constants'

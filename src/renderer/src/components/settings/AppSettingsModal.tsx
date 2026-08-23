@@ -93,7 +93,7 @@ function CustomThemeGuide(): React.JSX.Element {
       }}
     >
       <AccordionSummary expandIcon={<ExpandIcon />} sx={{ minHeight: 36, px: 1.5 }}>
-        <Typography variant="caption" fontWeight={600}>
+        <Typography variant="caption" sx={{ fontWeight: 600 }}>
           Theme file reference & sample
         </Typography>
       </AccordionSummary>
@@ -120,7 +120,7 @@ function CustomThemeGuide(): React.JSX.Element {
           ))}
         </Box>
 
-        <Typography variant="caption" fontWeight={600} sx={{ display: 'block', mb: 0.5 }}>
+        <Typography variant="caption" sx={{ fontWeight: 600, display: 'block', mb: 0.5 }}>
           Sample theme (Material Dark variant)
         </Typography>
         <Box sx={{ position: 'relative' }}>
@@ -250,7 +250,7 @@ function ShortcutsTab({
 
   return (
     <Stack spacing={2}>
-      <Stack direction="row" justifyContent="space-between" alignItems="center">
+      <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="subtitle2">Keyboard Shortcuts</Typography>
         {hasAnyOverride && (
           <Button
@@ -292,9 +292,8 @@ function ShortcutsTab({
                 <Stack
                   key={s.id}
                   direction="row"
-                  alignItems="center"
                   spacing={1}
-                  sx={{ py: 0.5, borderBottom: 1, borderColor: 'divider' }}
+                  sx={{ alignItems: 'center', py: 0.5, borderBottom: 1, borderColor: 'divider' }}
                 >
                   <Typography variant="body2" sx={{ flex: 1 }}>
                     {s.label}
@@ -435,7 +434,7 @@ export default function AppSettingsModal(): React.JSX.Element | null {
                 label="Enable auto-save"
               />
               {appSettings.autoSaveEnabled && (
-                <Stack direction="row" alignItems="center" spacing={1} sx={{ mt: 1 }}>
+                <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mt: 1 }}>
                   <Typography variant="body2" color="text.secondary">Save every</Typography>
                   <TextField
                     type="number"
@@ -444,9 +443,11 @@ export default function AppSettingsModal(): React.JSX.Element | null {
                     onChange={(e) => setAutoSaveSeconds(e.target.value)}
                     onBlur={handleAutoSaveBlur}
                     onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }}
-                    inputProps={{ min: 1, step: 1 }}
                     sx={{ width: 80 }}
                     disabled={saving}
+                    slotProps={{
+                      htmlInput: { min: 1, step: 1 }
+                    }}
                   />
                   <Typography variant="body2" color="text.secondary">seconds</Typography>
                 </Stack>
@@ -457,7 +458,7 @@ export default function AppSettingsModal(): React.JSX.Element | null {
 
             <Box>
               <Typography variant="subtitle2" gutterBottom>Default Save Location</Typography>
-              <Stack direction="row" alignItems="center" spacing={1}>
+              <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                 <Typography
                   variant="body2"
                   color={appSettings.defaultSaveLocation ? 'text.primary' : 'text.secondary'}
@@ -493,7 +494,7 @@ export default function AppSettingsModal(): React.JSX.Element | null {
 
               {appSettings.theme === 'custom' && (
                 <Box sx={{ mt: 1.5, pl: 1, borderLeft: 2, borderColor: 'divider' }}>
-                  <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.5 }}>
+                  <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 0.5 }}>
                     <Button size="small" variant="outlined" startIcon={<UploadIcon />} onClick={() => void handleSelectThemeFile()} disabled={saving}>
                       {appSettings.customThemePath ? 'Change Theme File' : 'Select Theme File'}
                     </Button>
@@ -538,5 +539,5 @@ export default function AppSettingsModal(): React.JSX.Element | null {
         )}
       </DialogContent>
     </Dialog>
-  )
+  );
 }
