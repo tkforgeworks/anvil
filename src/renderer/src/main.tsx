@@ -1,7 +1,7 @@
 import './assets/fonts/fonts.css'
 import React, { useEffect, useMemo, useState } from 'react'
 import ReactDOM from 'react-dom/client'
-import { HashRouter } from 'react-router-dom'
+import { HashRouter } from 'react-router'
 import { ThemeProvider, CssBaseline } from '@mui/material'
 import { darkTheme } from './themes/dark'
 import { lightTheme } from './themes/light'

@@ -20,7 +20,7 @@ import {
   Typography,
 } from '@mui/material'
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import type { AbilityRecord } from '../../../shared/domain-types'
 
 export interface AbilityAssignmentRef {
@@ -80,7 +80,9 @@ export default function AbilityAssignmentPanel({
     <Box>
       {assignments.length === 0 ? (
         <Paper variant="outlined" sx={{ p: 3, mb: 2, textAlign: 'center' }}>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" sx={{
+            color: "text.secondary"
+          }}>
             No abilities assigned. Use the picker below to add one.
           </Typography>
         </Paper>
@@ -137,7 +139,9 @@ export default function AbilityAssignmentPanel({
                 >
                   <ListItemText
                     primary={
-                      <Stack direction="row" alignItems="center" spacing={1}>
+                      <Stack direction="row" spacing={1} sx={{
+                        alignItems: "center"
+                      }}>
                         <Typography
                           variant="body2"
                           component="span"
@@ -165,13 +169,15 @@ export default function AbilityAssignmentPanel({
                     }
                   />
                 </ListItem>
-              )
+              );
             })}
           </List>
         </Paper>
       )}
 
-      <Stack direction="row" spacing={1} alignItems="center">
+      <Stack direction="row" spacing={1} sx={{
+        alignItems: "center"
+      }}>
         <Autocomplete
           options={pickerOptions}
           getOptionLabel={(option) => option.displayName}
@@ -200,5 +206,5 @@ export default function AbilityAssignmentPanel({
         </Button>
       </Stack>
     </Box>
-  )
+  );
 }

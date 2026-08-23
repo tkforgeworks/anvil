@@ -19,7 +19,7 @@ import {
   Typography,
 } from '@mui/material'
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import type { ClassRecord, NpcClassAssignment } from '../../../shared/domain-types'
 
 interface Props {
@@ -81,7 +81,9 @@ export default function ClassAssignmentPanel({
     <Box>
       {assignments.length === 0 ? (
         <Paper variant="outlined" sx={{ p: 3, mb: 2, textAlign: 'center' }}>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" sx={{
+            color: "text.secondary"
+          }}>
             No classes assigned. Use the picker below to add one.
           </Typography>
         </Paper>
@@ -98,7 +100,14 @@ export default function ClassAssignmentPanel({
                   divider={index < assignments.length - 1}
                   sx={{ gap: 2 }}
                 >
-                  <Stack direction="row" alignItems="center" spacing={1} sx={{ flex: 1, minWidth: 0 }}>
+                  <Stack
+                    direction="row"
+                    spacing={1}
+                    sx={{
+                      alignItems: "center",
+                      flex: 1,
+                      minWidth: 0
+                    }}>
                     <Typography
                       variant="body2"
                       component="span"
@@ -130,8 +139,10 @@ export default function ClassAssignmentPanel({
                     size="small"
                     value={assignment.level}
                     onChange={(e) => handleLevelChange(assignment.classId, Number(e.target.value))}
-                    inputProps={{ min: 1, max: maxLevel, style: { width: 60 } }}
                     disabled={disabled}
+                    slotProps={{
+                      htmlInput: { min: 1, max: maxLevel, style: { width: 60 } }
+                    }}
                   />
 
                   <Stack direction="row" spacing={0.5}>
@@ -171,13 +182,15 @@ export default function ClassAssignmentPanel({
                     </Tooltip>
                   </Stack>
                 </ListItem>
-              )
+              );
             })}
           </List>
         </Paper>
       )}
 
-      <Stack direction="row" spacing={1} alignItems="center">
+      <Stack direction="row" spacing={1} sx={{
+        alignItems: "center"
+      }}>
         <Autocomplete
           options={pickerOptions}
           getOptionLabel={(option) => option.displayName}
@@ -205,5 +218,5 @@ export default function ClassAssignmentPanel({
         </Button>
       </Stack>
     </Box>
-  )
+  );
 }

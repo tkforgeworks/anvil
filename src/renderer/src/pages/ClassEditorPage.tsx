@@ -9,7 +9,7 @@ import {
   Typography,
 } from '@mui/material'
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router'
 import { abilitiesApi } from '../../api/abilities.api'
 import { classesApi } from '../../api/classes.api'
 import type {
@@ -240,9 +240,11 @@ export default function ClassEditorPage({ recordId, onClose }: ClassEditorPagePr
   if (isLoading) {
     return (
       <Box sx={{ p: 4 }}>
-        <Typography color="text.secondary">Loading…</Typography>
+        <Typography sx={{
+          color: "text.secondary"
+        }}>Loading…</Typography>
       </Box>
-    )
+    );
   }
 
   if (!record) {
@@ -320,10 +322,12 @@ export default function ClassEditorPage({ recordId, onClose }: ClassEditorPagePr
               setExportKey(e.target.value)
               pushSnapshot({ exportKey: e.target.value })
             }}
-            inputProps={{ style: { fontFamily: '"JetBrains Mono", monospace', fontSize: '0.85rem' } }}
             placeholder="export-key"
             helperText="Export key — used in exported files"
             sx={{ maxWidth: 360 }}
+            slotProps={{
+              htmlInput: { style: { fontFamily: '"JetBrains Mono", monospace', fontSize: '0.85rem' } }
+            }}
           />
           <TextField
             label="Description"
@@ -344,9 +348,11 @@ export default function ClassEditorPage({ recordId, onClose }: ClassEditorPagePr
               pushSnapshot({ resourceMultiplier: e.target.value })
             }}
             type="number"
-            inputProps={{ step: 0.1, min: 0 }}
             helperText="Class-level metadata field — usable as a variable in derived stat formulas"
             sx={{ maxWidth: 240 }}
+            slotProps={{
+              htmlInput: { step: 0.1, min: 0 }
+            }}
           />
         </Stack>
       </TabPanel>
@@ -380,5 +386,5 @@ export default function ClassEditorPage({ recordId, onClose }: ClassEditorPagePr
         onDiscard={handleDiscard}
       />
     </Box>
-  )
+  );
 }

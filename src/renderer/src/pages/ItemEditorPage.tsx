@@ -16,7 +16,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useUndoRedo } from '../hooks/useUndoRedo'
 import { useTabDirtyTracking } from '../hooks/useTabDirtyTracking'
 import DirtyDot from '../components/DirtyDot'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router'
 import { itemsApi } from '../../api/items.api'
 import { metaApi } from '../../api/meta.api'
 import type { ItemRecord, ItemUsedBy, MetaItemCategory, MetaRarity } from '../../../shared/domain-types'
@@ -219,9 +219,11 @@ export default function ItemEditorPage({ recordId, onClose }: ItemEditorPageProp
   if (isLoading) {
     return (
       <Box sx={{ p: 4 }}>
-        <Typography color="text.secondary">Loading...</Typography>
+        <Typography sx={{
+          color: "text.secondary"
+        }}>Loading...</Typography>
       </Box>
-    )
+    );
   }
 
   if (!record) {
@@ -293,10 +295,12 @@ export default function ItemEditorPage({ recordId, onClose }: ItemEditorPageProp
               setExportKey(e.target.value)
               pushSnapshot({ exportKey: e.target.value })
             }}
-            inputProps={{ style: { fontFamily: '"JetBrains Mono", monospace', fontSize: '0.85rem' } }}
             placeholder="export-key"
             helperText="Export key — used in exported files"
             sx={{ maxWidth: 360 }}
+            slotProps={{
+              htmlInput: { style: { fontFamily: '"JetBrains Mono", monospace', fontSize: '0.85rem' } }
+            }}
           />
           <Stack direction="row" spacing={2}>
             <FormControl fullWidth required error={issuesForField('itemCategoryId').length > 0}>
@@ -375,5 +379,5 @@ export default function ItemEditorPage({ recordId, onClose }: ItemEditorPageProp
         onDiscard={handleDiscard}
       />
     </Box>
-  )
+  );
 }

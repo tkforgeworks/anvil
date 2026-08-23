@@ -29,7 +29,7 @@ import {
   Typography,
 } from '@mui/material'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import { itemsApi } from '../../api/items.api'
 import { lifecycleApi } from '../../api/lifecycle.api'
 import { metaApi } from '../../api/meta.api'
@@ -332,11 +332,24 @@ export default function RecipesPage(): React.JSX.Element {
                       onChange={() => multiSelect.toggle(recipe.id)}
                     />
                   </TableCell>
-                  <TableCell><Typography variant="body2" fontWeight={500}>{recipe.displayName}</Typography></TableCell>
-                  <TableCell><Typography variant="body2" color="text.secondary" fontFamily="monospace">{recipe.exportKey}</Typography></TableCell>
-                  <TableCell><Typography variant="body2" color="text.secondary">{itemById.get(recipe.outputItemId)?.displayName ?? recipe.outputItemId} x{recipe.outputQuantity}</Typography></TableCell>
-                  <TableCell><Typography variant="body2" color="text.secondary">{recipe.craftingStationId ? stationById.get(recipe.craftingStationId)?.displayName ?? recipe.craftingStationId : '-'}</Typography></TableCell>
-                  <TableCell><Typography variant="body2" color="text.secondary">{recipe.craftingSpecializationId ? specializationById.get(recipe.craftingSpecializationId)?.displayName ?? recipe.craftingSpecializationId : '-'}</Typography></TableCell>
+                  <TableCell><Typography variant="body2" sx={{
+                    fontWeight: 500
+                  }}>{recipe.displayName}</Typography></TableCell>
+                  <TableCell><Typography
+                    variant="body2"
+                    sx={{
+                      color: "text.secondary",
+                      fontFamily: "monospace"
+                    }}>{recipe.exportKey}</Typography></TableCell>
+                  <TableCell><Typography variant="body2" sx={{
+                    color: "text.secondary"
+                  }}>{itemById.get(recipe.outputItemId)?.displayName ?? recipe.outputItemId} x{recipe.outputQuantity}</Typography></TableCell>
+                  <TableCell><Typography variant="body2" sx={{
+                    color: "text.secondary"
+                  }}>{recipe.craftingStationId ? stationById.get(recipe.craftingStationId)?.displayName ?? recipe.craftingStationId : '-'}</Typography></TableCell>
+                  <TableCell><Typography variant="body2" sx={{
+                    color: "text.secondary"
+                  }}>{recipe.craftingSpecializationId ? specializationById.get(recipe.craftingSpecializationId)?.displayName ?? recipe.craftingSpecializationId : '-'}</Typography></TableCell>
                   <TableCell align="right" onClick={(e) => e.stopPropagation()}>
                     <Tooltip title="Edit"><IconButton size="small" onClick={() => openEditor(recipe.id)}><EditIcon fontSize="small" /></IconButton></Tooltip>
                     <Tooltip title="Duplicate"><IconButton data-tid="list-row-duplicate" size="small" onClick={() => void handleDuplicate(recipe)}><DuplicateIcon fontSize="small" /></IconButton></Tooltip>
@@ -375,5 +388,5 @@ export default function RecipesPage(): React.JSX.Element {
         )}
       </EditorModal>
     </Box>
-  )
+  );
 }

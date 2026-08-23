@@ -211,16 +211,21 @@ export default function ProjectSettingsModal(): React.JSX.Element | null {
 
         <DialogContent sx={{ pt: 3, minHeight: 400 }}>
           {!projectSettings ? (
-            <Typography color="text.secondary">Loading project settings...</Typography>
+            <Typography sx={{
+              color: "text.secondary"
+            }}>Loading project settings...</Typography>
           ) : tab === 0 ? (
             <Stack spacing={3} sx={{ maxWidth: 700 }}>
               <Box>
                 <Typography variant="subtitle2" gutterBottom>Project File</Typography>
                 <Typography
                   variant="body2"
-                  color="text.secondary"
-                  sx={{ fontFamily: '"JetBrains Mono", monospace', fontSize: '0.8rem', mb: 1 }}
-                >
+                  sx={{
+                    color: "text.secondary",
+                    fontFamily: '"JetBrains Mono", monospace',
+                    fontSize: '0.8rem',
+                    mb: 1
+                  }}>
                   {activeProject?.projectFolder?.root ?? activeProject?.filePath ?? '—'}
                 </Typography>
                 <Button
@@ -253,14 +258,22 @@ export default function ProjectSettingsModal(): React.JSX.Element | null {
                   size="small"
                   value={maxLevelStr}
                   onChange={(e) => setMaxLevelStr(e.target.value)}
-                  inputProps={{ min: 1, step: 1 }}
                   sx={{ width: 100 }}
+                  slotProps={{
+                    htmlInput: { min: 1, step: 1 }
+                  }}
                 />
               </Box>
 
               <Box>
                 <Typography variant="subtitle2" gutterBottom>Soft-Delete Reference Severity</Typography>
-                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: "text.secondary",
+                    display: 'block',
+                    mb: 1.5
+                  }}>
                   Controls how the validation engine treats references to soft-deleted (archived) records.
                 </Typography>
                 <FormControl>
@@ -269,11 +282,24 @@ export default function ProjectSettingsModal(): React.JSX.Element | null {
                     onChange={(e) => setSeverityStr(e.target.value as 'Warning' | 'Error')}
                   >
                     <FormControlLabel value="Warning" control={<Radio size="small" />} label="Warning" />
-                    <Typography variant="caption" color="text.secondary" sx={{ pl: 3.75, mt: -0.5, mb: 0.5 }}>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: "text.secondary",
+                        pl: 3.75,
+                        mt: -0.5,
+                        mb: 0.5
+                      }}>
                       Flag references to archived records, but allow export.
                     </Typography>
                     <FormControlLabel value="Error" control={<Radio size="small" />} label="Error" />
-                    <Typography variant="caption" color="text.secondary" sx={{ pl: 3.75, mt: -0.5 }}>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: "text.secondary",
+                        pl: 3.75,
+                        mt: -0.5
+                      }}>
                       Block export when references to archived records exist.
                     </Typography>
                   </RadioGroup>
@@ -344,10 +370,14 @@ export default function ProjectSettingsModal(): React.JSX.Element | null {
         {settingsDirty && (
           <Stack
             direction="row"
-            alignItems="center"
             spacing={2}
-            sx={{ px: 3, py: 1.5, borderTop: 2, borderTopColor: 'warning.main' }}
-          >
+            sx={{
+              alignItems: "center",
+              px: 3,
+              py: 1.5,
+              borderTop: 2,
+              borderTopColor: 'warning.main'
+            }}>
             <WarningAmberIcon color="warning" />
             <Typography variant="body2">You have unsaved changes</Typography>
             <Box sx={{ flex: 1 }} />
@@ -381,5 +411,5 @@ export default function ProjectSettingsModal(): React.JSX.Element | null {
         </DialogActions>
       </Dialog>
     </>
-  )
+  );
 }

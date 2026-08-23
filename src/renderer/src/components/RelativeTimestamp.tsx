@@ -54,9 +54,11 @@ export function RelativeTimestamp({ timestamp, variant = 'body2', inline }: Rela
 
   return (
     <Tooltip title={fullDate} arrow>
-      <Typography variant={variant} component="span" color="text.secondary">
+      <Typography variant={variant} component="span" sx={{
+        color: "text.secondary"
+      }}>
         {display}
       </Typography>
     </Tooltip>
-  )
+  );
 }

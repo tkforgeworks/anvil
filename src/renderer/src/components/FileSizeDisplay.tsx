@@ -17,10 +17,11 @@ export function FileSizeDisplay({ bytes }: FileSizeDisplayProps) {
     <Typography
       variant="caption"
       component="span"
-      sx={{ fontFamily: (theme) => theme.typography.fontFamilyMono ?? 'monospace' }}
-      color="text.secondary"
-    >
+      sx={{
+        color: "text.secondary",
+        fontFamily: (theme) => theme.typography.fontFamilyMono ?? 'monospace'
+      }}>
       {formatFileSize(bytes)}
     </Typography>
-  )
+  );
 }

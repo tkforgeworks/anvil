@@ -1,5 +1,5 @@
 import { useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import { projectApi } from '../../api/project.api'
 import { settingsApi } from '../../api/settings.api'
 import { useProjectStore } from '../stores/project.store'

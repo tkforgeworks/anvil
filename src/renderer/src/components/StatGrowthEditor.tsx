@@ -113,8 +113,19 @@ function FillColumnHelper({ stats, formulaStatIds, onApply }: FillColumnHelperPr
   const [value, setValue] = useState('')
 
   return (
-    <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
-      <Typography variant="caption" color="text.secondary" sx={{ minWidth: 80 }}>
+    <Stack
+      direction="row"
+      spacing={1}
+      sx={{
+        alignItems: "center",
+        flexWrap: "wrap"
+      }}>
+      <Typography
+        variant="caption"
+        sx={{
+          color: "text.secondary",
+          minWidth: 80
+        }}>
         Fill column:
       </Typography>
       <FormControl size="small" sx={{ minWidth: 140 }}>
@@ -152,7 +163,7 @@ function FillColumnHelper({ stats, formulaStatIds, onApply }: FillColumnHelperPr
         Apply
       </Button>
     </Stack>
-  )
+  );
 }
 
 interface InterpolateHelperProps {
@@ -178,8 +189,19 @@ function InterpolateHelper({ stats, formulaStatIds, maxLevel, onApply }: Interpo
     parseInt(fromLevel) < parseInt(toLevel)
 
   return (
-    <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
-      <Typography variant="caption" color="text.secondary" sx={{ minWidth: 80 }}>
+    <Stack
+      direction="row"
+      spacing={1}
+      sx={{
+        alignItems: "center",
+        flexWrap: "wrap"
+      }}>
+      <Typography
+        variant="caption"
+        sx={{
+          color: "text.secondary",
+          minWidth: 80
+        }}>
         Interpolate:
       </Typography>
       <FormControl size="small" sx={{ minWidth: 140 }}>
@@ -199,7 +221,9 @@ function InterpolateHelper({ stats, formulaStatIds, maxLevel, onApply }: Interpo
       </FormControl>
       <TextField size="small" label="From lvl" type="number" value={fromLevel} onChange={(e) => setFromLevel(e.target.value)} sx={{ width: 80 }} />
       <TextField size="small" label="From val" type="number" value={fromValue} onChange={(e) => setFromValue(e.target.value)} sx={{ width: 90 }} />
-      <Typography variant="body2" color="text.secondary">→</Typography>
+      <Typography variant="body2" sx={{
+        color: "text.secondary"
+      }}>→</Typography>
       <TextField size="small" label="To lvl" type="number" value={toLevel} onChange={(e) => setToLevel(e.target.value)} sx={{ width: 80 }} />
       <TextField size="small" label="To val" type="number" value={toValue} onChange={(e) => setToValue(e.target.value)} sx={{ width: 90 }} />
       <Button
@@ -219,7 +243,7 @@ function InterpolateHelper({ stats, formulaStatIds, maxLevel, onApply }: Interpo
         Apply
       </Button>
     </Stack>
-  )
+  );
 }
 
 // ─── Main component ────────────────────────────────────────────────────────────
@@ -491,17 +515,30 @@ const StatGrowthEditor = forwardRef<StatGrowthEditorRef, StatGrowthEditorProps>(
   }))
 
   if (isLoading) {
-    return <Typography color="text.secondary">Loading stat growth…</Typography>
+    return (
+      <Typography sx={{
+        color: "text.secondary"
+      }}>Loading stat growth…</Typography>
+    );
   }
 
   if (stats.length === 0) {
-    return <Typography color="text.secondary">No stats configured in this project.</Typography>
+    return (
+      <Typography sx={{
+        color: "text.secondary"
+      }}>No stats configured in this project.</Typography>
+    );
   }
 
   return (
     <Box>
       {/* Header */}
-      <Typography variant="subtitle1" fontWeight={500} sx={{ mb: 2 }}>
+      <Typography
+        variant="subtitle1"
+        sx={{
+          fontWeight: 500,
+          mb: 2
+        }}>
         Primary Stat Growth — levels 1–{maxLevel}
       </Typography>
 
@@ -543,13 +580,21 @@ const StatGrowthEditor = forwardRef<StatGrowthEditorRef, StatGrowthEditorProps>(
       {/* Formula inputs for formula-mode stats */}
       {formulaStatIds.size > 0 && (
         <Paper variant="outlined" sx={{ p: 1.5, mb: 2 }}>
-          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+          <Typography
+            variant="caption"
+            sx={{
+              color: "text.secondary",
+              display: 'block',
+              mb: 1
+            }}>
             Formula-driven stats — use <code>level</code> and <code>max_level</code> as variables.
             Functions: <code>min()</code>, <code>max()</code>, <code>floor()</code>, <code>ceil()</code>
           </Typography>
           <Stack spacing={1.5}>
             {stats.filter((s) => formulaStatIds.has(s.id)).map((stat) => (
-              <Stack key={stat.id} direction="row" spacing={1} alignItems="flex-start">
+              <Stack key={stat.id} direction="row" spacing={1} sx={{
+                alignItems: "flex-start"
+              }}>
                 <Typography
                   variant="body2"
                   sx={{ fontWeight: 600, minWidth: 100, pt: 1 }}
@@ -724,7 +769,7 @@ const StatGrowthEditor = forwardRef<StatGrowthEditorRef, StatGrowthEditorProps>(
         </DialogActions>
       </Dialog>
     </Box>
-  )
+  );
 })
 
 export default StatGrowthEditor
