@@ -134,6 +134,11 @@ export const IPC_CHANNELS = {
   META_DELETE_NPC_TYPE: 'meta:delete-npc-type',
   META_REORDER_NPC_TYPES: 'meta:reorder-npc-types',
 
+  META_ADD_ITEM_CATEGORY: 'meta:add-item-category',
+  META_UPDATE_ITEM_CATEGORY: 'meta:update-item-category',
+  META_DELETE_ITEM_CATEGORY: 'meta:delete-item-category',
+  META_REORDER_ITEM_CATEGORIES: 'meta:reorder-item-categories',
+
   META_LIST_DERIVED_STATS: 'meta:list-derived-stats',
 
   // Meta-layer CRUD

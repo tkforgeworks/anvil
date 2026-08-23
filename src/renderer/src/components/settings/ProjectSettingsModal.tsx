@@ -118,6 +118,7 @@ export default function ProjectSettingsModal(): React.JSX.Element | null {
   const refreshCraftingStations = (): void => { void metaApi.listCraftingStations().then(setCraftingStations) }
   const refreshCraftingSpecializations = (): void => { void metaApi.listCraftingSpecializations().then(setCraftingSpecializations) }
   const refreshNpcTypes = (): void => { void metaApi.listNpcTypes().then(setNpcTypes) }
+  const refreshItemCategories = (): void => { void metaApi.listItemCategories().then(setItemCategories) }
   const refreshDerivedStats = (): void => { void metaApi.listDerivedStats().then(setDerivedStats) }
 
   const saveSettings = async (): Promise<void> => {
@@ -281,20 +282,6 @@ export default function ProjectSettingsModal(): React.JSX.Element | null {
 
               <Divider />
 
-              <MetaListSection
-                title="NPC Types"
-                singularName="NPC Type"
-                description="Types used to categorize NPCs. Each NPC type can have its own custom fields."
-                items={npcTypes}
-                onAdd={metaApi.addNpcType}
-                onUpdate={metaApi.updateNpcType}
-                onDelete={metaApi.deleteNpcType}
-                onReorder={metaApi.reorderNpcTypes}
-                onRefresh={refreshNpcTypes}
-              />
-
-              <Divider />
-
               <RaritySection rarities={rarities} onRefresh={refreshRarities} />
             </Stack>
           ) : tab === 1 ? (
@@ -344,7 +331,12 @@ export default function ProjectSettingsModal(): React.JSX.Element | null {
               />
             </Stack>
           ) : (
-            <CustomFieldsSection itemCategories={itemCategories} npcTypes={npcTypes} />
+            <CustomFieldsSection
+              itemCategories={itemCategories}
+              npcTypes={npcTypes}
+              onRefreshItemCategories={refreshItemCategories}
+              onRefreshNpcTypes={refreshNpcTypes}
+            />
           )}
 
         </DialogContent>

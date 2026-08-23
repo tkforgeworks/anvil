@@ -52,6 +52,11 @@ interface MetaListSectionProps {
   onDelete: (id: string) => Promise<MetaDeleteResult>
   onReorder: (items: MetaReorderItem[]) => Promise<void>
   onRefresh: () => void
+  /** Compact variant for narrow rails: hides the export-key column and moves the Add button below the list. */
+  compact?: boolean
+  /** When set, rows are clickable and the matching row renders selected. */
+  selectedId?: string | null
+  onSelectItem?: (item: MetaListItem) => void
 }
 
 export default function MetaListSection({
@@ -64,6 +69,9 @@ export default function MetaListSection({
   onDelete,
   onReorder,
   onRefresh,
+  compact = false,
+  selectedId = null,
+  onSelectItem,
 }: MetaListSectionProps): React.JSX.Element {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<MetaListItem | null>(null)
@@ -161,9 +169,11 @@ export default function MetaListSection({
             </Typography>
           )}
         </Box>
-        <Button startIcon={<AddIcon />} variant="outlined" size="small" onClick={openAdd}>
-          Add
-        </Button>
+        {!compact && (
+          <Button startIcon={<AddIcon />} variant="outlined" size="small" onClick={openAdd}>
+            Add
+          </Button>
+        )}
       </Stack>
 
       {error && (
@@ -181,20 +191,30 @@ export default function MetaListSection({
           <TableHead>
             <TableRow>
               <TableCell>Name</TableCell>
-              <TableCell>Export Key</TableCell>
+              {!compact && <TableCell>Export Key</TableCell>}
               <TableCell align="right" sx={{ width: 150 }}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {items.map((item, index) => (
-              <TableRow key={item.id}>
-                <TableCell>{item.displayName}</TableCell>
-                <TableCell>
-                  <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>
-                    {item.exportKey}
-                  </Typography>
+              <TableRow
+                key={item.id}
+                hover={!!onSelectItem}
+                selected={selectedId === item.id}
+                onClick={onSelectItem ? () => onSelectItem(item) : undefined}
+                sx={onSelectItem ? { cursor: 'pointer' } : undefined}
+              >
+                <TableCell sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: compact ? 140 : undefined }}>
+                  {item.displayName}
                 </TableCell>
-                <TableCell align="right">
+                {!compact && (
+                  <TableCell>
+                    <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>
+                      {item.exportKey}
+                    </Typography>
+                  </TableCell>
+                )}
+                <TableCell align="right" onClick={(e) => e.stopPropagation()}>
                   <Tooltip title="Move up">
                     <span>
                       <IconButton size="small" disabled={index === 0} onClick={() => void handleMove(index, 'up')}>
@@ -224,6 +244,19 @@ export default function MetaListSection({
             ))}
           </TableBody>
         </Table>
+      )}
+
+      {compact && (
+        <Button
+          startIcon={<AddIcon />}
+          variant="outlined"
+          size="small"
+          fullWidth
+          onClick={openAdd}
+          sx={{ mt: 1 }}
+        >
+          Add {singularName}
+        </Button>
       )}
 
       <Dialog open={dialogOpen} onClose={handleClose} fullWidth maxWidth="xs">
