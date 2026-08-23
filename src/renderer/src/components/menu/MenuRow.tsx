@@ -26,10 +26,23 @@ interface MenuRowProps {
   role?: string
   tabIndex?: number
   'aria-checked'?: boolean
+  'aria-haspopup'?: 'menu'
+  'aria-expanded'?: boolean
 }
 
 const MenuRow = forwardRef<HTMLDivElement, MenuRowProps>(function MenuRow(
-  { item, hovered, onClick, onMouseEnter, onMouseLeave, role, tabIndex, 'aria-checked': ariaChecked },
+  {
+    item,
+    hovered,
+    onClick,
+    onMouseEnter,
+    onMouseLeave,
+    role,
+    tabIndex,
+    'aria-checked': ariaChecked,
+    'aria-haspopup': ariaHasPopup,
+    'aria-expanded': ariaExpanded,
+  },
   ref,
 ): React.JSX.Element {
   if (item.kind === 'divider') {
@@ -44,6 +57,8 @@ const MenuRow = forwardRef<HTMLDivElement, MenuRowProps>(function MenuRow(
       role={role}
       tabIndex={tabIndex}
       aria-checked={ariaChecked}
+      aria-haspopup={ariaHasPopup}
+      aria-expanded={ariaExpanded}
       aria-disabled={item.disabled || undefined}
       onClick={item.disabled ? undefined : onClick}
       onMouseEnter={onMouseEnter}
@@ -72,6 +87,7 @@ const MenuRow = forwardRef<HTMLDivElement, MenuRowProps>(function MenuRow(
               color: item.danger ? '#fda4af' : '#fff',
               '& .menu-row-ico': { color: 'inherit' },
             },
+        '&:focus': { outline: 'none' },
         '&:focus-visible': {
           bgcolor: item.danger ? 'rgba(239,68,68,0.16)' : 'rgba(59,130,246,0.14)',
           color: item.danger ? '#fda4af' : '#fff',
