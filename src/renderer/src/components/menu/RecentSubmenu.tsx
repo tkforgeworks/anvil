@@ -5,7 +5,12 @@ import { useUiStore } from '../../stores/ui.store'
 import { RelativeTimestamp } from '../RelativeTimestamp'
 import MenuIcon from './MenuIcon'
 
-export default function RecentSubmenu(): React.JSX.Element {
+interface RecentSubmenuProps {
+  focusedIndex?: number | null
+  rowRef?: (index: number) => (el: HTMLElement | null) => void
+}
+
+export default function RecentSubmenu({ focusedIndex, rowRef }: RecentSubmenuProps): React.JSX.Element {
   const recentProjects = useProjectStore((s) => s.recentProjects)
   const hydrate = useProjectStore((s) => s.hydrate)
   const setMenuOpen = useUiStore((s) => s.setMenuOpen)
@@ -62,9 +67,13 @@ export default function RecentSubmenu(): React.JSX.Element {
         </Box>
       )}
 
-      {recentProjects.map((project) => (
+      {recentProjects.map((project, i) => (
         <Box
           key={project.filePath}
+          ref={rowRef?.(i)}
+          role="menuitem"
+          tabIndex={focusedIndex === i ? 0 : -1}
+          aria-disabled={!project.exists || undefined}
           onClick={() => project.exists && handleOpen(project.filePath)}
           sx={{
             display: 'flex',
@@ -76,6 +85,8 @@ export default function RecentSubmenu(): React.JSX.Element {
             borderRadius: '5px',
             cursor: project.exists ? 'pointer' : 'not-allowed',
             opacity: project.exists ? 1 : 0.5,
+            outline: 'none',
+            bgcolor: focusedIndex === i ? 'rgba(59,130,246,0.14)' : 'transparent',
             '&:hover': project.exists
               ? { bgcolor: 'rgba(59,130,246,0.14)', '& .recent-name': { color: '#fff' } }
               : {},
@@ -129,6 +140,9 @@ export default function RecentSubmenu(): React.JSX.Element {
         <>
           <Box sx={{ height: '1px', bgcolor: '#233048', mx: '8px', my: '4px' }} />
           <Box
+            ref={rowRef?.(recentProjects.length)}
+            role="menuitem"
+            tabIndex={focusedIndex === recentProjects.length ? 0 : -1}
             onClick={handleClear}
             sx={{
               display: 'flex',
@@ -141,6 +155,8 @@ export default function RecentSubmenu(): React.JSX.Element {
               fontSize: '13px',
               color: '#fb7185',
               cursor: 'pointer',
+              outline: 'none',
+              bgcolor: focusedIndex === recentProjects.length ? 'rgba(239,68,68,0.16)' : 'transparent',
               '&:hover': { bgcolor: 'rgba(239,68,68,0.16)', color: '#fda4af' },
             }}
           >

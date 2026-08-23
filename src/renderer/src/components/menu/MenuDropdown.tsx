@@ -1,9 +1,11 @@
 import { Box } from '@mui/material'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { MENU_DATA, resolveShortcut } from '../../menu/menu-data'
 import type { MenuItem } from '../../menu/types'
 import useCommandDispatch from '../../menu/useCommandDispatch'
+import useMenuKeyboard from '../../menu/useMenuKeyboard'
+import type { NavRow } from '../../menu/useMenuKeyboard'
 import { useProjectStore } from '../../stores/project.store'
 import { useSettingsStore } from '../../stores/settings.store'
 import { useUiStore } from '../../stores/ui.store'
@@ -40,6 +42,10 @@ const PROJECT_REQUIRED = new Set([
   'nav-npcs',
   'nav-loot-tables',
 ])
+
+const CHECKABLE = new Set(['toggle-sidebar', 'theme-dark', 'theme-light', 'theme-custom'])
+
+const SECTION_IDS = MENU_DATA.map((s) => s.id)
 
 const RECORD_COUNT_MAP: Record<string, keyof NonNullable<ReturnType<typeof useProjectStore.getState>['activeProject']>['recordCounts']> = {
   'nav-classes': 'classes',
@@ -87,19 +93,7 @@ export default function MenuDropdown(): React.JSX.Element | null {
   const [activeTab, setActiveTab] = useState('file')
   const [hoveredSubmenu, setHoveredSubmenu] = useState<string | null>(null)
   const submenuTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  useEffect(() => {
-    if (!menuOpen) return undefined
-    const handleEsc = (e: KeyboardEvent): void => {
-      if (e.key === 'Escape') {
-        e.preventDefault()
-        e.stopPropagation()
-        setMenuOpen(false)
-      }
-    }
-    window.addEventListener('keydown', handleEsc)
-    return () => window.removeEventListener('keydown', handleEsc)
-  }, [menuOpen, setMenuOpen])
+  const panelRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!menuOpen) {
@@ -108,11 +102,52 @@ export default function MenuDropdown(): React.JSX.Element | null {
     }
   }, [menuOpen])
 
-  if (!menuOpen) return null
-
   const hasProject = !!activeProject
   const hasCustomTheme = !!appSettings?.customThemePath
   const activeSection = MENU_DATA.find((s) => s.id === activeTab) ?? MENU_DATA[0]
+
+  let navCounter = -1
+  const renderItems = activeSection.items.map((item) => ({
+    item,
+    navIndex: item.kind === 'divider' ? null : ++navCounter,
+  }))
+  const navRows: NavRow[] = renderItems
+    .filter((r) => r.navIndex !== null)
+    .map(({ item }) => ({
+      disabled: resolveDisabled(item, hasProject, isDirty, isRecoveryMode, hasCustomTheme),
+      submenuId: item.kind === 'submenu' ? item.id : undefined,
+    }))
+
+  const getSubmenuItemCount = useCallback((id: string): number => {
+    if (id === 'open-recent') {
+      const recents = useProjectStore.getState().recentProjects
+      // Recent rows plus the trailing "Clear Recents" row.
+      return recents.length === 0 ? 0 : recents.length + 1
+    }
+    for (const section of MENU_DATA) {
+      const found = section.items.find((it) => it.id === id)
+      if (found?.children) return found.children.length
+    }
+    return 0
+  }, [])
+
+  const closeMenu = useCallback((): void => setMenuOpen(false), [setMenuOpen])
+
+  const { focusedIndex, submenuFocusIndex, focusRow, focusSubRow, rowRef, subRowRef } =
+    useMenuKeyboard({
+      open: menuOpen,
+      panelRef,
+      rows: navRows,
+      sectionIds: SECTION_IDS,
+      activeTab,
+      setActiveTab,
+      openSubmenuId: hoveredSubmenu,
+      setOpenSubmenuId: setHoveredSubmenu,
+      getSubmenuItemCount,
+      closeMenu,
+    })
+
+  if (!menuOpen) return null
 
   const handleItemClick = (item: MenuItem): void => {
     if (!item.command) return
@@ -151,7 +186,8 @@ export default function MenuDropdown(): React.JSX.Element | null {
         sx={{ position: 'fixed', inset: 0, zIndex: 1300 }}
       />
       <Box
-        role="menu"
+        ref={panelRef}
+        tabIndex={-1}
         sx={{
           position: 'fixed',
           top: 48,
@@ -164,10 +200,12 @@ export default function MenuDropdown(): React.JSX.Element | null {
           pt: '4px',
           pb: '6px',
           zIndex: 1301,
+          outline: 'none',
           WebkitAppRegion: 'no-drag',
         }}
       >
         <Box
+          role="menubar"
           sx={{
             display: 'flex',
             borderBottom: '1px solid #233048',
@@ -179,7 +217,12 @@ export default function MenuDropdown(): React.JSX.Element | null {
           {MENU_DATA.map((section) => (
             <Box
               key={section.id}
-              onClick={() => setActiveTab(section.id)}
+              role="menuitem"
+              tabIndex={-1}
+              onClick={() => {
+                setHoveredSubmenu(null)
+                setActiveTab(section.id)
+              }}
               sx={{
                 fontFamily: '"Poppins", sans-serif',
                 fontSize: '11px',
@@ -205,47 +248,69 @@ export default function MenuDropdown(): React.JSX.Element | null {
           ))}
         </Box>
 
-        <Box sx={{ px: '4px', py: '2px' }}>
-          {activeSection.items.map((item, i) => {
+        <Box role="menu" sx={{ px: '4px', py: '2px' }}>
+          {renderItems.map(({ item, navIndex }, i) => {
             const isSubmenu = item.kind === 'submenu'
             const shortcut = resolveShortcut(item)
             const disabled = resolveDisabled(item, hasProject, isDirty, isRecoveryMode, hasCustomTheme)
             const checked = resolveChecked(item, sidebarOpen, theme)
             const meta = resolveMeta(item)
+            const focused = navIndex !== null && focusedIndex === navIndex
 
             if (isSubmenu && item.children) {
               return (
                 <Box
                   key={item.id ?? `sub-${i}`}
-                  onMouseEnter={() => handleSubmenuEnter(item.id)}
+                  onMouseEnter={() => {
+                    handleSubmenuEnter(item.id)
+                    if (navIndex !== null) focusRow(navIndex)
+                  }}
                   onMouseLeave={handleSubmenuLeave}
                 >
                   <MenuRow
+                    ref={navIndex !== null ? rowRef(navIndex) : undefined}
+                    role="menuitem"
+                    aria-haspopup="menu"
+                    aria-expanded={hoveredSubmenu === item.id}
+                    tabIndex={focused ? 0 : -1}
                     item={{
                       kind: 'submenu',
                       icon: item.icon,
                       label: item.label,
                       disabled,
                     }}
-                    hovered={hoveredSubmenu === item.id}
+                    hovered={hoveredSubmenu === item.id || focused}
                   />
-                  {hoveredSubmenu === item.id && item.children.map((child, ci) => (
-                    <MenuRow
-                      key={child.id ?? `child-${ci}`}
-                      item={{
-                        kind: child.kind ?? 'item',
-                        label: child.label,
-                        checked: resolveChecked(child, sidebarOpen, theme),
-                        disabled: resolveDisabled(child, hasProject, isDirty, isRecoveryMode, hasCustomTheme),
-                      }}
-                      onClick={() => {
-                        if (child.command) {
-                          if (!KEEP_OPEN.has(child.command)) setMenuOpen(false)
-                          dispatch(child.command)
-                        }
-                      }}
-                    />
-                  ))}
+                  {hoveredSubmenu === item.id && (
+                    <Box role="menu">
+                      {item.children.map((child, ci) => {
+                        const childCheckable = !!child.command && CHECKABLE.has(child.command)
+                        return (
+                          <MenuRow
+                            key={child.id ?? `child-${ci}`}
+                            ref={subRowRef(ci)}
+                            role={childCheckable ? 'menuitemcheckbox' : 'menuitem'}
+                            aria-checked={childCheckable ? resolveChecked(child, sidebarOpen, theme) : undefined}
+                            tabIndex={submenuFocusIndex === ci ? 0 : -1}
+                            hovered={submenuFocusIndex === ci}
+                            onMouseEnter={() => focusSubRow(ci)}
+                            item={{
+                              kind: child.kind ?? 'item',
+                              label: child.label,
+                              checked: resolveChecked(child, sidebarOpen, theme),
+                              disabled: resolveDisabled(child, hasProject, isDirty, isRecoveryMode, hasCustomTheme),
+                            }}
+                            onClick={() => {
+                              if (child.command) {
+                                if (!KEEP_OPEN.has(child.command)) setMenuOpen(false)
+                                dispatch(child.command)
+                              }
+                            }}
+                          />
+                        )
+                      })}
+                    </Box>
+                  )}
                 </Box>
               )
             }
@@ -254,19 +319,29 @@ export default function MenuDropdown(): React.JSX.Element | null {
               return (
                 <Box
                   key={item.id}
-                  onMouseEnter={() => handleSubmenuEnter(item.id)}
+                  onMouseEnter={() => {
+                    handleSubmenuEnter(item.id)
+                    if (navIndex !== null) focusRow(navIndex)
+                  }}
                   onMouseLeave={handleSubmenuLeave}
                   sx={{ position: 'relative' }}
                 >
                   <MenuRow
+                    ref={navIndex !== null ? rowRef(navIndex) : undefined}
+                    role="menuitem"
+                    aria-haspopup="menu"
+                    aria-expanded={hoveredSubmenu === 'open-recent'}
+                    tabIndex={focused ? 0 : -1}
                     item={{
                       kind: 'submenu',
                       icon: item.icon,
                       label: item.label,
                     }}
-                    hovered={hoveredSubmenu === 'open-recent'}
+                    hovered={hoveredSubmenu === 'open-recent' || focused}
                   />
-                  {hoveredSubmenu === 'open-recent' && <RecentSubmenu />}
+                  {hoveredSubmenu === 'open-recent' && (
+                    <RecentSubmenu focusedIndex={submenuFocusIndex} rowRef={subRowRef} />
+                  )}
                 </Box>
               )
             }
@@ -274,6 +349,12 @@ export default function MenuDropdown(): React.JSX.Element | null {
             return (
               <MenuRow
                 key={item.id ?? `div-${i}`}
+                ref={navIndex !== null ? rowRef(navIndex) : undefined}
+                role={item.command && CHECKABLE.has(item.command) ? 'menuitemcheckbox' : 'menuitem'}
+                aria-checked={item.command && CHECKABLE.has(item.command) ? checked : undefined}
+                tabIndex={focused ? 0 : -1}
+                hovered={focused}
+                onMouseEnter={navIndex !== null ? () => focusRow(navIndex) : undefined}
                 item={{
                   kind: item.kind,
                   icon: item.icon,
