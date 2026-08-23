@@ -4,7 +4,6 @@ import {
   ArrowUpward as UpIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
-  SaveAs as SaveAsIcon,
 } from '@mui/icons-material'
 import {
   Alert,
@@ -22,12 +21,7 @@ import {
   IconButton,
   InputAdornment,
   InputLabel,
-  List,
-  ListItemButton,
-  ListItemText,
   MenuItem,
-  Radio,
-  RadioGroup,
   Select,
   Stack,
   Table,
@@ -42,7 +36,6 @@ import {
 import { useCallback, useEffect, useState } from 'react'
 import { customFieldsApi } from '../../api/custom-fields.api'
 import { metaApi } from '../../api/meta.api'
-import { projectApi } from '../../api/project.api'
 import type {
   CreateCustomFieldDefinitionInput,
   CustomFieldDefinition,
@@ -50,19 +43,13 @@ import type {
   CustomFieldType,
   DerivedStatDefinition,
   DerivedStatInput,
-  MetaDeleteResult,
   MetaItemCategory,
   MetaNpcType,
   MetaRarity,
   MetaRarityInput,
   MetaReorderItem,
-  MetaStat,
-  MetaCraftingStation,
-  MetaCraftingSpecialization,
-  ProjectSettings,
   UpdateCustomFieldDefinitionInput,
 } from '../../../shared/domain-types'
-import { useProjectStore } from '../stores/project.store'
 import MetaListSection from './MetaListSection'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -915,74 +902,83 @@ function FieldList({ scopeType, scopeId }: FieldListProps): React.JSX.Element {
 interface CustomFieldsSectionProps {
   itemCategories: MetaItemCategory[]
   npcTypes: MetaNpcType[]
+  onRefreshItemCategories: () => void
+  onRefreshNpcTypes: () => void
 }
 
-export function CustomFieldsSection({ itemCategories, npcTypes }: CustomFieldsSectionProps): React.JSX.Element {
+export function CustomFieldsSection({
+  itemCategories,
+  npcTypes,
+  onRefreshItemCategories,
+  onRefreshNpcTypes,
+}: CustomFieldsSectionProps): React.JSX.Element {
   const [selectedScope, setSelectedScope] = useState<{
     type: CustomFieldScope
     id: string
-    label: string
   } | null>(null)
 
+  // Resolve the selection against the current lists so renames update the
+  // header and a deleted scope falls back to the first item category.
+  const selectedItem = selectedScope
+    ? ((selectedScope.type === 'item_category' ? itemCategories : npcTypes) as Array<
+        MetaItemCategory | MetaNpcType
+      >).find((x) => x.id === selectedScope.id) ?? null
+    : null
+
   useEffect(() => {
-    if (!selectedScope && itemCategories.length > 0) {
-      setSelectedScope({ type: 'item_category', id: itemCategories[0].id, label: itemCategories[0].displayName })
+    if (!selectedItem && itemCategories.length > 0) {
+      setSelectedScope({ type: 'item_category', id: itemCategories[0].id })
     }
-  }, [itemCategories, selectedScope])
+  }, [selectedItem, itemCategories])
 
   return (
     <Box>
       <Typography variant="subtitle2" sx={{ mb: 0.5 }}>Custom Fields</Typography>
       <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
-        Define custom fields for item categories and NPC types.
+        Manage item categories and NPC types, and define custom fields for each. Select a
+        category or type to edit its fields.
       </Typography>
 
       <Box sx={{ display: 'flex', gap: 3, alignItems: 'flex-start' }}>
-        <Box sx={{ width: 220, flexShrink: 0 }}>
-          <Typography variant="overline" color="text.secondary">
-            Item Categories
-          </Typography>
-          <List dense disablePadding>
-            {itemCategories.map((cat) => (
-              <ListItemButton
-                key={cat.id}
-                selected={selectedScope?.type === 'item_category' && selectedScope.id === cat.id}
-                onClick={() =>
-                  setSelectedScope({ type: 'item_category', id: cat.id, label: cat.displayName })
-                }
-                sx={{ borderRadius: 1 }}
-              >
-                <ListItemText primary={cat.displayName} />
-              </ListItemButton>
-            ))}
-          </List>
+        <Box sx={{ width: 320, flexShrink: 0 }}>
+          <MetaListSection
+            title="Item Categories"
+            singularName="Item Category"
+            description="Categories used to organize items."
+            items={itemCategories}
+            compact
+            selectedId={selectedScope?.type === 'item_category' ? selectedScope.id : null}
+            onSelectItem={(item) => setSelectedScope({ type: 'item_category', id: item.id })}
+            onAdd={metaApi.addItemCategory}
+            onUpdate={metaApi.updateItemCategory}
+            onDelete={metaApi.deleteItemCategory}
+            onReorder={metaApi.reorderItemCategories}
+            onRefresh={onRefreshItemCategories}
+          />
 
-          <Divider sx={{ my: 1.5 }} />
+          <Divider sx={{ my: 2 }} />
 
-          <Typography variant="overline" color="text.secondary">
-            NPC Types
-          </Typography>
-          <List dense disablePadding>
-            {npcTypes.map((t) => (
-              <ListItemButton
-                key={t.id}
-                selected={selectedScope?.type === 'npc_type' && selectedScope.id === t.id}
-                onClick={() =>
-                  setSelectedScope({ type: 'npc_type', id: t.id, label: t.displayName })
-                }
-                sx={{ borderRadius: 1 }}
-              >
-                <ListItemText primary={t.displayName} />
-              </ListItemButton>
-            ))}
-          </List>
+          <MetaListSection
+            title="NPC Types"
+            singularName="NPC Type"
+            description="Types used to categorize NPCs."
+            items={npcTypes}
+            compact
+            selectedId={selectedScope?.type === 'npc_type' ? selectedScope.id : null}
+            onSelectItem={(item) => setSelectedScope({ type: 'npc_type', id: item.id })}
+            onAdd={metaApi.addNpcType}
+            onUpdate={metaApi.updateNpcType}
+            onDelete={metaApi.deleteNpcType}
+            onReorder={metaApi.reorderNpcTypes}
+            onRefresh={onRefreshNpcTypes}
+          />
         </Box>
 
         <Box sx={{ flex: 1 }}>
-          {selectedScope ? (
+          {selectedScope && selectedItem ? (
             <>
               <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
-                <Typography variant="h6">{selectedScope.label}</Typography>
+                <Typography variant="h6">{selectedItem.displayName}</Typography>
                 <Typography variant="caption" color="text.secondary">
                   {selectedScope.type === 'item_category' ? 'Item Category' : 'NPC Type'}
                 </Typography>
@@ -1004,261 +1000,3 @@ export function CustomFieldsSection({ itemCategories, npcTypes }: CustomFieldsSe
   )
 }
 
-// ─── Project Settings Tab ────────────────────────────────────────────────────
-
-export default function ProjectSettingsTab(): React.JSX.Element {
-  const activeProject = useProjectStore((state) => state.activeProject)
-  const projectFilePath = activeProject?.filePath ?? null
-  const isRecoveryMode = useProjectStore((state) => state.isRecoveryMode)
-
-  const hydrate = useProjectStore((state) => state.hydrate)
-  const setSaveStatus = useProjectStore((state) => state.setSaveStatus)
-  const setSaveError = useProjectStore((state) => state.setSaveError)
-
-  const [projectSettings, setProjectSettings] = useState<ProjectSettings | null>(null)
-  const [gameTitleStr, setGameTitleStr] = useState('')
-  const [maxLevelStr, setMaxLevelStr] = useState('100')
-  const [stats, setStats] = useState<MetaStat[]>([])
-  const [rarities, setRarities] = useState<MetaRarity[]>([])
-  const [craftingStations, setCraftingStations] = useState<MetaCraftingStation[]>([])
-  const [craftingSpecializations, setCraftingSpecializations] = useState<MetaCraftingSpecialization[]>([])
-  const [derivedStats, setDerivedStats] = useState<DerivedStatDefinition[]>([])
-  const [itemCategories, setItemCategories] = useState<MetaItemCategory[]>([])
-  const [npcTypes, setNpcTypes] = useState<MetaNpcType[]>([])
-
-  useEffect(() => {
-    if (!projectFilePath) return
-    void Promise.all([
-      metaApi.getProjectSettings(),
-      metaApi.listStats(),
-      metaApi.listRarities(),
-      metaApi.listCraftingStations(),
-      metaApi.listCraftingSpecializations(),
-      metaApi.listDerivedStats(),
-      metaApi.listItemCategories(),
-      metaApi.listNpcTypes(),
-    ]).then(([settings, s, r, cs, csp, ds, cats, types]) => {
-      setProjectSettings(settings)
-      setGameTitleStr(settings.gameTitle)
-      setMaxLevelStr(String(settings.maxLevel))
-      setStats(s)
-      setRarities(r)
-      setCraftingStations(cs)
-      setCraftingSpecializations(csp)
-      setDerivedStats(ds)
-      setItemCategories(cats)
-      setNpcTypes(types)
-    })
-  }, [projectFilePath])
-
-  const refreshStats = (): void => { void metaApi.listStats().then(setStats) }
-  const refreshRarities = (): void => { void metaApi.listRarities().then(setRarities) }
-  const refreshCraftingStations = (): void => { void metaApi.listCraftingStations().then(setCraftingStations) }
-  const refreshCraftingSpecializations = (): void => { void metaApi.listCraftingSpecializations().then(setCraftingSpecializations) }
-  const refreshNpcTypes = (): void => { void metaApi.listNpcTypes().then(setNpcTypes) }
-  const refreshDerivedStats = (): void => { void metaApi.listDerivedStats().then(setDerivedStats) }
-
-  const saveProjectAs = async (): Promise<void> => {
-    if (isRecoveryMode) return
-    setSaveStatus('saving')
-    setSaveError(null)
-    try {
-      const snapshot = await projectApi.saveAs()
-      hydrate(snapshot)
-    } catch (cause) {
-      setSaveError(cause instanceof Error ? cause.message : 'Unable to save project copy.')
-    }
-  }
-
-  if (!projectSettings) {
-    return <Typography color="text.secondary">Loading project settings...</Typography>
-  }
-
-  const handleGameTitleBlur = (): void => {
-    const trimmed = gameTitleStr.trim()
-    if (!trimmed) {
-      setGameTitleStr(projectSettings!.gameTitle)
-      return
-    }
-    if (trimmed === projectSettings!.gameTitle) return
-    void metaApi.setProjectSettings({ gameTitle: trimmed }).then((updated) => {
-      setProjectSettings(updated)
-      setGameTitleStr(updated.gameTitle)
-      void projectApi.getState().then(hydrate)
-    })
-  }
-
-  const handleMaxLevelBlur = (): void => {
-    const value = Math.max(1, parseInt(maxLevelStr, 10) || 100)
-    setMaxLevelStr(String(value))
-    void metaApi.setProjectSettings({ maxLevel: value }).then(setProjectSettings)
-  }
-
-  const handleSeverityChange = (value: string): void => {
-    void metaApi
-      .setProjectSettings({ softDeleteReferenceSeverity: value as 'Warning' | 'Error' })
-      .then(setProjectSettings)
-  }
-
-  return (
-    <Stack spacing={4} sx={{ maxWidth: 900 }}>
-      {/* ── Project File ───────────────────────────────────────────────────────── */}
-      <Box>
-        <Typography variant="subtitle2" gutterBottom>Project File</Typography>
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          sx={{ fontFamily: (t) => (t.typography as any).fontFamilyMono, fontSize: '0.8rem', mb: 1 }}
-        >
-          {activeProject?.projectFolder?.root ?? activeProject?.filePath ?? '—'}
-        </Typography>
-        <Button
-          variant="outlined"
-          size="small"
-          startIcon={<SaveAsIcon />}
-          onClick={() => void saveProjectAs()}
-          disabled={isRecoveryMode}
-        >
-          Save As
-        </Button>
-        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
-          Save a copy of this project to a new location.
-        </Typography>
-      </Box>
-
-      <Divider />
-
-      {/* ── General ────────────────────────────────────────────────────────────── */}
-      <Box>
-        <Typography variant="subtitle2" gutterBottom>Game Title</Typography>
-        <TextField
-          size="small"
-          value={gameTitleStr}
-          onChange={(e) => setGameTitleStr(e.target.value)}
-          onBlur={handleGameTitleBlur}
-          onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }}
-          sx={{ width: 360 }}
-        />
-        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
-          The title of your game. Appears in exports and project metadata.
-        </Typography>
-      </Box>
-
-      <Box>
-        <Typography variant="subtitle2" gutterBottom>Max Level</Typography>
-        <Stack direction="row" alignItems="center" spacing={1}>
-          <TextField
-            type="number"
-            size="small"
-            value={maxLevelStr}
-            onChange={(e) => setMaxLevelStr(e.target.value)}
-            onBlur={handleMaxLevelBlur}
-            onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }}
-            inputProps={{ min: 1, step: 1 }}
-            sx={{ width: 100 }}
-          />
-        </Stack>
-        <Typography variant="caption" color="text.secondary">
-          The maximum character level for stat growth curves and derived stat calculations.
-        </Typography>
-      </Box>
-
-      <Box>
-        <Typography variant="subtitle2" gutterBottom>Soft-Delete Reference Severity</Typography>
-        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
-          Controls how the validation engine treats references to soft-deleted (archived) records.
-        </Typography>
-        <FormControl>
-          <RadioGroup
-            value={projectSettings.softDeleteReferenceSeverity}
-            onChange={(e) => handleSeverityChange(e.target.value)}
-          >
-            <FormControlLabel value="Warning" control={<Radio size="small" />} label="Warning" />
-            <Typography variant="caption" color="text.secondary" sx={{ pl: 3.75, mt: -0.5, mb: 0.5 }}>
-              Flag references to archived records, but allow export.
-            </Typography>
-            <FormControlLabel value="Error" control={<Radio size="small" />} label="Error" />
-            <Typography variant="caption" color="text.secondary" sx={{ pl: 3.75, mt: -0.5 }}>
-              Block export when references to archived records exist.
-            </Typography>
-          </RadioGroup>
-        </FormControl>
-      </Box>
-
-      <Divider />
-
-      {/* ── Stats ──────────────────────────────────────────────────────────────── */}
-      <MetaListSection
-        title="Primary Stats"
-        singularName="Stat"
-        description="Stats used in class growth curves and derived stat formulas."
-        items={stats}
-        onAdd={metaApi.addStat}
-        onUpdate={metaApi.updateStat}
-        onDelete={metaApi.deleteStat}
-        onReorder={metaApi.reorderStats}
-        onRefresh={refreshStats}
-      />
-
-      <Divider />
-
-      {/* ── Rarities ───────────────────────────────────────────────────────────── */}
-      <RaritySection rarities={rarities} onRefresh={refreshRarities} />
-
-      <Divider />
-
-      {/* ── Crafting Stations ──────────────────────────────────────────────────── */}
-      <MetaListSection
-        title="Crafting Stations"
-        singularName="Crafting Station"
-        description="Stations that recipes can require."
-        items={craftingStations}
-        onAdd={metaApi.addCraftingStation}
-        onUpdate={metaApi.updateCraftingStation}
-        onDelete={metaApi.deleteCraftingStation}
-        onReorder={metaApi.reorderCraftingStations}
-        onRefresh={refreshCraftingStations}
-      />
-
-      <Divider />
-
-      {/* ── Crafting Specializations ───────────────────────────────────────────── */}
-      <MetaListSection
-        title="Crafting Specializations"
-        singularName="Crafting Specialization"
-        description="Specializations that recipes can require."
-        items={craftingSpecializations}
-        onAdd={metaApi.addCraftingSpecialization}
-        onUpdate={metaApi.updateCraftingSpecialization}
-        onDelete={metaApi.deleteCraftingSpecialization}
-        onReorder={metaApi.reorderCraftingSpecializations}
-        onRefresh={refreshCraftingSpecializations}
-      />
-
-      <Divider />
-
-      {/* ── NPC Types ──────────────────────────────────────────────────────────── */}
-      <MetaListSection
-        title="NPC Types"
-        singularName="NPC Type"
-        description="Types used to categorize NPCs. Each NPC type can have its own custom fields."
-        items={npcTypes}
-        onAdd={metaApi.addNpcType}
-        onUpdate={metaApi.updateNpcType}
-        onDelete={metaApi.deleteNpcType}
-        onReorder={metaApi.reorderNpcTypes}
-        onRefresh={refreshNpcTypes}
-      />
-
-      <Divider />
-
-      {/* ── Derived Stats ──────────────────────────────────────────────────────── */}
-      <DerivedStatSection derivedStats={derivedStats} onRefresh={refreshDerivedStats} />
-
-      <Divider />
-
-      {/* ── Custom Fields ──────────────────────────────────────────────────────── */}
-      <CustomFieldsSection itemCategories={itemCategories} npcTypes={npcTypes} />
-    </Stack>
-  )
-}

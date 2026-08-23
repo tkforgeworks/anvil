@@ -407,6 +407,83 @@ export function registerMetaHandlers(): void {
     },
   )
 
+  // ─── Item Categories CRUD ────────────────────────────────────────────────────
+
+  safeHandle(
+    IPC_CHANNELS.META_ADD_ITEM_CATEGORY,
+    (_event, input: MetaItemInput): MetaItemCategory => {
+      const db = getDb()
+      const id = randomUUID()
+      const now = new Date().toISOString()
+      const maxOrder = (
+        db.prepare(`SELECT COALESCE(MAX(sort_order), 0) AS m FROM item_categories`).get() as { m: number }
+      ).m
+      db.prepare(
+        `INSERT INTO item_categories (id, display_name, export_key, description, sort_order, created_at, updated_at)
+         VALUES (?, ?, ?, '', ?, ?, ?)`,
+      ).run(id, input.displayName, input.exportKey, maxOrder + 1, now, now)
+      markProjectDirty({ domain: 'meta', recordId: id, recordName: input.displayName, subArea: 'basic-info', action: 'create' })
+      const row = db
+        .prepare(`SELECT id, display_name, export_key, description, sort_order FROM item_categories WHERE id = ?`)
+        .get(id) as ItemCategoryRow
+      return toMetaItemCategory(row)
+    },
+  )
+
+  safeHandle(
+    IPC_CHANNELS.META_UPDATE_ITEM_CATEGORY,
+    (_event, id: string, input: MetaItemInput): MetaItemCategory => {
+      const db = getDb()
+      const now = new Date().toISOString()
+      db.prepare(
+        `UPDATE item_categories SET display_name = ?, export_key = ?, updated_at = ? WHERE id = ?`,
+      ).run(input.displayName, input.exportKey, now, id)
+      markProjectDirty({ domain: 'meta', recordId: id, recordName: input.displayName, subArea: 'basic-info', action: 'update' })
+      const row = db
+        .prepare(`SELECT id, display_name, export_key, description, sort_order FROM item_categories WHERE id = ?`)
+        .get(id) as ItemCategoryRow
+      return toMetaItemCategory(row)
+    },
+  )
+
+  safeHandle(
+    IPC_CHANNELS.META_DELETE_ITEM_CATEGORY,
+    (_event, id: string): MetaDeleteResult => {
+      const db = getDb()
+      const { c } = db
+        .prepare(`SELECT COUNT(*) AS c FROM items WHERE item_category_id = ? AND deleted_at IS NULL`)
+        .get(id) as { c: number }
+      if (c > 0) {
+        return { deleted: false, reason: `Item category is used by ${c} item(s).` }
+      }
+      const { f } = db
+        .prepare(`SELECT COUNT(*) AS f FROM custom_field_definitions WHERE scope_type = 'item_category' AND scope_id = ?`)
+        .get(id) as { f: number }
+      if (f > 0) {
+        return { deleted: false, reason: `Item category has ${f} custom field definition(s). Delete those fields first.` }
+      }
+      db.prepare(`DELETE FROM item_categories WHERE id = ?`).run(id)
+      markProjectDirty({ domain: 'meta', recordId: id, recordName: '', subArea: 'basic-info', action: 'delete' })
+      return { deleted: true, reason: null }
+    },
+  )
+
+  safeHandle(
+    IPC_CHANNELS.META_REORDER_ITEM_CATEGORIES,
+    (_event, items: MetaReorderItem[]): void => {
+      const db = getDb()
+      const stmt = db.prepare(`UPDATE item_categories SET sort_order = ?, updated_at = ? WHERE id = ?`)
+      const now = new Date().toISOString()
+      const run = db.transaction(() => {
+        for (const item of items) {
+          stmt.run(item.sortOrder, now, item.id)
+        }
+      })
+      run()
+      markProjectDirty({ domain: 'meta', recordId: 'item-categories', recordName: 'item categories order', subArea: 'basic-info', action: 'update' })
+    },
+  )
+
   // ─── NPC Types CRUD ──────────────────────────────────────────────────────────
 
   safeHandle(
@@ -455,6 +532,12 @@ export function registerMetaHandlers(): void {
         .get(id) as { c: number }
       if (c > 0) {
         return { deleted: false, reason: `NPC type is used by ${c} NPC(s).` }
+      }
+      const { f } = db
+        .prepare(`SELECT COUNT(*) AS f FROM custom_field_definitions WHERE scope_type = 'npc_type' AND scope_id = ?`)
+        .get(id) as { f: number }
+      if (f > 0) {
+        return { deleted: false, reason: `NPC type has ${f} custom field definition(s). Delete those fields first.` }
       }
       db.prepare(`DELETE FROM npc_types WHERE id = ?`).run(id)
       markProjectDirty({ domain: 'meta', recordId: id, recordName: '', subArea: 'basic-info', action: 'delete' })
