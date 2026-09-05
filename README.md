@@ -166,3 +166,9 @@ Validation runs on save, on export, and on demand. Issues are surfaced inline in
 ### Export
 
 The export engine assembles a full context object (all six domains + project meta) and renders it through a Nunjucks template. Three built-in presets ship with the application (Nested JSON, Flat JSON, CSV). Users can create and save custom templates per project. Export scope can be the full project, a single domain, or a hand-selected record set.
+
+## License
+
+Apache-2.0 — see [`LICENSE`](LICENSE). Image assets (logos, icons,
+illustrations, screenshots) are **not** covered and are all rights reserved;
+see [`NOTICE`](NOTICE).

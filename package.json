@@ -8,7 +8,7 @@
     "type": "git",
     "url": "https://github.com/tkforgeworks/anvil.git"
   },
-  "license": "UNLICENSED",
+  "license": "Apache-2.0",
   "homepage": "https://www.tkforgeworks.com",
   "main": "out/main/index.js",
   "scripts": {
