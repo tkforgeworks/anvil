@@ -5,6 +5,8 @@ import type {
   MetaCraftingSpecialization,
   MetaCraftingStation,
   MetaDeleteResult,
+  MetaInUseKind,
+  MetaInUseResult,
   MetaItemCategory,
   MetaItemInput,
   MetaNpcType,
@@ -43,6 +45,10 @@ export const metaApi = {
 
   listDerivedStats: () =>
     window.anvil.invoke<DerivedStatDefinition[]>(IPC_CHANNELS.META_LIST_DERIVED_STATS),
+
+  /** Non-mutating FK check: would deleting this meta row be refused, and why? */
+  checkInUse: (kind: MetaInUseKind, id: string) =>
+    window.anvil.invoke<MetaInUseResult>(IPC_CHANNELS.META_CHECK_IN_USE, kind, id),
 
   // ─── Project settings ───────────────────────────────────────────────────────
 

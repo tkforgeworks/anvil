@@ -2,6 +2,7 @@ import { randomUUID } from 'crypto'
 import { IPC_CHANNELS } from '../../shared/ipc-channels'
 import { safeHandle } from './safe-handle'
 import { getDb } from '../db/connection'
+import type { DbConnection } from '../db/connection'
 import { markProjectDirty } from '../project/project-service'
 import type { ChangeEntry } from '../project/change-accumulator'
 import type {
@@ -10,6 +11,8 @@ import type {
   MetaCraftingSpecialization,
   MetaCraftingStation,
   MetaDeleteResult,
+  MetaInUseKind,
+  MetaInUseResult,
   MetaItemCategory,
   MetaItemInput,
   MetaNpcType,
@@ -134,7 +137,94 @@ function toMetaStat(row: StatRow): MetaStat {
   }
 }
 
+// ─── FK in-use checks ────────────────────────────────────────────────────────
+//
+// Shared by the delete handlers (which refuse to delete a referenced row) and
+// the META_CHECK_IN_USE channel (which lets the renderer ask the same question
+// without mutating anything — the buffered Project Settings modal uses it to
+// reject a delete at click time, before the change is committed on Save).
+
+function countOf(db: DbConnection, sql: string, id: string): number {
+  return (db.prepare(sql).get(id) as { c: number }).c
+}
+
+export function checkMetaInUse(db: DbConnection, kind: MetaInUseKind, id: string): MetaInUseResult {
+  const used = (reason: string): MetaInUseResult => ({ inUse: true, reason })
+  const free: MetaInUseResult = { inUse: false, reason: null }
+  switch (kind) {
+    case 'stat': {
+      const c = countOf(
+        db,
+        `SELECT COUNT(DISTINCT csg.class_id) AS c
+         FROM class_stat_growth csg
+         JOIN classes c ON c.id = csg.class_id
+         WHERE csg.stat_id = ? AND c.deleted_at IS NULL`,
+        id,
+      )
+      return c > 0 ? used(`Stat is used by ${c} class(es) in stat growth definitions.`) : free
+    }
+    case 'rarity': {
+      const c = countOf(db, `SELECT COUNT(*) AS c FROM items WHERE rarity_id = ? AND deleted_at IS NULL`, id)
+      return c > 0 ? used(`Rarity is used by ${c} item(s).`) : free
+    }
+    case 'item-category': {
+      const c = countOf(db, `SELECT COUNT(*) AS c FROM items WHERE item_category_id = ? AND deleted_at IS NULL`, id)
+      if (c > 0) return used(`Item category is used by ${c} item(s).`)
+      const f = countOf(
+        db,
+        `SELECT COUNT(*) AS c FROM custom_field_definitions WHERE scope_type = 'item_category' AND scope_id = ?`,
+        id,
+      )
+      return f > 0 ? used(`Item category has ${f} custom field definition(s). Delete those fields first.`) : free
+    }
+    case 'npc-type': {
+      const c = countOf(db, `SELECT COUNT(*) AS c FROM npcs WHERE npc_type_id = ? AND deleted_at IS NULL`, id)
+      if (c > 0) return used(`NPC type is used by ${c} NPC(s).`)
+      const f = countOf(
+        db,
+        `SELECT COUNT(*) AS c FROM custom_field_definitions WHERE scope_type = 'npc_type' AND scope_id = ?`,
+        id,
+      )
+      return f > 0 ? used(`NPC type has ${f} custom field definition(s). Delete those fields first.`) : free
+    }
+    case 'crafting-station': {
+      const c = countOf(db, `SELECT COUNT(*) AS c FROM recipes WHERE crafting_station_id = ? AND deleted_at IS NULL`, id)
+      return c > 0 ? used(`Station is used by ${c} recipe(s).`) : free
+    }
+    case 'crafting-specialization': {
+      const c = countOf(
+        db,
+        `SELECT COUNT(*) AS c FROM recipes WHERE crafting_specialization_id = ? AND deleted_at IS NULL`,
+        id,
+      )
+      return c > 0 ? used(`Specialization is used by ${c} recipe(s).`) : free
+    }
+    case 'derived-stat': {
+      const c = countOf(
+        db,
+        `SELECT COUNT(DISTINCT class_id) AS c FROM class_derived_stat_overrides WHERE derived_stat_id = ?`,
+        id,
+      )
+      return c > 0 ? used(`Derived stat has overrides in ${c} class(es).`) : free
+    }
+  }
+}
+
+/** Refuse-or-delete helper shared by every META_DELETE_* handler. */
+function deleteMetaRow(kind: MetaInUseKind, table: string, id: string): MetaDeleteResult {
+  const db = getDb()
+  const check = checkMetaInUse(db, kind, id)
+  if (check.inUse) return { deleted: false, reason: check.reason }
+  db.prepare(`DELETE FROM ${table} WHERE id = ?`).run(id)
+  markProjectDirty({ domain: 'meta', recordId: id, recordName: '', subArea: 'basic-info', action: 'delete' })
+  return { deleted: true, reason: null }
+}
+
 export function registerMetaHandlers(): void {
+  safeHandle(
+    IPC_CHANNELS.META_CHECK_IN_USE,
+    (_event, kind: MetaInUseKind, id: string): MetaInUseResult => checkMetaInUse(getDb(), kind, id),
+  )
   safeHandle(IPC_CHANNELS.META_LIST_ITEM_CATEGORIES, () => {
     const rows = getDb()
       .prepare(
@@ -301,23 +391,7 @@ export function registerMetaHandlers(): void {
 
   safeHandle(
     IPC_CHANNELS.META_DELETE_STAT,
-    (_event, id: string): MetaDeleteResult => {
-      const db = getDb()
-      const { c } = db
-        .prepare(
-          `SELECT COUNT(DISTINCT csg.class_id) AS c
-           FROM class_stat_growth csg
-           JOIN classes c ON c.id = csg.class_id
-           WHERE csg.stat_id = ? AND c.deleted_at IS NULL`,
-        )
-        .get(id) as { c: number }
-      if (c > 0) {
-        return { deleted: false, reason: `Stat is used by ${c} class(es) in stat growth definitions.` }
-      }
-      db.prepare(`DELETE FROM stats WHERE id = ?`).run(id)
-      markProjectDirty({ domain: 'meta', recordId: id, recordName: '', subArea: 'basic-info', action: 'delete' })
-      return { deleted: true, reason: null }
-    },
+    (_event, id: string): MetaDeleteResult => deleteMetaRow('stat', 'stats', id),
   )
 
   safeHandle(
@@ -377,18 +451,7 @@ export function registerMetaHandlers(): void {
 
   safeHandle(
     IPC_CHANNELS.META_DELETE_RARITY,
-    (_event, id: string): MetaDeleteResult => {
-      const db = getDb()
-      const { c } = db
-        .prepare(`SELECT COUNT(*) AS c FROM items WHERE rarity_id = ? AND deleted_at IS NULL`)
-        .get(id) as { c: number }
-      if (c > 0) {
-        return { deleted: false, reason: `Rarity is used by ${c} item(s).` }
-      }
-      db.prepare(`DELETE FROM rarities WHERE id = ?`).run(id)
-      markProjectDirty({ domain: 'meta', recordId: id, recordName: '', subArea: 'basic-info', action: 'delete' })
-      return { deleted: true, reason: null }
-    },
+    (_event, id: string): MetaDeleteResult => deleteMetaRow('rarity', 'rarities', id),
   )
 
   safeHandle(
@@ -448,24 +511,7 @@ export function registerMetaHandlers(): void {
 
   safeHandle(
     IPC_CHANNELS.META_DELETE_ITEM_CATEGORY,
-    (_event, id: string): MetaDeleteResult => {
-      const db = getDb()
-      const { c } = db
-        .prepare(`SELECT COUNT(*) AS c FROM items WHERE item_category_id = ? AND deleted_at IS NULL`)
-        .get(id) as { c: number }
-      if (c > 0) {
-        return { deleted: false, reason: `Item category is used by ${c} item(s).` }
-      }
-      const { f } = db
-        .prepare(`SELECT COUNT(*) AS f FROM custom_field_definitions WHERE scope_type = 'item_category' AND scope_id = ?`)
-        .get(id) as { f: number }
-      if (f > 0) {
-        return { deleted: false, reason: `Item category has ${f} custom field definition(s). Delete those fields first.` }
-      }
-      db.prepare(`DELETE FROM item_categories WHERE id = ?`).run(id)
-      markProjectDirty({ domain: 'meta', recordId: id, recordName: '', subArea: 'basic-info', action: 'delete' })
-      return { deleted: true, reason: null }
-    },
+    (_event, id: string): MetaDeleteResult => deleteMetaRow('item-category', 'item_categories', id),
   )
 
   safeHandle(
@@ -525,24 +571,7 @@ export function registerMetaHandlers(): void {
 
   safeHandle(
     IPC_CHANNELS.META_DELETE_NPC_TYPE,
-    (_event, id: string): MetaDeleteResult => {
-      const db = getDb()
-      const { c } = db
-        .prepare(`SELECT COUNT(*) AS c FROM npcs WHERE npc_type_id = ? AND deleted_at IS NULL`)
-        .get(id) as { c: number }
-      if (c > 0) {
-        return { deleted: false, reason: `NPC type is used by ${c} NPC(s).` }
-      }
-      const { f } = db
-        .prepare(`SELECT COUNT(*) AS f FROM custom_field_definitions WHERE scope_type = 'npc_type' AND scope_id = ?`)
-        .get(id) as { f: number }
-      if (f > 0) {
-        return { deleted: false, reason: `NPC type has ${f} custom field definition(s). Delete those fields first.` }
-      }
-      db.prepare(`DELETE FROM npc_types WHERE id = ?`).run(id)
-      markProjectDirty({ domain: 'meta', recordId: id, recordName: '', subArea: 'basic-info', action: 'delete' })
-      return { deleted: true, reason: null }
-    },
+    (_event, id: string): MetaDeleteResult => deleteMetaRow('npc-type', 'npc_types', id),
   )
 
   safeHandle(
@@ -602,18 +631,7 @@ export function registerMetaHandlers(): void {
 
   safeHandle(
     IPC_CHANNELS.META_DELETE_CRAFTING_STATION,
-    (_event, id: string): MetaDeleteResult => {
-      const db = getDb()
-      const { c } = db
-        .prepare(`SELECT COUNT(*) AS c FROM recipes WHERE crafting_station_id = ? AND deleted_at IS NULL`)
-        .get(id) as { c: number }
-      if (c > 0) {
-        return { deleted: false, reason: `Station is used by ${c} recipe(s).` }
-      }
-      db.prepare(`DELETE FROM crafting_stations WHERE id = ?`).run(id)
-      markProjectDirty({ domain: 'meta', recordId: id, recordName: '', subArea: 'basic-info', action: 'delete' })
-      return { deleted: true, reason: null }
-    },
+    (_event, id: string): MetaDeleteResult => deleteMetaRow('crafting-station', 'crafting_stations', id),
   )
 
   safeHandle(
@@ -673,18 +691,7 @@ export function registerMetaHandlers(): void {
 
   safeHandle(
     IPC_CHANNELS.META_DELETE_CRAFTING_SPECIALIZATION,
-    (_event, id: string): MetaDeleteResult => {
-      const db = getDb()
-      const { c } = db
-        .prepare(`SELECT COUNT(*) AS c FROM recipes WHERE crafting_specialization_id = ? AND deleted_at IS NULL`)
-        .get(id) as { c: number }
-      if (c > 0) {
-        return { deleted: false, reason: `Specialization is used by ${c} recipe(s).` }
-      }
-      db.prepare(`DELETE FROM crafting_specializations WHERE id = ?`).run(id)
-      markProjectDirty({ domain: 'meta', recordId: id, recordName: '', subArea: 'basic-info', action: 'delete' })
-      return { deleted: true, reason: null }
-    },
+    (_event, id: string): MetaDeleteResult => deleteMetaRow('crafting-specialization', 'crafting_specializations', id),
   )
 
   safeHandle(
@@ -766,18 +773,7 @@ export function registerMetaHandlers(): void {
 
   safeHandle(
     IPC_CHANNELS.META_DELETE_DERIVED_STAT,
-    (_event, id: string): MetaDeleteResult => {
-      const db = getDb()
-      const { c } = db
-        .prepare(`SELECT COUNT(DISTINCT class_id) AS c FROM class_derived_stat_overrides WHERE derived_stat_id = ?`)
-        .get(id) as { c: number }
-      if (c > 0) {
-        return { deleted: false, reason: `Derived stat has overrides in ${c} class(es).` }
-      }
-      db.prepare(`DELETE FROM derived_stat_definitions WHERE id = ?`).run(id)
-      markProjectDirty({ domain: 'meta', recordId: id, recordName: '', subArea: 'basic-info', action: 'delete' })
-      return { deleted: true, reason: null }
-    },
+    (_event, id: string): MetaDeleteResult => deleteMetaRow('derived-stat', 'derived_stat_definitions', id),
   )
 
   safeHandle(

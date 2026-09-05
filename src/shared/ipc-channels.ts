@@ -140,6 +140,7 @@ export const IPC_CHANNELS = {
   META_REORDER_ITEM_CATEGORIES: 'meta:reorder-item-categories',
 
   META_LIST_DERIVED_STATS: 'meta:list-derived-stats',
+  META_CHECK_IN_USE: 'meta:check-in-use',
 
   // Meta-layer CRUD
   META_ADD_STAT: 'meta:add-stat',
