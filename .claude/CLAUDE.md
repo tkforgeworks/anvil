@@ -53,7 +53,7 @@ Six first-class data domains, each with full CRUD, soft-delete, custom fields (w
 
 Two GitHub Actions workflows in `.github/workflows/`:
 
-- **`ci.yml`** — triggers on pushes to non-master branches and `pull_request` to master. Runs `validate` job (strict `npm audit --omit=dev` gate, typecheck, test, build with telemetry compiled on). This is the required status check for branch protection.
+- **`ci.yml`** — triggers on pushes to non-master branches and `pull_request` to master **and** to `v*/main` release branches (the org CI trigger envelope from `tkforgeworks/.github/docs/ci-standards.md`). Runs `validate` job (strict `npm audit --omit=dev` gate, typecheck, test, build with telemetry compiled on). `validate` is the required status check on master; on release-branch PRs it reports but is not required (see Branching & protection below).
 - **`release.yml`** — triggers on `push` to master **and** to `v*/main` version branches (shared TK ForgeWorks tagless flow, mirrored in claude-observability-gui). Reads version from `package.json` and self-gates: skips if the `v{version}` tag already exists, skips an RC version on master (finalize on the version branch first), and skips a stable version on a version branch (the stable release is cut on merge to master). Otherwise: shared workflow generates release notes → Windows + Linux matrix builds upload workflow artifacts (telemetry compiled in only on prerelease versions) → a single `publish` job creates a draft GitHub Release with all assets and notes, then flips it to published (immutable-release safe; publishing creates the tag).
 
 **Packaging is electron-builder 26** (config in the `build` key of `package.json`, output to `release/`). Windows ships an NSIS assisted installer (`oneClick: false` — wizard with per-user/all-users choice and install-dir selection, desktop + Start Menu shortcuts; the 512×512 `resources/icon.png` is auto-converted to `.ico`). Linux ships AppImage/deb/rpm. Electron Forge was removed — its `maker-squirrel` Setup.exe installed silently to `%LocalAppData%` with no wizard and, without Squirrel event handling, never created shortcuts. `npm run make` = `electron-vite build && electron-builder --publish never` (`--publish never` is required: electron-builder otherwise auto-publishes to GitHub Releases when it detects CI, failing on missing GH_TOKEN — release.yml does its own asset upload); `npm run package` = unpacked dir build. release.yml uploads only `release/*.{exe,AppImage,deb,rpm}`.
@@ -73,12 +73,21 @@ Tickets found during an RC run are triaged into one of these rather than left un
 
 ### Release process (RC → stable)
 
-1. Feature/bugfix branches (e.g. `v0.1.4/anv-131-autosave-countdown`) merge into the version integration branch (e.g. `v0.1.4/main`) via PRs.
+1. Topic branches named `vX.Y.Z/anvl-N-short-topic` (e.g. `v0.1.5/anvl-141-release-branch-ci-ruleset`) are cut from and PR'd **into** the release branch (e.g. `v0.1.5/main`), never into master. Delete the topic branch after merge.
 2. **Cut an RC**: `npm run rc:patch|minor|major` from the version branch — **the bump type is relative to the previous stable version, not the branch name** (a `v0.1.5/main` cycle following stable 0.1.4 needs `rc:patch`; `rc:minor` would produce `0.2.0-rc.1`). The script refuses to run on master, fetches remote tags, bumps `package.json` to the next `-rc.N` (no local git tags), commits, and pushes the version branch. **No PR is opened**: the push itself triggers `release.yml`, which publishes the `v{X.Y.Z}-rc.N` prerelease and creates the tag. Repeat 1–2 as you test and iterate; master is untouched throughout.
 3. **Finalize**: once the last RC is verified, `npm run release:final` promotes the current RC to its stable version (`0.1.4-rc.2` → `0.1.4`; errors if the current version isn't an RC), pushes it to the version branch (no release fires — stable on a version branch is skipped), and opens a PR into master. Merging that PR cuts the stable release.
 4. `release:patch|minor|major` are **only** for direct stable releases with no RC phase — they strip any rc suffix and bump *past* it, so never use them to finalize an RC cycle.
 
-**Branch protection required** — the workflow assumes direct pushes to master don't happen. Configure in GitHub repo settings: require PR, require `validate` status check.
+### Branching & protection (org standard)
+
+Anvil follows `tkforgeworks/.github/docs/branching-and-release.md`: **master is the released state**; work accumulates on the current release branch `vX.Y.Z/main`; topic branches PR **into the release branch**, never into master; the release branch reaches master via the release PR that `npm run release:final` opens.
+
+Two repository rulesets enforce this (standard: `tkforgeworks/.github/docs/branch-protection-ruleset.md`; rulesets, not classic branch protection):
+
+- **`master`** (ruleset id 16447467) — PR-only, no force-push or deletion, **no bypass actors** (not even admins). Required check: `validate` (GitHub Actions). Strict up-to-date policy: the PR must contain the current master tip before merge.
+- **`release-branches`** (ruleset id 22348077, added by ANVL-141) — matches `refs/heads/v*/main`; blocks force-push and deletion only. Deliberately **no PR rule and no required check**: `rc-tag.js` / `release-tag.js` push version-bump commits straight to the release branch, and a required check rejects any direct push of a new commit. A red topic-PR merged into a release branch is therefore possible; it is caught at the release PR into master. Don't add the check here — if gating is ever wanted, change the scripts to open PRs first.
+
+Emergency changes to master require disabling the ruleset (`enforcement: "disabled"`), acting, and re-enabling — deliberate friction. **Never hand-edit the version or push tags**; CI creates the tag when it publishes.
 
 ---
 
