@@ -5,7 +5,7 @@ export default function MenuDivider(): React.JSX.Element {
     <Box
       sx={{
         height: '1px',
-        bgcolor: '#233048',
+        bgcolor: 'divider',
         mx: '8px',
         my: '4px',
       }}
