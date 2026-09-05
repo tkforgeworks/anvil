@@ -10,6 +10,7 @@ import { useProjectStore } from '../../stores/project.store'
 import { useSettingsStore } from '../../stores/settings.store'
 import { useUiStore } from '../../stores/ui.store'
 import MenuRow from './MenuRow'
+import { menuMutedColor, menuSurfaceSx } from './menu-theme'
 import RecentSubmenu from './RecentSubmenu'
 
 const KEEP_OPEN = new Set([
@@ -192,10 +193,7 @@ export default function MenuDropdown(): React.JSX.Element | null {
           position: 'fixed',
           top: 48,
           left: 8,
-          bgcolor: '#14203a',
-          border: '1px solid #2a3553',
-          borderRadius: '8px',
-          boxShadow: '0 18px 40px rgba(0,0,0,0.55), 0 2px 6px rgba(0,0,0,0.4)',
+          ...menuSurfaceSx,
           width: 320,
           pt: '4px',
           pb: '6px',
@@ -208,7 +206,8 @@ export default function MenuDropdown(): React.JSX.Element | null {
           role="menubar"
           sx={{
             display: 'flex',
-            borderBottom: '1px solid #233048',
+            borderBottom: '1px solid',
+            borderColor: 'divider',
             px: '6px',
             pt: '4px',
             mb: '4px',
@@ -229,17 +228,15 @@ export default function MenuDropdown(): React.JSX.Element | null {
                 letterSpacing: '0.06em',
                 textTransform: 'uppercase',
                 fontWeight: 600,
-                color: section.id === activeTab ? '#3b82f6' : '#5d6a85',
-                borderBottom:
-                  section.id === activeTab
-                    ? '2px solid #3b82f6'
-                    : '2px solid transparent',
+                color: section.id === activeTab ? 'primary.main' : menuMutedColor,
+                borderBottom: '2px solid',
+                borderColor: section.id === activeTab ? 'primary.main' : 'transparent',
                 px: '10px',
                 py: '8px',
                 cursor: 'pointer',
                 userSelect: 'none',
                 '&:hover': {
-                  color: section.id === activeTab ? '#3b82f6' : '#e2e8f0',
+                  color: section.id === activeTab ? 'primary.main' : 'text.primary',
                 },
               }}
             >

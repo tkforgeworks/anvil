@@ -105,6 +105,7 @@ Emergency changes to master require disabling the ruleset (`enforcement: "disabl
 - **Constructor injection over field injection** (when applicable in any DI patterns used)
 - **Explicit over magic** — avoid framework features that obscure what's actually happening
 - **Tests test behavior, not implementation** — if tests are written, they should verify outcomes, not internal call sequences
+- **Renderer colours come from the MUI theme, never hex/rgba literals** — use palette tokens (`text.secondary`, `divider`, `background.paper`) or `alpha(theme.palette.x, n)` in `sx` so dark/light/custom modes all apply (ANVL-93 fixed the menu flyouts, which had hard-coded dark colours). The menu primitives centralize theirs in `src/renderer/src/components/menu/menu-theme.ts`. Controls inside the `AppBar` title bar use `color="inherit"` so they follow the bar's contrast text.
 - **IPC channels follow the pattern `domain:operation`** — e.g., `classes:list`, `abilities:create`, `loot-tables:get`
 - **Migrations are sequential and non-destructive** — each migration file has a version number; upgrading a project file creates a copy of the original before applying changes
 - **No half-finished commits** — each commit must leave the codebase in a working state

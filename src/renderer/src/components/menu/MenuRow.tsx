@@ -1,8 +1,10 @@
 import { Box } from '@mui/material'
+import type { Theme } from '@mui/material/styles'
 import { forwardRef } from 'react'
 import KbdPill from './KbdPill'
 import MenuDivider from './MenuDivider'
 import MenuIcon, { MENU_ICONS } from './MenuIcon'
+import { menuHighlight, menuMutedColor, menuRowColor } from './menu-theme'
 
 export interface MenuRowItem {
   kind: 'item' | 'submenu' | 'divider'
@@ -72,25 +74,23 @@ const MenuRow = forwardRef<HTMLDivElement, MenuRowProps>(function MenuRow(
         py: '8px',
         borderRadius: '5px',
         fontSize: '13px',
-        color: item.danger ? '#fb7185' : '#e6edf7',
+        color: (theme) => menuRowColor(theme, item.danger),
         cursor: item.disabled ? 'not-allowed' : 'pointer',
         userSelect: 'none',
         minHeight: '32px',
         opacity: item.disabled ? 0.4 : 1,
-        bgcolor: hovered && !item.disabled
-          ? (item.danger ? 'rgba(239,68,68,0.16)' : 'rgba(59,130,246,0.14)')
-          : 'transparent',
+        bgcolor: (theme) => (hovered && !item.disabled ? menuHighlight(theme, item.danger) : 'transparent'),
         '&:hover': item.disabled
           ? {}
           : {
-              bgcolor: item.danger ? 'rgba(239,68,68,0.16)' : 'rgba(59,130,246,0.14)',
-              color: item.danger ? '#fda4af' : '#fff',
+              bgcolor: (theme: Theme) => menuHighlight(theme, item.danger),
+              color: (theme: Theme) => menuRowColor(theme, item.danger),
               '& .menu-row-ico': { color: 'inherit' },
             },
         '&:focus': { outline: 'none' },
         '&:focus-visible': {
-          bgcolor: item.danger ? 'rgba(239,68,68,0.16)' : 'rgba(59,130,246,0.14)',
-          color: item.danger ? '#fda4af' : '#fff',
+          bgcolor: (theme: Theme) => menuHighlight(theme, item.danger),
+          color: (theme: Theme) => menuRowColor(theme, item.danger),
           outline: 'none',
         },
       }}
@@ -103,7 +103,7 @@ const MenuRow = forwardRef<HTMLDivElement, MenuRowProps>(function MenuRow(
           display: 'inline-flex',
           alignItems: 'center',
           justifyContent: 'center',
-          color: '#9ba8c2',
+          color: menuMutedColor,
           flexShrink: 0,
         }}
       >
@@ -126,7 +126,7 @@ const MenuRow = forwardRef<HTMLDivElement, MenuRowProps>(function MenuRow(
       >
         {item.label}
         {item.sub && (
-          <Box component="span" sx={{ color: '#5d6a85', fontSize: '11px', ml: '4px' }}>
+          <Box component="span" sx={{ color: menuMutedColor, fontSize: '11px', ml: '4px' }}>
             {' · '}
             {item.sub}
           </Box>
@@ -140,7 +140,7 @@ const MenuRow = forwardRef<HTMLDivElement, MenuRowProps>(function MenuRow(
           sx={{
             fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
             fontSize: '10px',
-            color: '#5d6a85',
+            color: menuMutedColor,
           }}
         >
           {item.meta}
@@ -152,7 +152,7 @@ const MenuRow = forwardRef<HTMLDivElement, MenuRowProps>(function MenuRow(
 
       {/* Submenu chevron */}
       {isSubmenu && (
-        <Box component="span" sx={{ color: '#5d6a85', ml: '-2px' }}>
+        <Box component="span" sx={{ color: menuMutedColor, ml: '-2px' }}>
           <MenuIcon name="chevron" size={12} />
         </Box>
       )}

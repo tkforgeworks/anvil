@@ -20,11 +20,17 @@ export default function HamburgerButton(): React.JSX.Element {
         mr: 0.5,
         ml: -0.5,
         borderRadius: '4px',
-        color: menuOpen ? 'primary.main' : 'text.secondary',
-        bgcolor: menuOpen ? 'rgba(59,130,246,0.16)' : 'transparent',
+        // Inherit the AppBar's contrast text like the other title-bar controls so the
+        // button stays visible whether the bar is dark paper or light-mode primary.
+        // The highlight is mixed from currentColor for the same reason.
+        color: 'inherit',
+        opacity: menuOpen ? 1 : 0.75,
+        bgcolor: menuOpen ? 'color-mix(in srgb, currentColor 18%, transparent)' : 'transparent',
         '&:hover': {
-          bgcolor: menuOpen ? 'rgba(59,130,246,0.16)' : 'rgba(255,255,255,0.08)',
-          color: menuOpen ? 'primary.main' : 'text.primary',
+          opacity: 1,
+          bgcolor: menuOpen
+            ? 'color-mix(in srgb, currentColor 18%, transparent)'
+            : 'color-mix(in srgb, currentColor 10%, transparent)',
         },
       }}
     >
