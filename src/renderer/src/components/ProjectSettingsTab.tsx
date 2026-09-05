@@ -43,6 +43,7 @@ import type {
   CustomFieldType,
   DerivedStatDefinition,
   DerivedStatInput,
+  MetaDeleteResult,
   MetaItemCategory,
   MetaNpcType,
   MetaRarity,
@@ -71,12 +72,36 @@ const FIELD_TYPE_LABELS: Record<CustomFieldType, string> = {
 
 // ─── Rarity section ──────────────────────────────────────────────────────────
 
-interface RaritySectionProps {
-  rarities: MetaRarity[]
-  onRefresh: () => void
+/**
+ * Persistence surface for a meta section. Defaults to the live `metaApi` calls;
+ * the buffered Project Settings modal (ANVL-121) swaps in in-memory handlers so
+ * edits are held until Save.
+ */
+export interface MetaSectionHandlers<T, I> {
+  add: (input: I) => Promise<T>
+  update: (id: string, input: I) => Promise<T>
+  delete: (id: string) => Promise<MetaDeleteResult>
+  reorder: (items: MetaReorderItem[]) => Promise<void>
 }
 
-export function RaritySection({ rarities, onRefresh }: RaritySectionProps): React.JSX.Element {
+const liveRarityHandlers: MetaSectionHandlers<MetaRarity, MetaRarityInput> = {
+  add: metaApi.addRarity,
+  update: metaApi.updateRarity,
+  delete: metaApi.deleteRarity,
+  reorder: metaApi.reorderRarities,
+}
+
+interface RaritySectionProps {
+  rarities: MetaRarity[]
+  onRefresh?: () => void
+  handlers?: MetaSectionHandlers<MetaRarity, MetaRarityInput>
+}
+
+export function RaritySection({
+  rarities,
+  onRefresh = () => {},
+  handlers = liveRarityHandlers,
+}: RaritySectionProps): React.JSX.Element {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<MetaRarity | null>(null)
   const [displayName, setDisplayName] = useState('')
@@ -127,9 +152,9 @@ export function RaritySection({ rarities, onRefresh }: RaritySectionProps): Reac
         colorHex: colorHex.trim(),
       }
       if (editing) {
-        await metaApi.updateRarity(editing.id, input)
+        await handlers.update(editing.id, input)
       } else {
-        await metaApi.addRarity(input)
+        await handlers.add(input)
       }
       handleClose()
       onRefresh()
@@ -142,7 +167,7 @@ export function RaritySection({ rarities, onRefresh }: RaritySectionProps): Reac
 
   const handleDelete = async (r: MetaRarity): Promise<void> => {
     setError(null)
-    const result = await metaApi.deleteRarity(r.id)
+    const result = await handlers.delete(r.id)
     if (!result.deleted) {
       setError(result.reason ?? `Cannot delete "${r.displayName}".`)
       return
@@ -158,7 +183,7 @@ export function RaritySection({ rarities, onRefresh }: RaritySectionProps): Reac
       if (i === targetIndex) return { id: item.id, sortOrder: rarities[index].sortOrder }
       return { id: item.id, sortOrder: item.sortOrder }
     })
-    await metaApi.reorderRarities(reordered)
+    await handlers.reorder(reordered)
     onRefresh()
   }
 
@@ -319,12 +344,24 @@ export function RaritySection({ rarities, onRefresh }: RaritySectionProps): Reac
 
 // ─── Derived stat section ────────────────────────────────────────────────────
 
-interface DerivedStatSectionProps {
-  derivedStats: DerivedStatDefinition[]
-  onRefresh: () => void
+const liveDerivedStatHandlers: MetaSectionHandlers<DerivedStatDefinition, DerivedStatInput> = {
+  add: metaApi.addDerivedStat,
+  update: metaApi.updateDerivedStat,
+  delete: metaApi.deleteDerivedStat,
+  reorder: metaApi.reorderDerivedStats,
 }
 
-export function DerivedStatSection({ derivedStats, onRefresh }: DerivedStatSectionProps): React.JSX.Element {
+interface DerivedStatSectionProps {
+  derivedStats: DerivedStatDefinition[]
+  onRefresh?: () => void
+  handlers?: MetaSectionHandlers<DerivedStatDefinition, DerivedStatInput>
+}
+
+export function DerivedStatSection({
+  derivedStats,
+  onRefresh = () => {},
+  handlers = liveDerivedStatHandlers,
+}: DerivedStatSectionProps): React.JSX.Element {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<DerivedStatDefinition | null>(null)
   const [displayName, setDisplayName] = useState('')
@@ -383,9 +420,9 @@ export function DerivedStatSection({ derivedStats, onRefresh }: DerivedStatSecti
         roundingMode,
       }
       if (editing) {
-        await metaApi.updateDerivedStat(editing.id, input)
+        await handlers.update(editing.id, input)
       } else {
-        await metaApi.addDerivedStat(input)
+        await handlers.add(input)
       }
       handleClose()
       onRefresh()
@@ -398,7 +435,7 @@ export function DerivedStatSection({ derivedStats, onRefresh }: DerivedStatSecti
 
   const handleDelete = async (ds: DerivedStatDefinition): Promise<void> => {
     setError(null)
-    const result = await metaApi.deleteDerivedStat(ds.id)
+    const result = await handlers.delete(ds.id)
     if (!result.deleted) {
       setError(result.reason ?? `Cannot delete "${ds.displayName}".`)
       return
@@ -414,7 +451,7 @@ export function DerivedStatSection({ derivedStats, onRefresh }: DerivedStatSecti
       if (i === targetIndex) return { id: item.id, sortOrder: derivedStats[index].sortOrder }
       return { id: item.id, sortOrder: item.sortOrder }
     })
-    await metaApi.reorderDerivedStats(reordered)
+    await handlers.reorder(reordered)
     onRefresh()
   }
 

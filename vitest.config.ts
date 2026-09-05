@@ -4,7 +4,7 @@ import { resolve } from 'path'
 export default defineConfig({
   test: {
     environment: 'node',
-    include: ['src/main/**/*.test.ts'],
+    include: ['src/main/**/*.test.ts', 'src/renderer/**/*.test.ts'],
     // forks pool is required for native modules (better-sqlite3)
     pool: 'forks',
   },
