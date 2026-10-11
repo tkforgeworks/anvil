@@ -1,7 +1,5 @@
 import {
   Add as AddIcon,
-  ArrowDownward as DownIcon,
-  ArrowUpward as UpIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
 } from '@mui/icons-material'
@@ -52,6 +50,7 @@ import type {
   UpdateCustomFieldDefinitionInput,
 } from '../../../shared/domain-types'
 import MetaListSection from './MetaListSection'
+import MetaRowActions, { MetaRowActionsHeader } from './MetaRowActions'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -231,7 +230,7 @@ export function RaritySection({
               <TableCell sx={{ width: 40 }}>Color</TableCell>
               <TableCell>Name</TableCell>
               <TableCell>Export Key</TableCell>
-              <TableCell align="right" sx={{ width: 150 }}>Actions</TableCell>
+              <MetaRowActionsHeader />
             </TableRow>
           </TableHead>
           <TableBody>
@@ -246,32 +245,14 @@ export function RaritySection({
                     {r.exportKey}
                   </Typography>
                 </TableCell>
-                <TableCell align="right">
-                  <Tooltip title="Move up">
-                    <span>
-                      <IconButton size="small" disabled={index === 0} onClick={() => void handleMove(index, 'up')}>
-                        <UpIcon fontSize="small" />
-                      </IconButton>
-                    </span>
-                  </Tooltip>
-                  <Tooltip title="Move down">
-                    <span>
-                      <IconButton size="small" disabled={index === rarities.length - 1} onClick={() => void handleMove(index, 'down')}>
-                        <DownIcon fontSize="small" />
-                      </IconButton>
-                    </span>
-                  </Tooltip>
-                  <Tooltip title="Edit">
-                    <IconButton size="small" onClick={() => openEdit(r)}>
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Delete">
-                    <IconButton size="small" color="error" onClick={() => void handleDelete(r)}>
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                </TableCell>
+                <MetaRowActions
+                  isFirst={index === 0}
+                  isLast={index === rarities.length - 1}
+                  onMoveUp={() => void handleMove(index, 'up')}
+                  onMoveDown={() => void handleMove(index, 'down')}
+                  onEdit={() => openEdit(r)}
+                  onDelete={() => void handleDelete(r)}
+                />
               </TableRow>
             ))}
           </TableBody>
@@ -501,7 +482,7 @@ export function DerivedStatSection({
               <TableCell>Formula</TableCell>
               <TableCell>Output</TableCell>
               <TableCell>Rounding</TableCell>
-              <TableCell align="right" sx={{ width: 150 }}>Actions</TableCell>
+              <MetaRowActionsHeader />
             </TableRow>
           </TableHead>
           <TableBody>
@@ -527,32 +508,14 @@ export function DerivedStatSection({
                 <TableCell>
                   <Chip label={ds.roundingMode} size="small" variant="outlined" />
                 </TableCell>
-                <TableCell align="right">
-                  <Tooltip title="Move up">
-                    <span>
-                      <IconButton size="small" disabled={index === 0} onClick={() => void handleMove(index, 'up')}>
-                        <UpIcon fontSize="small" />
-                      </IconButton>
-                    </span>
-                  </Tooltip>
-                  <Tooltip title="Move down">
-                    <span>
-                      <IconButton size="small" disabled={index === derivedStats.length - 1} onClick={() => void handleMove(index, 'down')}>
-                        <DownIcon fontSize="small" />
-                      </IconButton>
-                    </span>
-                  </Tooltip>
-                  <Tooltip title="Edit">
-                    <IconButton size="small" onClick={() => openEdit(ds)}>
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Delete">
-                    <IconButton size="small" color="error" onClick={() => void handleDelete(ds)}>
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                </TableCell>
+                <MetaRowActions
+                  isFirst={index === 0}
+                  isLast={index === derivedStats.length - 1}
+                  onMoveUp={() => void handleMove(index, 'up')}
+                  onMoveDown={() => void handleMove(index, 'down')}
+                  onEdit={() => openEdit(ds)}
+                  onDelete={() => void handleDelete(ds)}
+                />
               </TableRow>
             ))}
           </TableBody>
