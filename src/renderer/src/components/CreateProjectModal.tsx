@@ -4,10 +4,6 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
   Stack,
   TextField,
   Typography,
@@ -15,16 +11,9 @@ import {
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { projectApi } from '../../api/project.api'
-import type { ProjectTemplateId } from '../../../shared/project-types'
 import { MODAL_IDS } from '../menu/constants'
 import { useProjectStore } from '../stores/project.store'
 import { useUiStore } from '../stores/ui.store'
-
-const TEMPLATE_OPTIONS: { value: ProjectTemplateId; label: string }[] = [
-  { value: 'blank', label: 'Blank' },
-  { value: 'fantasy-rpg', label: 'Fantasy RPG' },
-  { value: 'sci-fi-rpg', label: 'Sci-Fi RPG' },
-]
 
 export default function CreateProjectModal(): React.JSX.Element | null {
   const activeModalId = useUiStore((s) => s.activeModalId)
@@ -40,7 +29,6 @@ function CreateProjectDialog(): React.JSX.Element {
   const hydrate = useProjectStore((state) => state.hydrate)
   const [projectName, setProjectName] = useState('')
   const [gameTitle, setGameTitle] = useState('')
-  const [templateId, setTemplateId] = useState<ProjectTemplateId>('blank')
   const [error, setError] = useState<string | null>(null)
   const [isBusy, setBusy] = useState(false)
 
@@ -48,7 +36,10 @@ function CreateProjectDialog(): React.JSX.Element {
     setBusy(true)
     setError(null)
     try {
-      const snapshot = await projectApi.create({ projectName, gameTitle, templateId })
+      // Templates are not implemented in the main process yet (ANVL-156), so the
+      // selector is hidden and every project is created blank. `templateId`
+      // stays in the IPC contract so the wire shape does not churn.
+      const snapshot = await projectApi.create({ projectName, gameTitle, templateId: 'blank' })
       hydrate(snapshot)
       if (snapshot.activeProject) {
         closeModal()
@@ -86,21 +77,6 @@ function CreateProjectDialog(): React.JSX.Element {
             onChange={(event) => setGameTitle(event.target.value)}
             required
           />
-          <FormControl>
-            <InputLabel id="project-template-label">Template</InputLabel>
-            <Select
-              labelId="project-template-label"
-              label="Template"
-              value={templateId}
-              onChange={(event) => setTemplateId(event.target.value as ProjectTemplateId)}
-            >
-              {TEMPLATE_OPTIONS.map((option) => (
-                <MenuItem key={option.value} value={option.value}>
-                  {option.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
         </Stack>
       </DialogContent>
       <DialogActions>
