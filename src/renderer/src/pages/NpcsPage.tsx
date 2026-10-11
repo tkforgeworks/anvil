@@ -29,7 +29,7 @@ import {
   Typography,
 } from '@mui/material'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import { lifecycleApi } from '../../api/lifecycle.api'
 import { metaApi } from '../../api/meta.api'
 import { npcsApi } from '../../api/npcs.api'
@@ -308,10 +308,21 @@ export default function NpcsPage(): React.JSX.Element {
                       onChange={() => multiSelect.toggle(npc.id)}
                     />
                   </TableCell>
-                  <TableCell><Typography variant="body2" fontWeight={500}>{npc.displayName}</Typography></TableCell>
-                  <TableCell><Typography variant="body2" color="text.secondary" fontFamily="monospace">{npc.exportKey}</Typography></TableCell>
-                  <TableCell><Typography variant="body2" color="text.secondary">{typeById.get(npc.npcTypeId)?.displayName ?? npc.npcTypeId}</Typography></TableCell>
-                  <TableCell><Typography variant="body2" color="text.secondary">{new Date(npc.updatedAt).toLocaleString()}</Typography></TableCell>
+                  <TableCell><Typography variant="body2" sx={{
+                    fontWeight: 500
+                  }}>{npc.displayName}</Typography></TableCell>
+                  <TableCell><Typography
+                    variant="body2"
+                    sx={{
+                      color: "text.secondary",
+                      fontFamily: "monospace"
+                    }}>{npc.exportKey}</Typography></TableCell>
+                  <TableCell><Typography variant="body2" sx={{
+                    color: "text.secondary"
+                  }}>{typeById.get(npc.npcTypeId)?.displayName ?? npc.npcTypeId}</Typography></TableCell>
+                  <TableCell><Typography variant="body2" sx={{
+                    color: "text.secondary"
+                  }}>{new Date(npc.updatedAt).toLocaleString()}</Typography></TableCell>
                   <TableCell align="right" onClick={(e) => e.stopPropagation()}>
                     <Tooltip title="Edit"><IconButton size="small" onClick={() => openEditor(npc.id)}><EditIcon fontSize="small" /></IconButton></Tooltip>
                     <Tooltip title="Duplicate"><IconButton data-tid="list-row-duplicate" size="small" onClick={() => void handleDuplicate(npc)}><DuplicateIcon fontSize="small" /></IconButton></Tooltip>
@@ -350,5 +361,5 @@ export default function NpcsPage(): React.JSX.Element {
         )}
       </EditorModal>
     </Box>
-  )
+  );
 }

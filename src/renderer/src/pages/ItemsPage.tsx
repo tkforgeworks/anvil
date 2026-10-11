@@ -30,7 +30,7 @@ import {
   Typography,
 } from '@mui/material'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import { itemsApi } from '../../api/items.api'
 import { lifecycleApi } from '../../api/lifecycle.api'
 import { metaApi } from '../../api/meta.api'
@@ -379,17 +379,26 @@ export default function ItemsPage(): React.JSX.Element {
                       />
                     </TableCell>
                     <TableCell>
-                      <Typography variant="body2" fontWeight={500}>
+                      <Typography variant="body2" sx={{
+                        fontWeight: 500
+                      }}>
                         {item.displayName}
                       </Typography>
                     </TableCell>
                     <TableCell>
-                      <Typography variant="body2" color="text.secondary" fontFamily="monospace">
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color: "text.secondary",
+                          fontFamily: "monospace"
+                        }}>
                         {item.exportKey}
                       </Typography>
                     </TableCell>
                     <TableCell>
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography variant="body2" sx={{
+                        color: "text.secondary"
+                      }}>
                         {category?.displayName ?? item.itemCategoryId}
                       </Typography>
                     </TableCell>
@@ -402,7 +411,9 @@ export default function ItemsPage(): React.JSX.Element {
                           sx={{ borderColor: rarity.colorHex }}
                         />
                       ) : (
-                        <Typography variant="body2" color="text.secondary">
+                        <Typography variant="body2" sx={{
+                          color: "text.secondary"
+                        }}>
                           {item.rarityId}
                         </Typography>
                       )}
@@ -410,14 +421,13 @@ export default function ItemsPage(): React.JSX.Element {
                     <TableCell>
                       <Typography
                         variant="body2"
-                        color="text.secondary"
                         sx={{
+                          color: "text.secondary",
                           maxWidth: 260,
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
+                          whiteSpace: 'nowrap'
+                        }}>
                         {item.description || '-'}
                       </Typography>
                     </TableCell>
@@ -439,7 +449,7 @@ export default function ItemsPage(): React.JSX.Element {
                       </Tooltip>
                     </TableCell>
                   </TableRow>
-                )
+                );
               })}
             </TableBody>
           </Table>
@@ -483,5 +493,5 @@ export default function ItemsPage(): React.JSX.Element {
         )}
       </EditorModal>
     </Box>
-  )
+  );
 }

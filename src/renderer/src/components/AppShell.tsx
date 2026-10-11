@@ -1,6 +1,6 @@
 import { Alert, Box, Snackbar } from '@mui/material'
 import { useEffect } from 'react'
-import { Outlet } from 'react-router-dom'
+import { Outlet } from 'react-router'
 import { projectApi } from '../../api/project.api'
 import { useLifecycleStore } from '../stores/lifecycle.store'
 import { useProjectStore } from '../stores/project.store'

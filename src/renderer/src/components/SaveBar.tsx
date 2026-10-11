@@ -29,7 +29,9 @@ export default function SaveBar({
         borderTopColor: 'warning.main',
       }}
     >
-      <Stack direction="row" alignItems="center" spacing={2}>
+      <Stack direction="row" spacing={2} sx={{
+        alignItems: "center"
+      }}>
         <WarningAmberIcon color="warning" />
         <Typography variant="body2">You have unsaved changes</Typography>
         <Box sx={{ flex: 1 }} />
@@ -41,5 +43,5 @@ export default function SaveBar({
         </Button>
       </Stack>
     </Paper>
-  )
+  );
 }

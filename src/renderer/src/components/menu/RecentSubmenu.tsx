@@ -1,11 +1,19 @@
 import { Box, Typography } from '@mui/material'
+import type { Theme } from '@mui/material/styles'
 import { projectApi } from '../../../api/project.api'
 import { useProjectStore } from '../../stores/project.store'
 import { useUiStore } from '../../stores/ui.store'
 import { RelativeTimestamp } from '../RelativeTimestamp'
+import MenuDivider from './MenuDivider'
 import MenuIcon from './MenuIcon'
+import { menuHighlight, menuMutedColor, menuRowColor, menuSurfaceSx } from './menu-theme'
 
-export default function RecentSubmenu(): React.JSX.Element {
+interface RecentSubmenuProps {
+  focusedIndex?: number | null
+  rowRef?: (index: number) => (el: HTMLElement | null) => void
+}
+
+export default function RecentSubmenu({ focusedIndex, rowRef }: RecentSubmenuProps): React.JSX.Element {
   const recentProjects = useProjectStore((s) => s.recentProjects)
   const hydrate = useProjectStore((s) => s.hydrate)
   const setMenuOpen = useUiStore((s) => s.setMenuOpen)
@@ -30,10 +38,7 @@ export default function RecentSubmenu(): React.JSX.Element {
         position: 'absolute',
         top: 0,
         left: 320,
-        bgcolor: '#14203a',
-        border: '1px solid #2a3553',
-        borderRadius: '8px',
-        boxShadow: '0 18px 40px rgba(0,0,0,0.55)',
+        ...menuSurfaceSx,
         width: 320,
         pt: '4px',
         pb: '6px',
@@ -47,7 +52,7 @@ export default function RecentSubmenu(): React.JSX.Element {
           fontSize: '10px',
           letterSpacing: '0.08em',
           textTransform: 'uppercase',
-          color: '#5d6a85',
+          color: menuMutedColor,
           px: '14px',
           pt: '10px',
           pb: '6px',
@@ -57,14 +62,18 @@ export default function RecentSubmenu(): React.JSX.Element {
       </Typography>
 
       {recentProjects.length === 0 && (
-        <Box sx={{ px: '14px', py: '8px', fontSize: '13px', color: '#5d6a85' }}>
+        <Box sx={{ px: '14px', py: '8px', fontSize: '13px', color: menuMutedColor }}>
           No recent projects
         </Box>
       )}
 
-      {recentProjects.map((project) => (
+      {recentProjects.map((project, i) => (
         <Box
           key={project.filePath}
+          ref={rowRef?.(i)}
+          role="menuitem"
+          tabIndex={focusedIndex === i ? 0 : -1}
+          aria-disabled={!project.exists || undefined}
           onClick={() => project.exists && handleOpen(project.filePath)}
           sx={{
             display: 'flex',
@@ -76,8 +85,10 @@ export default function RecentSubmenu(): React.JSX.Element {
             borderRadius: '5px',
             cursor: project.exists ? 'pointer' : 'not-allowed',
             opacity: project.exists ? 1 : 0.5,
+            outline: 'none',
+            bgcolor: (theme) => (focusedIndex === i ? menuHighlight(theme) : 'transparent'),
             '&:hover': project.exists
-              ? { bgcolor: 'rgba(59,130,246,0.14)', '& .recent-name': { color: '#fff' } }
+              ? { bgcolor: (theme: Theme) => menuHighlight(theme) }
               : {},
           }}
         >
@@ -87,7 +98,7 @@ export default function RecentSubmenu(): React.JSX.Element {
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#5d6a85',
+              color: menuMutedColor,
               flexShrink: 0,
             }}
           >
@@ -110,7 +121,7 @@ export default function RecentSubmenu(): React.JSX.Element {
               sx={{
                 fontFamily: '"JetBrains Mono", monospace',
                 fontSize: '10px',
-                color: '#5d6a85',
+                color: menuMutedColor,
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
@@ -119,7 +130,7 @@ export default function RecentSubmenu(): React.JSX.Element {
               {project.filePath}
             </Box>
           </Box>
-          <Box sx={{ flexShrink: 0, fontSize: '10px', color: '#5d6a85' }}>
+          <Box sx={{ flexShrink: 0, fontSize: '10px', color: menuMutedColor }}>
             <RelativeTimestamp timestamp={project.lastModifiedAt} inline variant="caption" />
           </Box>
         </Box>
@@ -127,8 +138,11 @@ export default function RecentSubmenu(): React.JSX.Element {
 
       {recentProjects.length > 0 && (
         <>
-          <Box sx={{ height: '1px', bgcolor: '#233048', mx: '8px', my: '4px' }} />
+          <MenuDivider />
           <Box
+            ref={rowRef?.(recentProjects.length)}
+            role="menuitem"
+            tabIndex={focusedIndex === recentProjects.length ? 0 : -1}
             onClick={handleClear}
             sx={{
               display: 'flex',
@@ -139,9 +153,12 @@ export default function RecentSubmenu(): React.JSX.Element {
               mx: '4px',
               borderRadius: '5px',
               fontSize: '13px',
-              color: '#fb7185',
+              color: (theme) => menuRowColor(theme, true),
               cursor: 'pointer',
-              '&:hover': { bgcolor: 'rgba(239,68,68,0.16)', color: '#fda4af' },
+              outline: 'none',
+              bgcolor: (theme) =>
+                focusedIndex === recentProjects.length ? menuHighlight(theme, true) : 'transparent',
+              '&:hover': { bgcolor: (theme: Theme) => menuHighlight(theme, true) },
             }}
           >
             Clear Recents

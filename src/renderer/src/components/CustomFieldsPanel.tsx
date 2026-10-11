@@ -104,19 +104,21 @@ export default function CustomFieldsPanel({
 
   if (isLoading) {
     return (
-      <Typography variant="body2" color="text.secondary">
-        Loading custom fields…
-      </Typography>
-    )
+      <Typography variant="body2" sx={{
+        color: "text.secondary"
+      }}>Loading custom fields…
+              </Typography>
+    );
   }
 
   if (definitions.length === 0) {
     return (
-      <Typography variant="body2" color="text.secondary">
-        No custom fields defined for this{' '}
+      <Typography variant="body2" sx={{
+        color: "text.secondary"
+      }}>No custom fields defined for this{' '}
         {scopeType === 'item_category' ? 'item category' : 'NPC type'}.
-      </Typography>
-    )
+              </Typography>
+    );
   }
 
   return (
@@ -148,7 +150,9 @@ export default function CustomFieldsPanel({
                     />
                   }
                   label={
-                    <Stack direction="row" spacing={0.5} alignItems="center">
+                    <Stack direction="row" spacing={0.5} sx={{
+                      alignItems: "center"
+                    }}>
                       <span>{def.fieldName}</span>
                       {def.isRequired && (
                         <Typography component="span" color="error" variant="caption">
@@ -158,7 +162,7 @@ export default function CustomFieldsPanel({
                     </Stack>
                   }
                 />
-              )
+              );
 
             case 'enum':
               return (
@@ -199,13 +203,15 @@ export default function CustomFieldsPanel({
                   value={currentValue}
                   onChange={(e) => setValue(def.id, e.target.value)}
                   type="number"
-                  inputProps={def.fieldType === 'integer' ? { step: 1 } : { step: 'any' }}
                   required={def.isRequired}
                   error={isRequiredAndEmpty}
                   helperText={isRequiredAndEmpty ? 'This field is required.' : undefined}
                   fullWidth
+                  slotProps={{
+                    htmlInput: def.fieldType === 'integer' ? { step: 1 } : { step: 'any' }
+                  }}
                 />
-              )
+              );
 
             case 'text':
             default:
@@ -225,7 +231,9 @@ export default function CustomFieldsPanel({
         })}
       </Stack>
 
-      <Stack direction="row" spacing={2} alignItems="center">
+      <Stack direction="row" spacing={2} sx={{
+        alignItems: "center"
+      }}>
         <Button
           variant="contained"
           size="small"
@@ -235,11 +243,13 @@ export default function CustomFieldsPanel({
           Save Custom Fields
         </Button>
         {savedAt && (
-          <Typography variant="caption" color="success.main">
+          <Typography variant="caption" sx={{
+            color: "success.main"
+          }}>
             Saved at {savedAt.toLocaleTimeString()}
           </Typography>
         )}
       </Stack>
     </Box>
-  )
+  );
 }

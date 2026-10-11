@@ -65,9 +65,9 @@ export function CreateLootTableDialog({ open, onClose, onCreated }: CreateLootTa
       onClose={onClose}
       fullWidth
       maxWidth="sm"
-      // autoFocus races the MUI FocusTrap init; re-focus after the transition so
-      // keyboard focus reliably lands in the field (ANV-111)
-      TransitionProps={{ onEntered: () => displayNameRef.current?.focus() }}
+      slotProps={{
+        transition: { onEntered: () => displayNameRef.current?.focus() }
+      }}
     >
       <DialogTitle>New Loot Table</DialogTitle>
       <DialogContent>
@@ -80,10 +80,14 @@ export function CreateLootTableDialog({ open, onClose, onCreated }: CreateLootTa
             onChange={(e) => { setExportKey(e.target.value); setExportKeyTouched(true) }}
             fullWidth
             helperText="Used in exported files. Auto-generated from the display name."
-            InputProps={{
-              startAdornment: exportKey ? undefined : (
-                <InputAdornment position="start"><Typography variant="caption" color="text.disabled">auto</Typography></InputAdornment>
-              ),
+            slotProps={{
+              input: {
+                startAdornment: exportKey ? undefined : (
+                  <InputAdornment position="start"><Typography variant="caption" sx={{
+                    color: "text.disabled"
+                  }}>auto</Typography></InputAdornment>
+                ),
+              }
             }}
           />
         </Stack>
@@ -93,5 +97,5 @@ export function CreateLootTableDialog({ open, onClose, onCreated }: CreateLootTa
         <Button data-tid="dialog-create-confirm" variant="contained" onClick={() => void handleCreate()} disabled={!displayName.trim() || isBusy}>Create Loot Table</Button>
       </DialogActions>
     </Dialog>
-  )
+  );
 }

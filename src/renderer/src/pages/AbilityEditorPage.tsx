@@ -18,7 +18,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useUndoRedo } from '../hooks/useUndoRedo'
 import { useTabDirtyTracking } from '../hooks/useTabDirtyTracking'
 import DirtyDot from '../components/DirtyDot'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router'
 import { abilitiesApi } from '../../api/abilities.api'
 import { metaApi } from '../../api/meta.api'
 import type { AbilityRecord, AbilityUsedBy, MetaStat } from '../../../shared/domain-types'
@@ -267,9 +267,11 @@ export default function AbilityEditorPage({ recordId, onClose }: AbilityEditorPa
   if (isLoading) {
     return (
       <Box sx={{ p: 4 }}>
-        <Typography color="text.secondary">Loading…</Typography>
+        <Typography sx={{
+          color: "text.secondary"
+        }}>Loading…</Typography>
       </Box>
-    )
+    );
   }
 
   if (!record) {
@@ -341,10 +343,12 @@ export default function AbilityEditorPage({ recordId, onClose }: AbilityEditorPa
               setExportKey(e.target.value)
               pushSnapshot({ exportKey: e.target.value })
             }}
-            inputProps={{ style: { fontFamily: '"JetBrains Mono", monospace', fontSize: '0.85rem' } }}
             placeholder="export-key"
             helperText="Export key — used in exported files"
             sx={{ maxWidth: 360 }}
+            slotProps={{
+              htmlInput: { style: { fontFamily: '"JetBrains Mono", monospace', fontSize: '0.85rem' } }
+            }}
           />
           <TextField
             label="Description"
@@ -386,8 +390,10 @@ export default function AbilityEditorPage({ recordId, onClose }: AbilityEditorPa
                 setResourceCost(e.target.value)
                 pushSnapshot({ resourceCost: e.target.value })
               }}
-              inputProps={{ min: 0 }}
               sx={{ flex: 1 }}
+              slotProps={{
+                htmlInput: { min: 0 }
+              }}
             />
             <TextField
               label="Cooldown"
@@ -397,9 +403,11 @@ export default function AbilityEditorPage({ recordId, onClose }: AbilityEditorPa
                 setCooldown(e.target.value)
                 pushSnapshot({ cooldown: e.target.value })
               }}
-              inputProps={{ min: 0 }}
               helperText="In turns or seconds"
               sx={{ flex: 1 }}
+              slotProps={{
+                htmlInput: { min: 0 }
+              }}
             />
           </Stack>
         </Stack>
@@ -407,12 +415,19 @@ export default function AbilityEditorPage({ recordId, onClose }: AbilityEditorPa
 
       <TabPanel index={2} value={activeTab}>
         {stats.length === 0 ? (
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" sx={{
+            color: "text.secondary"
+          }}>
             No stats defined in this project.
           </Typography>
         ) : (
           <>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            <Typography
+              variant="body2"
+              sx={{
+                color: "text.secondary",
+                mb: 2
+              }}>
               Flat modifiers applied when this ability is active. Zero values are not exported.
             </Typography>
             <Table size="small" sx={{ maxWidth: 400 }}>
@@ -439,14 +454,18 @@ export default function AbilityEditorPage({ recordId, onClose }: AbilityEditorPa
                           pushSnapshot({ statModifiers: nextModifiers })
                         }}
                         sx={{ width: 120 }}
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <Typography variant="caption" color="text.secondary">
-                                ±
-                              </Typography>
-                            </InputAdornment>
-                          ),
+                        slotProps={{
+                          input: {
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <Typography variant="caption" sx={{
+                                  color: "text.secondary"
+                                }}>
+                                  ±
+                                </Typography>
+                              </InputAdornment>
+                            ),
+                          }
                         }}
                       />
                     </TableCell>
@@ -465,5 +484,5 @@ export default function AbilityEditorPage({ recordId, onClose }: AbilityEditorPa
         onDiscard={handleDiscard}
       />
     </Box>
-  )
+  );
 }

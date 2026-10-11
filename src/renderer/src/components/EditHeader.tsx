@@ -48,26 +48,38 @@ export default function EditHeader({
       }}
     >
       {/* Row 1: Back navigation */}
-      <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
+      <Stack
+        direction="row"
+        spacing={1}
+        sx={{
+          alignItems: "center",
+          mb: 1
+        }}>
         <Tooltip title={`Back to ${backLabel}`}>
           <IconButton size="small" onClick={onBack} data-tid="editor-back">
             <ArrowBackIcon fontSize="small" />
           </IconButton>
         </Tooltip>
-        <Typography variant="caption" color="text.secondary">
+        <Typography variant="caption" sx={{
+          color: "text.secondary"
+        }}>
           {backLabel}
         </Typography>
       </Stack>
 
       {/* Row 2: Display name + undo/redo + save */}
-      <Stack direction="row" alignItems="center" spacing={2}>
+      <Stack direction="row" spacing={2} sx={{
+        alignItems: "center"
+      }}>
         <TextField
           variant="standard"
           value={displayName}
           onChange={(e) => onDisplayNameChange(e.target.value)}
-          inputProps={{ style: { fontSize: '1.5rem', fontWeight: 600 } }}
           placeholder="Name"
           sx={{ flex: 1 }}
+          slotProps={{
+            htmlInput: { style: { fontSize: '1.5rem', fontWeight: 600 } }
+          }}
         />
         <Tooltip title="Undo (Ctrl+Z)">
           <span>
@@ -101,7 +113,13 @@ export default function EditHeader({
       </Stack>
 
       {/* Row 3: Export key (read-only) */}
-      <Stack direction="row" alignItems="center" spacing={1} sx={{ mt: 1 }}>
+      <Stack
+        direction="row"
+        spacing={1}
+        sx={{
+          alignItems: "center",
+          mt: 1
+        }}>
         <Typography
           variant="caption"
           sx={{
@@ -129,10 +147,12 @@ export default function EditHeader({
         >
           {exportKey}
         </Box>
-        <Typography variant="caption" color="text.disabled">
+        <Typography variant="caption" sx={{
+          color: "text.disabled"
+        }}>
           &middot; used in exported files
         </Typography>
       </Stack>
     </Paper>
-  )
+  );
 }

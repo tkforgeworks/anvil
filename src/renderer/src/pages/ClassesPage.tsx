@@ -25,7 +25,7 @@ import {
   Typography,
 } from '@mui/material'
 import { useCallback, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import { classesApi } from '../../api/classes.api'
 import { lifecycleApi } from '../../api/lifecycle.api'
 import type { ClassRecord } from '../../../shared/domain-types'
@@ -306,26 +306,32 @@ export default function ClassesPage(): React.JSX.Element {
                         />
                       </TableCell>
                       <TableCell>
-                        <Typography variant="body2" fontWeight={500}>
+                        <Typography variant="body2" sx={{
+                          fontWeight: 500
+                        }}>
                           {cls.displayName}
                         </Typography>
                       </TableCell>
                       <TableCell>
-                        <Typography variant="body2" color="text.secondary" fontFamily="monospace">
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            color: "text.secondary",
+                            fontFamily: "monospace"
+                          }}>
                           {cls.exportKey}
                         </Typography>
                       </TableCell>
                       <TableCell>
                         <Typography
                           variant="body2"
-                          color="text.secondary"
                           sx={{
+                            color: "text.secondary",
                             maxWidth: 300,
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
+                            whiteSpace: 'nowrap'
+                          }}>
                           {cls.description || '—'}
                         </Typography>
                       </TableCell>
@@ -393,5 +399,5 @@ export default function ClassesPage(): React.JSX.Element {
         )}
       </EditorModal>
     </Box>
-  )
+  );
 }

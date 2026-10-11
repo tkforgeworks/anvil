@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route } from 'react-router'
 import { Box, CircularProgress } from '@mui/material'
 import { useEffect, useState } from 'react'
 import TitleBar from './components/TitleBar'

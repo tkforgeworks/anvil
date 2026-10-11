@@ -17,7 +17,7 @@ import {
   Typography,
 } from '@mui/material'
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import { lootTablesApi } from '../../api/loot-tables.api'
 import type {
   ItemRecord,
@@ -88,7 +88,13 @@ export default function LootTableAssignmentPanel({
 
   return (
     <Box>
-      <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
+      <Stack
+        direction="row"
+        spacing={1}
+        sx={{
+          alignItems: "center",
+          mb: 2
+        }}>
         <Autocomplete
           options={pickerOptions}
           getOptionLabel={(option) => option.displayName}
@@ -127,7 +133,13 @@ export default function LootTableAssignmentPanel({
 
       {selected && (
         <Box>
-          <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{
+              alignItems: "center",
+              mb: 1
+            }}>
             <Typography
               variant="body2"
               sx={{ cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
@@ -135,7 +147,9 @@ export default function LootTableAssignmentPanel({
             >
               {selected.displayName}
             </Typography>
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="caption" sx={{
+              color: "text.secondary"
+            }}>
               ({entries.length} {entries.length === 1 ? 'entry' : 'entries'})
             </Typography>
           </Stack>
@@ -147,12 +161,16 @@ export default function LootTableAssignmentPanel({
           )}
 
           {loadingEntries ? (
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{
+              color: "text.secondary"
+            }}>
               Loading entries…
             </Typography>
           ) : entries.length === 0 ? (
             <Paper variant="outlined" sx={{ p: 2, textAlign: 'center' }}>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" sx={{
+                color: "text.secondary"
+              }}>
                 This loot table has no entries.
               </Typography>
             </Paper>
@@ -183,7 +201,9 @@ export default function LootTableAssignmentPanel({
                     return (
                       <TableRow key={entry.id}>
                         <TableCell>
-                          <Stack direction="row" spacing={1} alignItems="center">
+                          <Stack direction="row" spacing={1} sx={{
+                            alignItems: "center"
+                          }}>
                             <Typography
                               variant="body2"
                               sx={{ color: itemDeleted ? 'text.secondary' : 'text.primary' }}
@@ -205,7 +225,7 @@ export default function LootTableAssignmentPanel({
                           {qty}
                         </TableCell>
                       </TableRow>
-                    )
+                    );
                   })}
                 </TableBody>
               </Table>
@@ -214,5 +234,5 @@ export default function LootTableAssignmentPanel({
         </Box>
       )}
     </Box>
-  )
+  );
 }

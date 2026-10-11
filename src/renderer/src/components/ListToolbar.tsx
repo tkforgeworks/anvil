@@ -38,21 +38,30 @@ export default function ListToolbar({
   hideNew,
 }: ListToolbarProps): React.JSX.Element {
   return (
-    <Stack direction="row" alignItems="center" spacing={1.5} flexWrap="wrap" mb={2}>
+    <Stack
+      direction="row"
+      spacing={1.5}
+      sx={{
+        alignItems: "center",
+        flexWrap: "wrap",
+        mb: 2
+      }}>
       <TextField
         size="small"
         placeholder="Search..."
         value={search}
         onChange={(e) => onSearchChange(e.target.value)}
         data-tid="toolbar-search"
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <SearchIcon fontSize="small" />
-            </InputAdornment>
-          ),
-        }}
         sx={{ width: 220 }}
+        slotProps={{
+          input: {
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon fontSize="small" />
+              </InputAdornment>
+            ),
+          }
+        }}
       />
 
       {filterSlot}
@@ -92,5 +101,5 @@ export default function ListToolbar({
         </Button>
       )}
     </Stack>
-  )
+  );
 }

@@ -228,9 +228,20 @@ export default function RecycleBinPage(): React.JSX.Element {
           <Stack spacing={2.5}>
             {groups.map((group) => (
               <Box key={group.domain}>
-                <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1 }}>
+                <Typography
+                  variant="subtitle1"
+                  sx={{
+                    fontWeight: 600,
+                    mb: 1
+                  }}>
                   {group.label}
-                  <Typography component="span" variant="body2" color="text.secondary" sx={{ ml: 1 }}>
+                  <Typography
+                    component="span"
+                    variant="body2"
+                    sx={{
+                      color: "text.secondary",
+                      ml: 1
+                    }}>
                     ({group.records.length})
                   </Typography>
                 </Typography>
@@ -266,22 +277,36 @@ export default function RecycleBinPage(): React.JSX.Element {
                             />
                           </TableCell>
                           <TableCell>
-                            <Typography variant="body2" fontWeight={500} color="text.secondary">
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                fontWeight: 500,
+                                color: "text.secondary"
+                              }}>
                               {record.displayName}
                             </Typography>
                           </TableCell>
                           <TableCell>
-                            <Typography variant="body2" color="text.secondary" fontFamily="monospace">
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                color: "text.secondary",
+                                fontFamily: "monospace"
+                              }}>
                               {record.exportKey}
                             </Typography>
                           </TableCell>
                           <TableCell>
-                            <Typography variant="body2" color="text.secondary">
+                            <Typography variant="body2" sx={{
+                              color: "text.secondary"
+                            }}>
                               {formatDeletedAt(record.deletedAt)}
                             </Typography>
                           </TableCell>
                           <TableCell align="right">
-                            <Stack direction="row" spacing={0.5} justifyContent="flex-end">
+                            <Stack direction="row" spacing={0.5} sx={{
+                              justifyContent: "flex-end"
+                            }}>
                               <Tooltip title="Restore">
                                 <IconButton
                                   data-tid="recycle-bin-restore"
@@ -335,5 +360,5 @@ export default function RecycleBinPage(): React.JSX.Element {
         onConfirm={() => void handleEmptyTrash()}
       />
     </Box>
-  )
+  );
 }

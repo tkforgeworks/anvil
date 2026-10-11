@@ -15,7 +15,9 @@ export default function EditorModal({ open, title, onClose, children }: EditorMo
       onClose={onClose}
       fullWidth
       maxWidth="lg"
-      PaperProps={{ sx: { height: '85vh', display: 'flex', flexDirection: 'column' } }}
+      slotProps={{
+        paper: { sx: { height: '85vh', display: 'flex', flexDirection: 'column' } }
+      }}
     >
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 1 }}>
         {title}
@@ -27,5 +29,5 @@ export default function EditorModal({ open, title, onClose, children }: EditorMo
         {children}
       </DialogContent>
     </Dialog>
-  )
+  );
 }

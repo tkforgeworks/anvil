@@ -25,7 +25,7 @@ import {
   Typography,
 } from '@mui/material'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import { lifecycleApi } from '../../api/lifecycle.api'
 import { lootTablesApi } from '../../api/loot-tables.api'
 import { npcsApi } from '../../api/npcs.api'
@@ -304,11 +304,24 @@ export default function LootTablesPage(): React.JSX.Element {
                       onChange={() => multiSelect.toggle(table.id)}
                     />
                   </TableCell>
-                  <TableCell><Typography variant="body2" fontWeight={500}>{table.displayName}</Typography></TableCell>
-                  <TableCell><Typography variant="body2" color="text.secondary" fontFamily="monospace">{table.exportKey}</Typography></TableCell>
-                  <TableCell><Typography variant="body2" color="text.secondary">{entriesByTableId.get(table.id)?.length ?? 0}</Typography></TableCell>
-                  <TableCell><Typography variant="body2" color="text.secondary">Used by {assignmentCounts.get(table.id) ?? 0} NPCs</Typography></TableCell>
-                  <TableCell><Typography variant="body2" color="text.secondary">{new Date(table.updatedAt).toLocaleString()}</Typography></TableCell>
+                  <TableCell><Typography variant="body2" sx={{
+                    fontWeight: 500
+                  }}>{table.displayName}</Typography></TableCell>
+                  <TableCell><Typography
+                    variant="body2"
+                    sx={{
+                      color: "text.secondary",
+                      fontFamily: "monospace"
+                    }}>{table.exportKey}</Typography></TableCell>
+                  <TableCell><Typography variant="body2" sx={{
+                    color: "text.secondary"
+                  }}>{entriesByTableId.get(table.id)?.length ?? 0}</Typography></TableCell>
+                  <TableCell><Typography variant="body2" sx={{
+                    color: "text.secondary"
+                  }}>Used by {assignmentCounts.get(table.id) ?? 0} NPCs</Typography></TableCell>
+                  <TableCell><Typography variant="body2" sx={{
+                    color: "text.secondary"
+                  }}>{new Date(table.updatedAt).toLocaleString()}</Typography></TableCell>
                   <TableCell align="right" onClick={(e) => e.stopPropagation()}>
                     <Tooltip title="Edit"><IconButton size="small" onClick={() => openEditor(table.id)}><EditIcon fontSize="small" /></IconButton></Tooltip>
                     <Tooltip title="Duplicate"><IconButton data-tid="list-row-duplicate" size="small" onClick={() => void handleDuplicate(table)}><DuplicateIcon fontSize="small" /></IconButton></Tooltip>
@@ -347,5 +360,5 @@ export default function LootTablesPage(): React.JSX.Element {
         )}
       </EditorModal>
     </Box>
-  )
+  );
 }

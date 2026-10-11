@@ -45,7 +45,9 @@ export function BulkActionToolbar({
       elevation={3}
       sx={{ px: 2, py: 1, mb: 2, display: 'flex', alignItems: 'center', gap: 2 }}
     >
-      <Typography variant="body2" fontWeight={600}>
+      <Typography variant="body2" sx={{
+        fontWeight: 600
+      }}>
         {count} selected
       </Typography>
       <Box sx={{ flex: 1 }} />
@@ -86,7 +88,7 @@ export function BulkActionToolbar({
         </Button>
       )}
     </Paper>
-  )
+  );
 }
 
 // ─── Bulk Delete Dialog (with impact summary) ────────────────────────────────
@@ -138,9 +140,18 @@ export function BulkDeleteDialog({
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
         {loading ? (
-          <Stack alignItems="center" py={2}>
+          <Stack
+            sx={{
+              alignItems: "center",
+              py: 2
+            }}>
             <CircularProgress size={24} />
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            <Typography
+              variant="body2"
+              sx={{
+                color: "text.secondary",
+                mt: 1
+              }}>
               Computing impact...
             </Typography>
           </Stack>
@@ -153,7 +164,9 @@ export function BulkDeleteDialog({
 
             {impact && impact.references.length > 0 && (
               <Alert severity="warning" sx={{ mt: 2 }}>
-                <Typography variant="body2" fontWeight={600} gutterBottom>
+                <Typography variant="body2" gutterBottom sx={{
+                  fontWeight: 600
+                }}>
                   This will affect references in other domains:
                 </Typography>
                 <ul style={{ margin: 0, paddingLeft: 20 }}>
@@ -183,7 +196,7 @@ export function BulkDeleteDialog({
         </Button>
       </DialogActions>
     </Dialog>
-  )
+  );
 }
 
 // ─── Bulk Hard Delete Dialog (double-confirmation) ───────────────────────────
@@ -277,7 +290,9 @@ export function EmptyTrashDialog({
           </DialogContentText>
         ) : (
           <Alert severity="error">
-            <Typography variant="body2" fontWeight={600}>
+            <Typography variant="body2" sx={{
+              fontWeight: 600
+            }}>
               Are you absolutely sure? This will permanently remove {totalCount} record{totalCount !== 1 ? 's' : ''}.
               There is no way to recover them.
             </Typography>
@@ -297,5 +312,5 @@ export function EmptyTrashDialog({
         </Button>
       </DialogActions>
     </Dialog>
-  )
+  );
 }

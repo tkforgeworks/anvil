@@ -36,7 +36,7 @@ import {
   Typography,
 } from '@mui/material'
 import { useCallback, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import { classesApi } from '../../api/classes.api'
 import { abilitiesApi } from '../../api/abilities.api'
 import { itemsApi } from '../../api/items.api'
@@ -306,7 +306,13 @@ export default function ExportPage(): React.JSX.Element {
             >
               {presets.map((preset) => (
                 <MenuItem key={preset.id} value={preset.id}>
-                  <Stack direction="row" alignItems="center" spacing={1} sx={{ width: '100%' }}>
+                  <Stack
+                    direction="row"
+                    spacing={1}
+                    sx={{
+                      alignItems: "center",
+                      width: '100%'
+                    }}>
                     <span>{preset.name}</span>
                     {preset.builtIn && (
                       <Chip label="Built-in" size="small" variant="outlined" sx={{ ml: 'auto' }} />
@@ -318,8 +324,15 @@ export default function ExportPage(): React.JSX.Element {
           </FormControl>
 
           {currentPreset && (
-            <Stack direction="row" alignItems="center" spacing={1}>
-              <Typography variant="body2" color="text.secondary" sx={{ flex: 1 }}>
+            <Stack direction="row" spacing={1} sx={{
+              alignItems: "center"
+            }}>
+              <Typography
+                variant="body2"
+                sx={{
+                  color: "text.secondary",
+                  flex: 1
+                }}>
                 {currentPreset.description}
               </Typography>
               {!currentPreset.builtIn && (
@@ -388,7 +401,9 @@ export default function ExportPage(): React.JSX.Element {
                     </ListItemIcon>
                     <ListItemText
                       primary={`Select All (${selectedRecordIds.size}/${domainRecords.length})`}
-                      primaryTypographyProps={{ fontWeight: 600, variant: 'body2' }}
+                      slotProps={{
+                        primary: { variant: 'body2', sx: { fontWeight: 600 } }
+                      }}
                     />
                   </ListItemButton>
                 </ListItem>
@@ -412,7 +427,9 @@ export default function ExportPage(): React.JSX.Element {
           )}
 
           {scopeMode === 'selection' && scopeDomain && domainRecords.length === 0 && (
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{
+              color: "text.secondary"
+            }}>
               No records found in this domain.
             </Typography>
           )}
@@ -524,7 +541,9 @@ export default function ExportPage(): React.JSX.Element {
                       <Typography variant="caption" sx={{ fontWeight: 600, display: 'block', mb: 0.5 }}>
                         Context Variables
                       </Typography>
-                      <Typography variant="caption" color="text.secondary" component="div">
+                      <Typography variant="caption" component="div" sx={{
+                        color: "text.secondary"
+                      }}>
                         Your template receives these top-level variables:
                       </Typography>
                       <Box component="ul" sx={{ m: 0, pl: 2.5, '& li': { fontSize: '0.75rem', color: 'text.secondary' } }}>
@@ -643,5 +662,5 @@ Rarity: {{ item.rarity_id | export_key }}
         </DialogActions>
       </Dialog>
     </Box>
-  )
+  );
 }

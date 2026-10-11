@@ -263,6 +263,22 @@ export interface MetaDeleteResult {
   reason: string | null
 }
 
+/** Meta list kinds whose rows can be referenced by domain records (FK in-use checks). */
+export type MetaInUseKind =
+  | 'stat'
+  | 'rarity'
+  | 'item-category'
+  | 'npc-type'
+  | 'crafting-station'
+  | 'crafting-specialization'
+  | 'derived-stat'
+
+/** Non-mutating answer to "would deleting this meta row be refused?" */
+export interface MetaInUseResult {
+  inUse: boolean
+  reason: string | null
+}
+
 export interface MetaReorderItem {
   id: string
   sortOrder: number

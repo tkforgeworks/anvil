@@ -1,5 +1,10 @@
 #!/usr/bin/env node
 
+// Cuts a release-candidate version bump on the current version branch
+// (vX.Y.Z/main). No git tag is created here — the tag is created by CI when
+// release.yml publishes the prerelease on push, so this works under branch
+// protection. Shared TK ForgeWorks flow, mirrored in claude-observability-gui.
+
 const { execSync } = require('child_process')
 const { readFileSync } = require('fs')
 const { resolve } = require('path')
@@ -10,19 +15,24 @@ if (!['patch', 'minor', 'major'].includes(bumpType)) {
   process.exit(1)
 }
 
-function git(cmd, opts) {
-  return execSync(`git ${cmd}`, { encoding: 'utf8', ...opts }).trim()
+function git(cmd) {
+  return execSync(`git ${cmd}`, { encoding: 'utf8' }).trim()
 }
 
-function ghPrExists(branch) {
-  try {
-    const out = execSync(`gh pr list --head "${branch}" --json number --jq length`, {
-      encoding: 'utf8'
-    }).trim()
-    return parseInt(out, 10) > 0
-  } catch {
-    return false
-  }
+const currentBranch = git('rev-parse --abbrev-ref HEAD')
+if (currentBranch === 'master' || currentBranch === 'main') {
+  console.error(
+    'RCs are cut from a version branch (vX.Y.Z/main), never from master — check out the version branch first'
+  )
+  process.exit(1)
+}
+
+// Tags are created remotely by CI, so make sure the local tag list is fresh
+// before deriving the next RC number.
+try {
+  execSync('git fetch --tags --quiet origin', { stdio: 'inherit' })
+} catch {
+  console.warn('Could not fetch tags from origin — RC numbering uses local tags only')
 }
 
 const pkg = JSON.parse(readFileSync(resolve(__dirname, '..', 'package.json'), 'utf8'))
@@ -64,28 +74,13 @@ try {
 
 const nextRc = Math.max(highestTagRc, currentRcNum) + 1
 const rcVersion = `${base}-rc.${nextRc}`
-const branchName = `release/v${rcVersion}`
-
-const currentBranch = git('rev-parse --abbrev-ref HEAD')
-if (currentBranch === 'master' || currentBranch === 'main') {
-  console.log(`Creating branch ${branchName}`)
-  git(`checkout -b ${branchName}`)
-}
 
 console.log(`Bumping to ${rcVersion}`)
 execSync(`npm version ${rcVersion} --no-git-tag-version`, { stdio: 'inherit' })
 execSync('git add package.json package-lock.json', { stdio: 'inherit' })
 execSync(`git commit -m "Release candidate ${rcVersion}"`, { stdio: 'inherit' })
 
-const activeBranch = git('rev-parse --abbrev-ref HEAD')
-console.log(`Pushing ${activeBranch}`)
-execSync(`git push -u origin ${activeBranch}`, { stdio: 'inherit' })
-
-if (!ghPrExists(activeBranch)) {
-  console.log('Creating pull request')
-  execSync(`gh pr create --title "Release ${rcVersion}" --body "Release candidate ${rcVersion}"`, {
-    stdio: 'inherit'
-  })
-} else {
-  console.log('Pull request already exists — pushed update')
-}
+console.log(
+  `Pushing ${currentBranch} — release.yml will build and publish the prerelease (tag v${rcVersion} is created by CI)`
+)
+execSync(`git push -u origin ${currentBranch}`, { stdio: 'inherit' })

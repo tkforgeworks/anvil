@@ -22,7 +22,8 @@ Anvil is game-agnostic — it ships with sensible RPG defaults but allows full s
 - **Recycle Bin & Bulk Operations** — Soft-delete with restore, bulk actions across domains, per-record and project-wide recycle bin with impact summaries
 - **Undo/Redo** — Per-record undo/redo (Ctrl+Z/Y) across all editor pages
 - **Dashboard** — Project overview with record counts, weekly deltas, save history feed, validation summary, and quick-add
-- **Application & Project Settings** — Theme selection (dark/light/custom), editing mode (modal/full-page), stat/rarity/station/specialization CRUD, custom fields
+- **Application Menu & Keyboard Shortcuts** — Hamburger menu (File / View / Project / Data / Help) with full keyboard navigation (WAI-ARIA menu pattern), global shortcuts, and a shortcuts cheatsheet
+- **Application & Project Settings** — Theme selection (dark/light/custom), editing mode (modal/full-page), CRUD for stats, rarities, crafting stations/specializations, item categories, and NPC types, plus per-category/per-type custom fields
 
 ### Out of Scope (v1)
 
@@ -79,8 +80,9 @@ anvil/
 │   │   └── src/
 │   │       ├── main.tsx         # React root — ThemeProvider + HashRouter
 │   │       ├── App.tsx          # Route tree (11 routes)
-│   │       ├── components/      # Shared UI: AppShell, Sidebar, TitleBar, editors, dialogs
-│   │       ├── pages/           # Welcome, dashboard, settings, and all domain list/editor pages
+│   │       ├── components/      # Shared UI: AppShell, Sidebar, TitleBar, editors, dialogs, settings modals
+│   │       ├── menu/            # Menu data, shortcut registry, command dispatch, keyboard navigation
+│   │       ├── pages/           # Welcome, dashboard, and all domain list/editor pages
 │   │       ├── stores/          # Zustand stores (project, ui, lifecycle, settings, domain stores)
 │   │       └── themes/          # MUI dark/light theme objects
 │   └── shared/
@@ -164,3 +166,9 @@ Validation runs on save, on export, and on demand. Issues are surfaced inline in
 ### Export
 
 The export engine assembles a full context object (all six domains + project meta) and renders it through a Nunjucks template. Three built-in presets ship with the application (Nested JSON, Flat JSON, CSV). Users can create and save custom templates per project. Export scope can be the full project, a single domain, or a hand-selected record set.
+
+## License
+
+Apache-2.0 — see [`LICENSE`](LICENSE). Image assets (logos, icons,
+illustrations, screenshots) are **not** covered and are all rights reserved;
+see [`NOTICE`](NOTICE).

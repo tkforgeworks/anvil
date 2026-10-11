@@ -105,10 +105,14 @@ export function CreateRecipeDialog({
             onChange={(e) => { setExportKey(e.target.value); setExportKeyTouched(true) }}
             fullWidth
             helperText="Used in exported files. Auto-generated from the display name."
-            InputProps={{
-              startAdornment: exportKey ? undefined : (
-                <InputAdornment position="start"><Typography variant="caption" color="text.disabled">auto</Typography></InputAdornment>
-              ),
+            slotProps={{
+              input: {
+                startAdornment: exportKey ? undefined : (
+                  <InputAdornment position="start"><Typography variant="caption" sx={{
+                    color: "text.disabled"
+                  }}>auto</Typography></InputAdornment>
+                ),
+              }
             }}
           />
           <Stack direction="row" spacing={2}>
@@ -121,7 +125,9 @@ export function CreateRecipeDialog({
               renderInput={(params) => <TextField {...params} label="Output Item" required />}
               sx={{ flex: 1 }}
             />
-            <TextField label="Output Quantity" type="number" value={outputQuantity} onChange={(e) => setOutputQuantity(e.target.value)} inputProps={{ min: 1, step: 1 }} sx={{ width: 180 }} />
+            <TextField label="Output Quantity" type="number" value={outputQuantity} onChange={(e) => setOutputQuantity(e.target.value)} sx={{ width: 180 }} slotProps={{
+              htmlInput: { min: 1, step: 1 }
+            }} />
           </Stack>
           <Stack direction="row" spacing={2}>
             <FormControl fullWidth>
@@ -146,5 +152,5 @@ export function CreateRecipeDialog({
         <Button data-tid="dialog-create-confirm" variant="contained" onClick={() => void handleCreate()} disabled={!displayName.trim() || !outputItemId || isBusy}>Create Recipe</Button>
       </DialogActions>
     </Dialog>
-  )
+  );
 }

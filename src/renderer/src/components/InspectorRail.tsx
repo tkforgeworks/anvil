@@ -5,7 +5,7 @@ import {
   Stack,
   Typography,
 } from '@mui/material'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 
 interface UsedByItem {
   id: string
@@ -56,7 +56,9 @@ export default function InspectorRail({
         )}
 
         {isEmpty && (
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" sx={{
+            color: "text.secondary"
+          }}>
             {emptyMessage}
           </Typography>
         )}
@@ -92,9 +94,11 @@ export default function InspectorRail({
                 {section.items.length === 0 ? (
                   <Typography
                     variant="body2"
-                    color="text.disabled"
-                    sx={{ fontStyle: 'italic', fontSize: '0.6875rem' }}
-                  >
+                    sx={{
+                      color: "text.disabled",
+                      fontStyle: 'italic',
+                      fontSize: '0.6875rem'
+                    }}>
                     Not assigned to any {section.label.toLowerCase().replace(/s$/, '')}.
                   </Typography>
                 ) : (
@@ -116,13 +120,21 @@ export default function InspectorRail({
                           '&:hover': { bgcolor: 'action.hover', color: 'primary.main' },
                         }}
                       >
-                        <Typography color="text.disabled" sx={{ fontSize: 'inherit' }}>
+                        <Typography
+                          sx={{
+                            color: "text.disabled",
+                            fontSize: 'inherit'
+                          }}>
                           &#x203A;
                         </Typography>
                         <Typography sx={{ flex: 1, fontSize: 'inherit' }}>
                           {item.displayName}
                         </Typography>
-                        <Typography color="text.disabled" sx={{ fontSize: 'inherit' }}>
+                        <Typography
+                          sx={{
+                            color: "text.disabled",
+                            fontSize: 'inherit'
+                          }}>
                           &rarr;
                         </Typography>
                       </Box>
@@ -135,5 +147,5 @@ export default function InspectorRail({
         )}
       </Paper>
     </Box>
-  )
+  );
 }

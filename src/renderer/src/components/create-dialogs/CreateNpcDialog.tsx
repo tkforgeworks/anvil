@@ -80,10 +80,14 @@ export function CreateNpcDialog({ open, npcTypes, onClose, onCreated }: CreateNp
             onChange={(e) => { setExportKey(e.target.value); setExportKeyTouched(true) }}
             fullWidth
             helperText="Used in exported files. Auto-generated from the display name."
-            InputProps={{
-              startAdornment: exportKey ? undefined : (
-                <InputAdornment position="start"><Typography variant="caption" color="text.disabled">auto</Typography></InputAdornment>
-              ),
+            slotProps={{
+              input: {
+                startAdornment: exportKey ? undefined : (
+                  <InputAdornment position="start"><Typography variant="caption" sx={{
+                    color: "text.disabled"
+                  }}>auto</Typography></InputAdornment>
+                ),
+              }
             }}
           />
           <FormControl fullWidth required>
@@ -99,5 +103,5 @@ export function CreateNpcDialog({ open, npcTypes, onClose, onCreated }: CreateNp
         <Button data-tid="dialog-create-confirm" variant="contained" onClick={() => void handleCreate()} disabled={!displayName.trim() || !npcTypeId || isBusy}>Create NPC</Button>
       </DialogActions>
     </Dialog>
-  )
+  );
 }

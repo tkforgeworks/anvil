@@ -120,7 +120,7 @@ function applyOutputConfig(
 
 function formatResult(value: number, outputType: 'integer' | 'float'): string {
   if (outputType === 'integer') return String(Math.round(value))
-  return value.toFixed(3).replace(/\.?0+$/, '')
+  return value.toFixed(3).replace(/\.?0+$/, '');
 }
 
 function defaultBreakpointLevels(maxLevel: number): number[] {
@@ -205,23 +205,35 @@ function MetadataFieldsPanel({ fields, onChange }: MetadataFieldsPanelProps): Re
       <Typography variant="subtitle2" gutterBottom>
         Class Metadata Fields
       </Typography>
-      <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1.5 }}>
+      <Typography
+        variant="caption"
+        sx={{
+          color: "text.secondary",
+          display: "block",
+          mb: 1.5
+        }}>
         Numeric key-value pairs usable as variables in derived stat formulas.
       </Typography>
       {fields.length === 0 ? (
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+        <Typography
+          variant="body2"
+          sx={{
+            color: "text.secondary",
+            mb: 1.5
+          }}>
           No metadata fields. Add one below.
         </Typography>
       ) : (
         <Stack spacing={1} sx={{ mb: 1.5 }}>
           {fields.map((f, i) => (
-            <Stack key={i} direction="row" spacing={1} alignItems="center">
+            <Stack key={i} direction="row" spacing={1} sx={{
+              alignItems: "center"
+            }}>
               <TextField
                 size="small"
                 label="Key"
                 value={f.fieldKey}
                 onChange={(e) => updateKey(i, e.target.value)}
-                inputProps={{ style: { fontFamily: 'monospace' } }}
                 sx={{ flex: 1 }}
                 error={!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(f.fieldKey) && f.fieldKey !== ''}
                 helperText={
@@ -229,6 +241,9 @@ function MetadataFieldsPanel({ fields, onChange }: MetadataFieldsPanelProps): Re
                     ? 'Letters, digits, underscores only. Must start with a letter.'
                     : undefined
                 }
+                slotProps={{
+                  htmlInput: { style: { fontFamily: 'monospace' } }
+                }}
               />
               <TextField
                 size="small"
@@ -251,7 +266,7 @@ function MetadataFieldsPanel({ fields, onChange }: MetadataFieldsPanelProps): Re
         Add Field
       </Button>
     </Box>
-  )
+  );
 }
 
 // ─── Breakpoint table ─────────────────────────────────────────────────────────
@@ -288,11 +303,21 @@ function BreakpointTable({
 
   return (
     <Box>
-      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
-        <Typography variant="subtitle1" fontWeight={500}>
+      <Stack
+        direction="row"
+        sx={{
+          alignItems: "center",
+          justifyContent: "space-between",
+          mb: 2
+        }}>
+        <Typography variant="subtitle1" sx={{
+          fontWeight: 500
+        }}>
           Breakpoint Table
         </Typography>
-        <Stack direction="row" spacing={1} alignItems="center">
+        <Stack direction="row" spacing={1} sx={{
+          alignItems: "center"
+        }}>
           <TextField
             size="small"
             type="number"
@@ -302,8 +327,10 @@ function BreakpointTable({
             onKeyDown={(e) => {
               if (e.key === 'Enter') { e.preventDefault(); addLevel() }
             }}
-            inputProps={{ min: 1, max: maxLevel, style: { width: 56, textAlign: 'center' } }}
             sx={{ width: 110 }}
+            slotProps={{
+              htmlInput: { min: 1, max: maxLevel, style: { width: 56, textAlign: 'center' } }
+            }}
           />
           <Button size="small" variant="outlined" onClick={addLevel} disabled={!levelInput.trim()}>
             Add
@@ -312,7 +339,9 @@ function BreakpointTable({
       </Stack>
 
       {breakpointLevels.length === 0 ? (
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant="body2" sx={{
+          color: "text.secondary"
+        }}>
           No breakpoint levels configured.
         </Typography>
       ) : (
@@ -327,8 +356,16 @@ function BreakpointTable({
                 </TableCell>
                 {breakpointLevels.map((level) => (
                   <TableCell key={level} align="right" sx={{ minWidth: 90, whiteSpace: 'nowrap' }}>
-                    <Stack direction="row" alignItems="center" justifyContent="flex-end" spacing={0.25}>
-                      <Typography variant="caption" fontWeight={500}>
+                    <Stack
+                      direction="row"
+                      spacing={0.25}
+                      sx={{
+                        alignItems: "center",
+                        justifyContent: "flex-end"
+                      }}>
+                      <Typography variant="caption" sx={{
+                        fontWeight: 500
+                      }}>
                         Lvl {level}
                       </Typography>
                       <Tooltip title="Remove level">
@@ -349,10 +386,17 @@ function BreakpointTable({
                     <TableCell
                       sx={{ position: 'sticky', left: 0, bgcolor: 'background.paper', zIndex: 1 }}
                     >
-                      <Typography variant="body2" fontWeight={500}>
+                      <Typography variant="body2" sx={{
+                        fontWeight: 500
+                      }}>
                         {def.displayName}
                       </Typography>
-                      <Typography variant="caption" color="text.secondary" fontFamily="monospace">
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: "text.secondary",
+                          fontFamily: "monospace"
+                        }}>
                         {def.exportKey}
                       </Typography>
                     </TableCell>
@@ -367,29 +411,33 @@ function BreakpointTable({
                               <Chip label="err" size="small" color="warning" variant="outlined" />
                             </Tooltip>
                           ) : result?.value !== null && result?.value !== undefined ? (
-                            <Typography variant="body2" fontFamily="monospace">
+                            <Typography variant="body2" sx={{
+                              fontFamily: "monospace"
+                            }}>
                               {formatResult(
                                 applyOutputConfig(result.value, def.outputType, def.roundingMode),
                                 def.outputType,
                               )}
                             </Typography>
                           ) : (
-                            <Typography variant="caption" color="text.disabled">
+                            <Typography variant="caption" sx={{
+                              color: "text.disabled"
+                            }}>
                               —
                             </Typography>
                           )}
                         </TableCell>
-                      )
+                      );
                     })}
                   </TableRow>
-                )
+                );
               })}
             </TableBody>
           </Table>
         </Paper>
       )}
     </Box>
-  )
+  );
 }
 
 // ─── Main component ────────────────────────────────────────────────────────────
@@ -640,24 +688,42 @@ const DerivedStatsEditor = forwardRef<DerivedStatsEditorRef, DerivedStatsEditorP
   // ─── Render ───────────────────────────────────────────────────────────────
 
   if (isLoading) {
-    return <Typography color="text.secondary">Loading derived stats…</Typography>
+    return (
+      <Typography sx={{
+        color: "text.secondary"
+      }}>Loading derived stats…</Typography>
+    );
   }
 
   if (derivedStats.length === 0) {
     return (
-      <Typography color="text.secondary">No derived stats configured in this project.</Typography>
-    )
+      <Typography sx={{
+        color: "text.secondary"
+      }}>No derived stats configured in this project.</Typography>
+    );
   }
 
   return (
     <Box>
       {/* Header */}
-      <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 2 }}>
-        <Typography variant="subtitle1" fontWeight={500}>
+      <Stack
+        direction="row"
+        spacing={2}
+        sx={{
+          alignItems: "center",
+          mb: 2
+        }}>
+        <Typography variant="subtitle1" sx={{
+          fontWeight: 500
+        }}>
           Derived Stats
         </Typography>
-        <Stack direction="row" alignItems="center" spacing={1}>
-          <Typography variant="caption" color="text.secondary">
+        <Stack direction="row" spacing={1} sx={{
+          alignItems: "center"
+        }}>
+          <Typography variant="caption" sx={{
+            color: "text.secondary"
+          }}>
             Preview at level
           </Typography>
           <TextField
@@ -668,8 +734,10 @@ const DerivedStatsEditor = forwardRef<DerivedStatsEditorRef, DerivedStatsEditorP
               const v = Math.max(1, Math.min(maxLevel, parseInt(e.target.value) || 1))
               setPreviewLevel(v)
             }}
-            inputProps={{ min: 1, max: maxLevel, style: { width: 56, textAlign: 'center' } }}
             sx={{ width: 80 }}
+            slotProps={{
+              htmlInput: { min: 1, max: maxLevel, style: { width: 56, textAlign: 'center' } }
+            }}
           />
         </Stack>
       </Stack>
@@ -707,10 +775,17 @@ const DerivedStatsEditor = forwardRef<DerivedStatsEditorRef, DerivedStatsEditorP
               return (
                 <TableRow key={def.id}>
                   <TableCell>
-                    <Typography variant="body2" fontWeight={500}>
+                    <Typography variant="body2" sx={{
+                      fontWeight: 500
+                    }}>
                       {def.displayName}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary" fontFamily="monospace">
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: "text.secondary",
+                        fontFamily: "monospace"
+                      }}>
                       {def.exportKey}
                     </Typography>
                   </TableCell>
@@ -724,11 +799,18 @@ const DerivedStatsEditor = forwardRef<DerivedStatsEditorRef, DerivedStatsEditorP
                         onChange={(e) => handleFormulaChange(def.id, e.target.value)}
                         error={Boolean(syntaxError)}
                         helperText={syntaxError ?? undefined}
-                        inputProps={{ style: { fontFamily: 'monospace', fontSize: 12 } }}
                         placeholder="e.g. con * 10"
+                        slotProps={{
+                          htmlInput: { style: { fontFamily: 'monospace', fontSize: 12 } }
+                        }}
                       />
                     ) : (
-                      <Typography variant="body2" fontFamily="monospace" color="text.secondary">
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontFamily: "monospace",
+                          color: "text.secondary"
+                        }}>
                         {activeFormula}
                       </Typography>
                     )}
@@ -749,7 +831,9 @@ const DerivedStatsEditor = forwardRef<DerivedStatsEditorRef, DerivedStatsEditorP
                   </TableCell>
 
                   <TableCell align="center">
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography variant="caption" sx={{
+                      color: "text.secondary"
+                    }}>
                       {def.roundingMode}
                     </Typography>
                   </TableCell>
@@ -764,20 +848,24 @@ const DerivedStatsEditor = forwardRef<DerivedStatsEditorRef, DerivedStatsEditorP
                         <Chip label="error" size="small" color="warning" variant="outlined" />
                       </Tooltip>
                     ) : evalResult?.value !== null && evalResult?.value !== undefined ? (
-                      <Typography variant="body2" fontFamily="monospace">
+                      <Typography variant="body2" sx={{
+                        fontFamily: "monospace"
+                      }}>
                         {formatResult(
                           applyOutputConfig(evalResult.value, def.outputType, def.roundingMode),
                           def.outputType,
                         )}
                       </Typography>
                     ) : (
-                      <Typography variant="caption" color="text.disabled">
+                      <Typography variant="caption" sx={{
+                        color: "text.disabled"
+                      }}>
                         —
                       </Typography>
                     )}
                   </TableCell>
                 </TableRow>
-              )
+              );
             })}
           </TableBody>
         </Table>
@@ -802,11 +890,17 @@ const DerivedStatsEditor = forwardRef<DerivedStatsEditorRef, DerivedStatsEditorP
       {/* Metadata fields */}
       <MetadataFieldsPanel fields={metadataFields} onChange={handleMetadataChange} />
 
-      <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+      <Typography
+        variant="caption"
+        sx={{
+          color: "text.secondary",
+          mt: 1,
+          display: 'block'
+        }}>
         <code>resource_multiplier</code> ({resourceMultiplier}) is always available as a formula variable.
       </Typography>
     </Box>
-  )
+  );
 })
 
 export default DerivedStatsEditor

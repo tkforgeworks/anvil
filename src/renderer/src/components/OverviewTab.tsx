@@ -1,5 +1,5 @@
 import { Box, CircularProgress, Stack, Typography } from '@mui/material'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import type { UsedBySection } from './InspectorRail'
 
 export interface OverviewTabProps {
@@ -36,7 +36,13 @@ export default function OverviewTab({
         >
           Description
         </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ mt: 0.5, whiteSpace: 'pre-wrap' }}>
+        <Typography
+          variant="body1"
+          sx={{
+            color: "text.secondary",
+            mt: 0.5,
+            whiteSpace: 'pre-wrap'
+          }}>
           {description || 'No description provided.'}
         </Typography>
       </Box>
@@ -83,9 +89,11 @@ export default function OverviewTab({
                   {section.items.length === 0 ? (
                     <Typography
                       variant="body2"
-                      color="text.disabled"
-                      sx={{ fontStyle: 'italic', fontSize: '0.6875rem' }}
-                    >
+                      sx={{
+                        color: "text.disabled",
+                        fontStyle: 'italic',
+                        fontSize: '0.6875rem'
+                      }}>
                       Not assigned to any {section.label.toLowerCase().replace(/s$/, '')}.
                     </Typography>
                   ) : (
@@ -107,13 +115,21 @@ export default function OverviewTab({
                             '&:hover': { bgcolor: 'action.hover', color: 'primary.main' },
                           }}
                         >
-                          <Typography color="text.disabled" sx={{ fontSize: 'inherit' }}>
+                          <Typography
+                            sx={{
+                              color: "text.disabled",
+                              fontSize: 'inherit'
+                            }}>
                             &#x203A;
                           </Typography>
                           <Typography sx={{ flex: 1, fontSize: 'inherit' }}>
                             {item.displayName}
                           </Typography>
-                          <Typography color="text.disabled" sx={{ fontSize: 'inherit' }}>
+                          <Typography
+                            sx={{
+                              color: "text.disabled",
+                              fontSize: 'inherit'
+                            }}>
                             &rarr;
                           </Typography>
                         </Box>
@@ -127,5 +143,5 @@ export default function OverviewTab({
         </Box>
       )}
     </Box>
-  )
+  );
 }

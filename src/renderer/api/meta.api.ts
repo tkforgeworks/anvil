@@ -5,6 +5,8 @@ import type {
   MetaCraftingSpecialization,
   MetaCraftingStation,
   MetaDeleteResult,
+  MetaInUseKind,
+  MetaInUseResult,
   MetaItemCategory,
   MetaItemInput,
   MetaNpcType,
@@ -43,6 +45,10 @@ export const metaApi = {
 
   listDerivedStats: () =>
     window.anvil.invoke<DerivedStatDefinition[]>(IPC_CHANNELS.META_LIST_DERIVED_STATS),
+
+  /** Non-mutating FK check: would deleting this meta row be refused, and why? */
+  checkInUse: (kind: MetaInUseKind, id: string) =>
+    window.anvil.invoke<MetaInUseResult>(IPC_CHANNELS.META_CHECK_IN_USE, kind, id),
 
   // ─── Project settings ───────────────────────────────────────────────────────
 
@@ -90,6 +96,20 @@ export const metaApi = {
 
   reorderNpcTypes: (items: MetaReorderItem[]) =>
     window.anvil.invoke<void>(IPC_CHANNELS.META_REORDER_NPC_TYPES, items),
+
+  // ─── Item Categories CRUD ───────────────────────────────────────────────────
+
+  addItemCategory: (input: MetaItemInput) =>
+    window.anvil.invoke<MetaItemCategory>(IPC_CHANNELS.META_ADD_ITEM_CATEGORY, input),
+
+  updateItemCategory: (id: string, input: MetaItemInput) =>
+    window.anvil.invoke<MetaItemCategory>(IPC_CHANNELS.META_UPDATE_ITEM_CATEGORY, id, input),
+
+  deleteItemCategory: (id: string) =>
+    window.anvil.invoke<MetaDeleteResult>(IPC_CHANNELS.META_DELETE_ITEM_CATEGORY, id),
+
+  reorderItemCategories: (items: MetaReorderItem[]) =>
+    window.anvil.invoke<void>(IPC_CHANNELS.META_REORDER_ITEM_CATEGORIES, items),
 
   // ─── Crafting Stations CRUD ─────────��───────────────────────────────────────
 

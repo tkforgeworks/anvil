@@ -1,6 +1,6 @@
 import {
   Error as ErrorIcon,
-  CheckCircleOutline as CheckIcon,
+  CheckCircleOutlined as CheckIcon,
   Refresh as RefreshIcon,
   Warning as WarningIcon,
 } from '@mui/icons-material'
@@ -18,7 +18,7 @@ import {
   Typography,
 } from '@mui/material'
 import { useCallback, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import { validationApi } from '../../api/validation.api'
 import DeferredLoader from '../components/DeferredLoader'
 import EmptyState from '../components/EmptyState'
@@ -209,7 +209,13 @@ export default function ValidationPage(): React.JSX.Element {
                           </TableCell>
                           <TableCell>
                             {issue.field && (
-                              <Typography variant="body2" color="text.secondary" sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>
+                              <Typography
+                                variant="body2"
+                                sx={{
+                                  color: "text.secondary",
+                                  fontFamily: 'monospace',
+                                  fontSize: '0.8rem'
+                                }}>
                                 {issue.field}
                               </Typography>
                             )}
@@ -218,7 +224,7 @@ export default function ValidationPage(): React.JSX.Element {
                             <Typography variant="body2">{issue.message}</Typography>
                           </TableCell>
                         </TableRow>
-                      )
+                      );
                     })}
                   </TableBody>
                 </Table>
@@ -228,5 +234,5 @@ export default function ValidationPage(): React.JSX.Element {
         </Stack>
       )}
     </Box>
-  )
+  );
 }

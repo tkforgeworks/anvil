@@ -25,7 +25,7 @@ import {
 } from '@mui/material'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useUndoRedo } from '../hooks/useUndoRedo'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router'
 import { itemsApi } from '../../api/items.api'
 import { lootTablesApi } from '../../api/loot-tables.api'
 import { metaApi } from '../../api/meta.api'
@@ -307,9 +307,11 @@ export default function LootTableEditorPage({ recordId, onClose }: LootTableEdit
   if (isLoading) {
     return (
       <Box sx={{ p: 4 }}>
-        <Typography color="text.secondary">Loading...</Typography>
+        <Typography sx={{
+          color: "text.secondary"
+        }}>Loading...</Typography>
       </Box>
-    )
+    );
   }
 
   if (!record) {
@@ -376,18 +378,27 @@ export default function LootTableEditorPage({ recordId, onClose }: LootTableEdit
               setExportKey(e.target.value)
               pushSnapshot({ exportKey: e.target.value })
             }}
-            inputProps={{ style: { fontFamily: '"JetBrains Mono", monospace', fontSize: '0.85rem' } }}
             placeholder="export-key"
             helperText="Export key — used in exported files"
             sx={{ maxWidth: 360 }}
+            slotProps={{
+              htmlInput: { style: { fontFamily: '"JetBrains Mono", monospace', fontSize: '0.85rem' } }
+            }}
           />
           <TextField label="Description" value={description} onChange={(e) => { setDescription(e.target.value); pushSnapshot({ description: e.target.value }) }} multiline minRows={3} fullWidth sx={{ maxWidth: 760 }} />
 
           <Stack spacing={2}>
-            <Stack direction="row" justifyContent="space-between" alignItems="center">
+            <Stack
+              direction="row"
+              sx={{
+                justifyContent: "space-between",
+                alignItems: "center"
+              }}>
               <Box>
                 <Typography variant="subtitle1">Entries</Typography>
-                <Typography variant="caption" color="text.secondary">Drop percentages are calculated from the current weights.</Typography>
+                <Typography variant="caption" sx={{
+                  color: "text.secondary"
+                }}>Drop percentages are calculated from the current weights.</Typography>
               </Box>
               <Button data-tid="loot-table-add-entry" startIcon={<AddIcon />} variant="outlined" size="small" onClick={addEntry} disabled={activeItems.length === 0}>
                 Add Entry
@@ -395,7 +406,9 @@ export default function LootTableEditorPage({ recordId, onClose }: LootTableEdit
             </Stack>
             {activeItems.length === 0 && <Alert severity="info">Create an active item before adding loot entries.</Alert>}
             {entries.length === 0 ? (
-              <Typography variant="body2" color="text.secondary">No entries yet.</Typography>
+              <Typography variant="body2" sx={{
+                color: "text.secondary"
+              }}>No entries yet.</Typography>
             ) : (
               <Box sx={{ overflowX: 'auto', pb: 1 }}>
                 <Table size="small" sx={{ minWidth: 980 }}>
@@ -419,7 +432,13 @@ export default function LootTableEditorPage({ recordId, onClose }: LootTableEdit
                     return (
                       <TableRow key={`${entry.itemId}:${index}`}>
                         <TableCell>
-                          <Stack direction="row" spacing={1} alignItems="flex-start" sx={{ minWidth: 420 }}>
+                          <Stack
+                            direction="row"
+                            spacing={1}
+                            sx={{
+                              alignItems: "flex-start",
+                              minWidth: 420
+                            }}>
                             <Box sx={{ pt: 0.75, width: 40, flex: '0 0 auto' }}>
                               {renderRarityChip(rarity)}
                             </Box>
@@ -436,17 +455,25 @@ export default function LootTableEditorPage({ recordId, onClose }: LootTableEdit
                                 const optionRarity = rarityById.get(option.rarityId)
                                 return (
                                   <Box component="li" {...props}>
-                                    <Stack direction="row" spacing={1} alignItems="center" sx={{ width: '100%' }}>
+                                    <Stack
+                                      direction="row"
+                                      spacing={1}
+                                      sx={{
+                                        alignItems: "center",
+                                        width: '100%'
+                                      }}>
                                       {renderRarityChip(optionRarity)}
                                       <Box sx={{ minWidth: 0 }}>
                                         <Typography variant="body2">{option.displayName}</Typography>
-                                        <Typography variant="caption" color="text.secondary">
+                                        <Typography variant="caption" sx={{
+                                          color: "text.secondary"
+                                        }}>
                                           {optionRarity?.displayName ?? option.rarityId}
                                         </Typography>
                                       </Box>
                                     </Stack>
                                   </Box>
-                                )
+                                );
                               }}
                               renderInput={(params) => (
                                 <TextField {...params} label="Item" size="small" error={isDeleted} helperText={isDeleted ? 'Soft-deleted item reference' : undefined} />
@@ -454,7 +481,12 @@ export default function LootTableEditorPage({ recordId, onClose }: LootTableEdit
                               sx={{ flex: 1, minWidth: 360 }}
                             />
                           </Stack>
-                          {isDeleted && <Typography variant="caption" color="warning.main" sx={{ textDecoration: 'line-through' }}>{item?.displayName}</Typography>}
+                          {isDeleted && <Typography
+                            variant="caption"
+                            sx={{
+                              color: "warning.main",
+                              textDecoration: 'line-through'
+                            }}>{item?.displayName}</Typography>}
                         </TableCell>
                         <TableCell>
                           <TextField
@@ -462,12 +494,16 @@ export default function LootTableEditorPage({ recordId, onClose }: LootTableEdit
                             size="small"
                             value={entry.weight}
                             onChange={(e) => setEntryAt(index, { weight: Math.max(1, parseInt(e.target.value, 10) || 1) })}
-                            inputProps={{ min: 1, step: 1 }}
                             fullWidth
+                            slotProps={{
+                              htmlInput: { min: 1, step: 1 }
+                            }}
                           />
                         </TableCell>
                         <TableCell>
-                          <Typography variant="body2" color="text.secondary">{formatPercent(percent)}</Typography>
+                          <Typography variant="body2" sx={{
+                            color: "text.secondary"
+                          }}>{formatPercent(percent)}</Typography>
                         </TableCell>
                         <TableCell>
                           <TextField
@@ -475,8 +511,10 @@ export default function LootTableEditorPage({ recordId, onClose }: LootTableEdit
                             size="small"
                             value={entry.quantityMin}
                             onChange={(e) => setEntryAt(index, { quantityMin: Math.max(1, parseInt(e.target.value, 10) || 1) })}
-                            inputProps={{ min: 1, step: 1 }}
                             fullWidth
+                            slotProps={{
+                              htmlInput: { min: 1, step: 1 }
+                            }}
                           />
                         </TableCell>
                         <TableCell>
@@ -485,8 +523,10 @@ export default function LootTableEditorPage({ recordId, onClose }: LootTableEdit
                             size="small"
                             value={entry.quantityMax}
                             onChange={(e) => setEntryAt(index, { quantityMax: Math.max(1, parseInt(e.target.value, 10) || 1) })}
-                            inputProps={{ min: 1, step: 1 }}
                             fullWidth
+                            slotProps={{
+                              htmlInput: { min: 1, step: 1 }
+                            }}
                           />
                         </TableCell>
                         <TableCell align="right">
@@ -495,7 +535,7 @@ export default function LootTableEditorPage({ recordId, onClose }: LootTableEdit
                           <Tooltip title="Remove"><IconButton size="small" color="error" onClick={() => removeEntry(index)}><DeleteIcon fontSize="small" /></IconButton></Tooltip>
                         </TableCell>
                       </TableRow>
-                    )
+                    );
                   })}
                 </TableBody>
               </Table>
@@ -512,5 +552,5 @@ export default function LootTableEditorPage({ recordId, onClose }: LootTableEdit
         onDiscard={handleDiscard}
       />
     </Box>
-  )
+  );
 }

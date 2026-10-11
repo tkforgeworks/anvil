@@ -25,7 +25,7 @@ import {
   ChevronLeft as CollapseIcon,
   ChevronRight as ExpandIcon,
 } from '@mui/icons-material'
-import { NavLink } from 'react-router-dom'
+import { NavLink } from 'react-router'
 import type { RecordCounts } from '../../../shared/project-types'
 import { useLifecycleStore } from '../stores/lifecycle.store'
 import { useProjectStore } from '../stores/project.store'
@@ -107,7 +107,9 @@ function NavListItem({
         <>
           <ListItemText
             primary={item.label}
-            primaryTypographyProps={{ fontSize: '0.875rem' }}
+            slotProps={{
+              primary: { sx: { fontSize: '0.875rem' } }
+            }}
           />
           {count != null && (
             <Typography
@@ -195,7 +197,9 @@ export default function Sidebar(): React.JSX.Element {
       {!collapsed && (
         <ListItemText
           primary="Dashboard"
-          primaryTypographyProps={{ fontSize: '0.875rem' }}
+          slotProps={{
+            primary: { sx: { fontSize: '0.875rem' } }
+          }}
         />
       )}
     </ListItemButton>
