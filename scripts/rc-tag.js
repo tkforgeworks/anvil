@@ -20,9 +20,9 @@ function git(cmd) {
 }
 
 const currentBranch = git('rev-parse --abbrev-ref HEAD')
-if (currentBranch === 'master' || currentBranch === 'main') {
+if (currentBranch === 'main') {
   console.error(
-    'RCs are cut from a version branch (vX.Y.Z/main), never from master — check out the version branch first'
+    'RCs are cut from a version branch (vX.Y.Z/main), never from the default branch — check out the version branch first'
   )
   process.exit(1)
 }

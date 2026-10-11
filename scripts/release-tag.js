@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-// Prepares a stable release as a PR into master. No git tag is created here —
+// Prepares a stable release as a PR into main. No git tag is created here —
 // the tag is created by CI when release.yml publishes the release after the
 // PR merges, so this works under branch protection. Shared TK ForgeWorks flow,
 // mirrored in claude-observability-gui.
@@ -58,7 +58,7 @@ if (bumpType === 'final') {
 const branchName = `release/v${nextVersion}`
 
 const currentBranch = git('rev-parse --abbrev-ref HEAD')
-if (currentBranch === 'master' || currentBranch === 'main') {
+if (currentBranch === 'main') {
   console.log(`Creating branch ${branchName}`)
   git(`checkout -b ${branchName}`)
 }
@@ -75,9 +75,9 @@ execSync(`git push -u origin ${activeBranch}`, { stdio: 'inherit' })
 // The stable-version push to the version branch does NOT release (release.yml
 // skips stable versions on v*/main); the release happens when this PR merges.
 if (!ghPrExists(activeBranch)) {
-  console.log('Creating pull request into master')
+  console.log('Creating pull request into main')
   execSync(
-    `gh pr create --base master --title "Release ${nextVersion}" --body "Release ${nextVersion} — merging cuts the stable release."`,
+    `gh pr create --base main --title "Release ${nextVersion}" --body "Release ${nextVersion} — merging cuts the stable release."`,
     { stdio: 'inherit' }
   )
 } else {
