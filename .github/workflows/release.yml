@@ -6,10 +6,10 @@ name: Release
 # exists, and the tag is created server-side when the GitHub release is
 # published. RC prereleases are cut from v*/main version branches as they are
 # pushed; the stable release is cut only when the version branch merges to
-# master.
+# main.
 on:
   push:
-    branches: [master, 'v*/main']
+    branches: [main, 'v*/main']
 
 concurrency:
   group: release
@@ -38,15 +38,15 @@ jobs:
           if git rev-parse "$TAG" >/dev/null 2>&1; then
             echo "Tag $TAG already exists — skipping release"
             echo "should-release=false" >> $GITHUB_OUTPUT
-          elif [ "$BRANCH" = "master" ] && [ "$IS_RC" = "true" ]; then
-            # An RC version should never merge to master — run release:final on
+          elif [ "$BRANCH" = "main" ] && [ "$IS_RC" = "true" ]; then
+            # An RC version should never merge to main — run release:final on
             # the version branch first.
-            echo "RC version $VERSION on master — skipping release"
+            echo "RC version $VERSION on main — skipping release"
             echo "should-release=false" >> $GITHUB_OUTPUT
-          elif [ "$BRANCH" != "master" ] && [ "$IS_RC" = "false" ]; then
+          elif [ "$BRANCH" != "main" ] && [ "$IS_RC" = "false" ]; then
             # The release:final bump pushes a stable version to the version
-            # branch before its PR merges; the stable release is cut on master.
-            echo "Stable version $VERSION on $BRANCH — releasing on merge to master, skipping"
+            # branch before its PR merges; the stable release is cut on main.
+            echo "Stable version $VERSION on $BRANCH — releasing on merge to main, skipping"
             echo "should-release=false" >> $GITHUB_OUTPUT
           else
             echo "Tag $TAG does not exist — will release"
