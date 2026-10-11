@@ -93,7 +93,7 @@ export default function WelcomePage(): React.JSX.Element {
               icon={<AddIcon sx={{ color: '#fff', fontSize: 22 }} />}
               iconBg="primary.main"
               title="New project"
-              subtitle="Blank or from template"
+              subtitle="Start a blank project"
               variant="brand"
               onClick={() => openModal(MODAL_IDS.NEW_PROJECT)}
               disabled={isBusy}

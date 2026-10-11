@@ -1,10 +1,4 @@
-import {
-  Add as AddIcon,
-  ArrowDownward as DownIcon,
-  ArrowUpward as UpIcon,
-  Delete as DeleteIcon,
-  Edit as EditIcon,
-} from '@mui/icons-material'
+import { Add as AddIcon } from '@mui/icons-material'
 import {
   Alert,
   Box,
@@ -13,7 +7,6 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  IconButton,
   InputAdornment,
   Stack,
   Table,
@@ -22,11 +15,11 @@ import {
   TableHead,
   TableRow,
   TextField,
-  Tooltip,
   Typography,
 } from '@mui/material'
 import { useState } from 'react'
 import type { MetaDeleteResult, MetaReorderItem } from '../../../shared/domain-types'
+import MetaRowActions, { MetaRowActionsHeader } from './MetaRowActions'
 
 function slugify(value: string): string {
   return value
@@ -205,7 +198,7 @@ export default function MetaListSection({
             <TableRow>
               <TableCell>Name</TableCell>
               {!compact && <TableCell>Export Key</TableCell>}
-              <TableCell align="right" sx={{ width: 150 }}>Actions</TableCell>
+              <MetaRowActionsHeader />
             </TableRow>
           </TableHead>
           <TableBody>
@@ -227,32 +220,14 @@ export default function MetaListSection({
                     </Typography>
                   </TableCell>
                 )}
-                <TableCell align="right" onClick={(e) => e.stopPropagation()}>
-                  <Tooltip title="Move up">
-                    <span>
-                      <IconButton size="small" disabled={index === 0} onClick={() => void handleMove(index, 'up')}>
-                        <UpIcon fontSize="small" />
-                      </IconButton>
-                    </span>
-                  </Tooltip>
-                  <Tooltip title="Move down">
-                    <span>
-                      <IconButton size="small" disabled={index === items.length - 1} onClick={() => void handleMove(index, 'down')}>
-                        <DownIcon fontSize="small" />
-                      </IconButton>
-                    </span>
-                  </Tooltip>
-                  <Tooltip title="Edit">
-                    <IconButton size="small" onClick={() => openEdit(item)}>
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Delete">
-                    <IconButton size="small" color="error" onClick={() => void handleDelete(item)}>
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                </TableCell>
+                <MetaRowActions
+                  isFirst={index === 0}
+                  isLast={index === items.length - 1}
+                  onMoveUp={() => void handleMove(index, 'up')}
+                  onMoveDown={() => void handleMove(index, 'down')}
+                  onEdit={() => openEdit(item)}
+                  onDelete={() => void handleDelete(item)}
+                />
               </TableRow>
             ))}
           </TableBody>

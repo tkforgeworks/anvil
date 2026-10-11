@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches-ignore: [master]
+    branches-ignore: [main]
   pull_request:
-    branches: [master, 'v*/main']
+    branches: [main, 'v*/main']
 
 concurrency:
   group: ci-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || github.ref }}
