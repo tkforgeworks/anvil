@@ -24,6 +24,13 @@ dependencies:
     path: packages/anvil_core
   flutter:
     sdk: flutter
+  # The shared tkforgeworks theme, widgets and bundled fonts (Poppins,
+  # JetBrains Mono, Source Serif 4). Pinned to an exact release tag; fixes go
+  # into forge-ui and the pin moves. The app declares no fonts of its own.
+  forge_ui:
+    git:
+      url: https://github.com/tkforgeworks/forge-ui.git
+      ref: v0.2.1
 
 dev_dependencies:
   flutter_test:
