@@ -17,10 +17,13 @@ The Flutter desktop app (Windows + Linux) lives alongside the Electron source wh
 | Path | What it is |
 |---|---|
 | `pubspec.yaml`, `lib/`, `test/` | The Flutter app (`anvil`). `lib/main.dart` is the entry point. |
+| `lib/app/theme/` | The app theme on the shared [`forge_ui`](https://github.com/tkforgeworks/forge-ui) package (git dependency pinned to a release tag): the Electron palette, the Dark / Light / Custom-file theme builder, Anvil's own colour roles and layout constants, and the theme gallery that is the app's home until the shell lands. |
 | `linux/`, `windows/` | Generated desktop runners. The window title and Windows version resources say Anvil / TK ForgeWorks. |
 | `packages/anvil_core/` | The Flutter-free core: data access, project lifecycle, formula, validation and export logic. A member of the root pub workspace. |
 | `.fvmrc` | Pins Flutter 3.47.5, the SDK the org CI and `forge-ui` use. |
 | `src/`, `package.json`, … | The Electron 0.1.x app, kept untouched as the porting reference until cutover (ANVL-169). |
+
+**Theme.** Colours come from the theme, never literals; `test/theme/no_hardcoded_colors_test.dart` enforces it. A custom theme JSON file from Anvil 0.1.x (`mode` plus up to eleven colour keys) still works: the parser in `anvil_core` reproduces the 0.1.x validation messages, and the keys lay over the chosen mode's defaults as before.
 
 **Core/UI boundary.** `packages/anvil_core` must never depend on `package:flutter`. The boundary is enforced by its `pubspec.yaml`, which has no Flutter dependency, so any Flutter import fails `flutter analyze`; everything in the core runs under plain `dart test`. The app depends on the core, never the other way round.
 
