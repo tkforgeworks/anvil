@@ -1,4 +1,20 @@
-name: CI
+# Consumes the org standard Flutter CI (tkforgeworks/.github): flutter pub get,
+# dart format --set-exit-if-changed, flutter analyze, flutter test. Platform
+# builds belong to the release workflow, not here.
+#
+# Trigger envelope per docs/ci-standards.md for the version-branch flow: topic
+# branches PR into a release branch (vX.Y.Z/main), and the release branch is
+# merged into main by a release PR. Pushes to any branch but main get feedback
+# while iterating; PRs into main or a release branch get the merge-gate check.
+#
+# Two jobs because the repo is a Dart pub workspace and a bare `flutter test`
+# only runs the package it is invoked in: `ci` covers the Flutter app at the
+# repo root, `core` covers packages/anvil_core (pure Dart, no Flutter
+# dependency). The main ruleset requires both checks, named
+# "ci / ci" and "core / ci" (caller job / reusable job).
+#
+# Keep flutter-version identical to .fvmrc and release.yml (ANVL-167).
+name: ci
 
 on:
   push:
@@ -10,19 +26,17 @@ concurrency:
   group: ci-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
-  validate:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - run: npm audit --omit=dev
-      - run: npm run typecheck
-      - run: npm test
-      - run: npm run build
-        env:
-          VITE_TELEMETRY_ENABLED: 'true'
+  ci:
+    uses: tkforgeworks/.github/.github/workflows/ci-flutter.yml@main
+    with:
+      flutter-version: '3.47.5'
+
+  core:
+    uses: tkforgeworks/.github/.github/workflows/ci-flutter.yml@main
+    with:
+      flutter-version: '3.47.5'
+      working-directory: packages/anvil_core
