@@ -1,0 +1,6 @@
+# Pure-Dart spike package: same lint set as packages/anvil_core.
+include: package:lints/recommended.yaml
+
+linter:
+  rules:
+    prefer_single_quotes: true

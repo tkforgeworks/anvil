@@ -1,0 +1,3 @@
+export_key,display_name,description,resource_multiplier
+mage,Mage,"Glass cannon, comma, ""quoted""",0.8
+warrior,Warrior,Front-line fighter,1.25

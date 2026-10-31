@@ -1,0 +1,17 @@
+name: template_engine
+description: ANVL-151 throwaway spike - export template engine options for the Flutter rewrite (pure Dart).
+publish_to: 'none'
+version: 0.0.0
+
+environment:
+  sdk: ^3.13.2
+resolution: workspace
+
+# Pure Dart, like packages/anvil_core: no package:flutter, so it runs under
+# plain `dart test` and the winning option can move into the core.
+dependencies:
+  jinja: 0.7.2
+
+dev_dependencies:
+  lints: ^6.0.0
+  test: ^1.25.6

@@ -1,0 +1,7 @@
+{% for c in classes %}{{ loop.index }}/{{ classes | length }} {{ c.display_name | upper }}{% if not loop.last %}, {% endif %}{% endfor %}
+{% for a in abilities %}{{ a.export_key }}={{ a.resource_cost if a.resource_cost > 0 else "free" }} {% endfor %}
+{{ "x" ~ 1 }} {{ items[0].display_name }} {{ items | length > 2 }} {{ project.name | default("unnamed") }} {{ "a,b" | replace(",", ";") }}
+{%- if items | length %}
+has items
+{%- endif %}
+{{ meta.stats[0].export_key }} {{ meta.stats | first | dump }} {{ project.max_level + 5 }} {{ (1.5 + 1.5) }} {{ [1,2,3] | join("-") }}

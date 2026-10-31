@@ -1,0 +1,390 @@
+
+RECIPE BOOK: Forge & Fable (schema 7, max level 20)
+
+= Brew Healing Potion [brew_healing_potion] x3 -> healing_potion
+  station: crafting-station-alchemy-table
+  - 2 x moonpetal_herb
+
+= Forge Iron Sword [forge_iron_sword] x1 -> iron_sword
+  station: crafting-station-forge
+  - 2 x iron_ingot
+  - 1 x leather_strip
+
+NPC DROPS
+goblin_raider drops goblin_drops
+
+CLASS JSON
+[
+  {
+    "id": "a7b87a4c-f898-4ebd-bfca-a8163101fc77",
+    "display_name": "Mage",
+    "export_key": "mage",
+    "description": "Glass cannon, comma, \"quoted\"",
+    "resource_multiplier": 0.8,
+    "stat_growth": [
+      {
+        "stat_id": "stat-intelligence",
+        "level": 1,
+        "value": 12
+      },
+      {
+        "stat_id": "stat-intelligence",
+        "level": 2,
+        "value": 16
+      },
+      {
+        "stat_id": "stat-intelligence",
+        "level": 3,
+        "value": 20
+      },
+      {
+        "stat_id": "stat-intelligence",
+        "level": 4,
+        "value": 24
+      },
+      {
+        "stat_id": "stat-intelligence",
+        "level": 5,
+        "value": 28
+      },
+      {
+        "stat_id": "stat-intelligence",
+        "level": 6,
+        "value": 32
+      },
+      {
+        "stat_id": "stat-intelligence",
+        "level": 7,
+        "value": 36
+      },
+      {
+        "stat_id": "stat-intelligence",
+        "level": 8,
+        "value": 40
+      },
+      {
+        "stat_id": "stat-intelligence",
+        "level": 9,
+        "value": 44
+      },
+      {
+        "stat_id": "stat-intelligence",
+        "level": 10,
+        "value": 48
+      },
+      {
+        "stat_id": "stat-intelligence",
+        "level": 11,
+        "value": 52
+      },
+      {
+        "stat_id": "stat-intelligence",
+        "level": 12,
+        "value": 56
+      },
+      {
+        "stat_id": "stat-intelligence",
+        "level": 13,
+        "value": 60
+      },
+      {
+        "stat_id": "stat-intelligence",
+        "level": 14,
+        "value": 64
+      },
+      {
+        "stat_id": "stat-intelligence",
+        "level": 15,
+        "value": 68
+      },
+      {
+        "stat_id": "stat-intelligence",
+        "level": 16,
+        "value": 72
+      },
+      {
+        "stat_id": "stat-intelligence",
+        "level": 17,
+        "value": 76
+      },
+      {
+        "stat_id": "stat-intelligence",
+        "level": 18,
+        "value": 80
+      },
+      {
+        "stat_id": "stat-intelligence",
+        "level": 19,
+        "value": 84
+      },
+      {
+        "stat_id": "stat-intelligence",
+        "level": 20,
+        "value": 88
+      },
+      {
+        "stat_id": "stat-wisdom",
+        "level": 1,
+        "value": 19
+      },
+      {
+        "stat_id": "stat-wisdom",
+        "level": 2,
+        "value": 18
+      },
+      {
+        "stat_id": "stat-wisdom",
+        "level": 3,
+        "value": 17
+      },
+      {
+        "stat_id": "stat-wisdom",
+        "level": 4,
+        "value": 16
+      },
+      {
+        "stat_id": "stat-wisdom",
+        "level": 5,
+        "value": 15
+      },
+      {
+        "stat_id": "stat-wisdom",
+        "level": 6,
+        "value": 14
+      },
+      {
+        "stat_id": "stat-wisdom",
+        "level": 7,
+        "value": 13
+      },
+      {
+        "stat_id": "stat-wisdom",
+        "level": 8,
+        "value": 12
+      },
+      {
+        "stat_id": "stat-wisdom",
+        "level": 9,
+        "value": 11
+      },
+      {
+        "stat_id": "stat-wisdom",
+        "level": 10,
+        "value": 10
+      },
+      {
+        "stat_id": "stat-wisdom",
+        "level": 11,
+        "value": 9
+      },
+      {
+        "stat_id": "stat-wisdom",
+        "level": 12,
+        "value": 8
+      },
+      {
+        "stat_id": "stat-wisdom",
+        "level": 13,
+        "value": 7
+      },
+      {
+        "stat_id": "stat-wisdom",
+        "level": 14,
+        "value": 6
+      },
+      {
+        "stat_id": "stat-wisdom",
+        "level": 15,
+        "value": 5
+      },
+      {
+        "stat_id": "stat-wisdom",
+        "level": 16,
+        "value": 4
+      },
+      {
+        "stat_id": "stat-wisdom",
+        "level": 17,
+        "value": 3
+      },
+      {
+        "stat_id": "stat-wisdom",
+        "level": 18,
+        "value": 2
+      },
+      {
+        "stat_id": "stat-wisdom",
+        "level": 19,
+        "value": 1
+      },
+      {
+        "stat_id": "stat-wisdom",
+        "level": 20,
+        "value": 0
+      }
+    ],
+    "abilities": [
+      {
+        "ability_id": "4e5b5a67-ba0b-43b2-bdfa-3bd426f83c7e",
+        "sort_order": 0
+      },
+      {
+        "ability_id": "a41d8d54-0a88-49c8-b53a-0cb21ef14f6a",
+        "sort_order": 1
+      }
+    ],
+    "derived_stat_overrides": [],
+    "metadata": {}
+  },
+  {
+    "id": "8cb0cf2e-a3f2-47ad-ad82-158dc9eb3d8a",
+    "display_name": "Warrior",
+    "export_key": "warrior",
+    "description": "Front-line fighter",
+    "resource_multiplier": 1.25,
+    "stat_growth": [
+      {
+        "stat_id": "stat-strength",
+        "level": 1,
+        "value": 12
+      },
+      {
+        "stat_id": "stat-strength",
+        "level": 2,
+        "value": 14
+      },
+      {
+        "stat_id": "stat-strength",
+        "level": 3,
+        "value": 16
+      },
+      {
+        "stat_id": "stat-strength",
+        "level": 4,
+        "value": 18
+      },
+      {
+        "stat_id": "stat-strength",
+        "level": 5,
+        "value": 20
+      },
+      {
+        "stat_id": "stat-constitution",
+        "level": 1,
+        "value": 15
+      },
+      {
+        "stat_id": "stat-constitution",
+        "level": 2,
+        "value": 18
+      },
+      {
+        "stat_id": "stat-constitution",
+        "level": 3,
+        "value": 21
+      },
+      {
+        "stat_id": "stat-constitution",
+        "level": 4,
+        "value": 24
+      },
+      {
+        "stat_id": "stat-constitution",
+        "level": 5,
+        "value": 27
+      },
+      {
+        "stat_id": "stat-constitution",
+        "level": 6,
+        "value": 30
+      },
+      {
+        "stat_id": "stat-constitution",
+        "level": 7,
+        "value": 33
+      },
+      {
+        "stat_id": "stat-constitution",
+        "level": 8,
+        "value": 36
+      },
+      {
+        "stat_id": "stat-constitution",
+        "level": 9,
+        "value": 39
+      },
+      {
+        "stat_id": "stat-constitution",
+        "level": 10,
+        "value": 42
+      },
+      {
+        "stat_id": "stat-constitution",
+        "level": 11,
+        "value": 45
+      },
+      {
+        "stat_id": "stat-constitution",
+        "level": 12,
+        "value": 48
+      },
+      {
+        "stat_id": "stat-constitution",
+        "level": 13,
+        "value": 51
+      },
+      {
+        "stat_id": "stat-constitution",
+        "level": 14,
+        "value": 54
+      },
+      {
+        "stat_id": "stat-constitution",
+        "level": 15,
+        "value": 57
+      },
+      {
+        "stat_id": "stat-constitution",
+        "level": 16,
+        "value": 60
+      },
+      {
+        "stat_id": "stat-constitution",
+        "level": 17,
+        "value": 63
+      },
+      {
+        "stat_id": "stat-constitution",
+        "level": 18,
+        "value": 66
+      },
+      {
+        "stat_id": "stat-constitution",
+        "level": 19,
+        "value": 69
+      },
+      {
+        "stat_id": "stat-constitution",
+        "level": 20,
+        "value": 72
+      }
+    ],
+    "abilities": [
+      {
+        "ability_id": "a41d8d54-0a88-49c8-b53a-0cb21ef14f6a",
+        "sort_order": 0
+      }
+    ],
+    "derived_stat_overrides": [
+      {
+        "derived_stat_id": "derived-stat-max-hp",
+        "formula": "constitution * 12"
+      }
+    ],
+    "metadata": {
+      "base_speed": 4
+    }
+  }
+]
+COMPACT
+[{"id":"rarity-common","display_name":"Common","export_key":"common","color_hex":"#D8DEE9","sort_order":10},{"id":"rarity-uncommon","display_name":"Uncommon","export_key":"uncommon","color_hex":"#A3BE8C","sort_order":20},{"id":"rarity-rare","display_name":"Rare","export_key":"rare","color_hex":"#5E81AC","sort_order":30},{"id":"rarity-epic","display_name":"Epic","export_key":"epic","color_hex":"#B48EAD","sort_order":40},{"id":"rarity-legendary","display_name":"Legendary","export_key":"legendary","color_hex":"#EBCB8B","sort_order":50}]
