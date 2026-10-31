@@ -29,8 +29,8 @@ build/Release/
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/
-# Flutter build output (also covers the old Electron build/Release/ above)
-/build/
+# Flutter build output at the root and in workspace packages (also covers the old Electron build/Release/ above)
+build/
 migrate_working_dir/
 **/doc/api/
 app.*.symbols
