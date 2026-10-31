@@ -4,7 +4,38 @@ Anvil is a desktop application for managing RPG game data. It gives game develop
 
 Anvil is game-agnostic — it ships with sensible RPG defaults but allows full schema customization per project.
 
-> **Status:** Pre-release (v0.1.x). All six domain editors, the validation engine, export system, and full project lifecycle are implemented and in active testing. See [Releases](https://github.com/tkforgeworks/anvil/releases) for builds.
+> **Status:** 0.1.6 (October 2026) is the final Electron release; see [Releases](https://github.com/tkforgeworks/anvil/releases) for builds. Anvil is being rebuilt in Flutter as 0.2.0 on the `v0.2.0/main` branch. The sections below describe the Electron app until the rewrite replaces them.
+
+---
+
+## Flutter rewrite (0.2.0)
+
+The Flutter desktop app (Windows + Linux) lives alongside the Electron source while it is being ported. It opens the same `.anvil` SQLite project files.
+
+### Repository layout
+
+| Path | What it is |
+|---|---|
+| `pubspec.yaml`, `lib/`, `test/` | The Flutter app (`anvil`). `lib/main.dart` is the entry point. |
+| `linux/`, `windows/` | Generated desktop runners. The window title and Windows version resources say Anvil / TK ForgeWorks. |
+| `packages/anvil_core/` | The Flutter-free core: data access, project lifecycle, formula, validation and export logic. A member of the root pub workspace. |
+| `.fvmrc` | Pins Flutter 3.47.5, the SDK the org CI and `forge-ui` use. |
+| `src/`, `package.json`, … | The Electron 0.1.x app, kept untouched as the porting reference until cutover (ANVL-169). |
+
+**Core/UI boundary.** `packages/anvil_core` must never depend on `package:flutter`. The boundary is enforced by its `pubspec.yaml`, which has no Flutter dependency, so any Flutter import fails `flutter analyze`; everything in the core runs under plain `dart test`. The app depends on the core, never the other way round.
+
+### Working on it
+
+```bash
+fvm use 3.47.5                 # once per clone; installs the pinned SDK
+fvm flutter pub get            # resolves the whole workspace
+fvm dart format --set-exit-if-changed .
+fvm flutter analyze
+fvm flutter test test packages/anvil_core/test   # app + core tests (bare `flutter test` runs only test/)
+fvm flutter build linux        # or: fvm flutter build windows
+```
+
+The Electron toolchain (`npm …`) keeps working from the same checkout; the two do not share any paths. Flutter build output goes to `build/`, which is ignored.
 
 ---
 

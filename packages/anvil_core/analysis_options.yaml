@@ -1,0 +1,7 @@
+# Pure-Dart package: package:lints rather than flutter_lints (which only adds
+# Flutter-specific rules on top of this same recommended set).
+include: package:lints/recommended.yaml
+
+linter:
+  rules:
+    prefer_single_quotes: true

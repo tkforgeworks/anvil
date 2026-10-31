@@ -1,0 +1,16 @@
+# Analyzer and lint configuration. CI runs `flutter analyze` and
+# `dart format --set-exit-if-changed .` from the repo root (org ci-flutter.yml).
+# packages/anvil_core has its own analysis_options.yaml (package:lints, since
+# it is not a Flutter package); the workspace analyzes both together.
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    - build/**
+    - windows/**
+    - linux/**
+    - node_modules/**
+
+linter:
+  rules:
+    prefer_single_quotes: true

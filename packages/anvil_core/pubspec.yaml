@@ -1,0 +1,16 @@
+name: anvil_core
+description: Anvil's Flutter-free core - data access, project lifecycle, formula, validation and export logic.
+publish_to: 'none'
+version: 0.2.0
+
+environment:
+  sdk: ^3.13.2
+resolution: workspace
+
+# No package:flutter here, by design: the app depends on this package, never
+# the other way round, so the core stays testable with plain `dart test`.
+dependencies:
+
+dev_dependencies:
+  lints: ^6.0.0
+  test: ^1.25.6

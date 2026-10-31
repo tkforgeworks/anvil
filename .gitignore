@@ -1,18 +1,40 @@
+# Claude Code local settings (machine-specific permissions)
+.claude/settings.local.json
+
+# Local working folders that never ship
 archive/
 testing/
 test-project-exports/
 design_handoff_entry_and_dashboard/
 design_work/
-.claude/settings.local.json
 
-# Dependencies
+# Editor / IDE
+.vscode/
+.idea/
+*.iml
+*.swp
+
+# --- Electron app (0.1.x, kept as the porting reference until ANVL-169) ---
 node_modules/
-
-# Build output
 .vite/
 out/
 dist/
-release/
-
-# Native module build artifacts
 build/Release/
+
+# --- Flutter app (0.2.0) ---
+# FVM: the pinned SDK lives in .fvmrc; .fvm/ is the local symlink and cache
+.fvm/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+# Flutter build output (also covers the old Electron build/Release/ above)
+/build/
+migrate_working_dir/
+**/doc/api/
+app.*.symbols
+app.*.map.json
+
+# Release artifacts: electron-builder today, scripts/release/* after ANVL-167
+/release/
