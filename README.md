@@ -10,7 +10,7 @@ Anvil is game-agnostic — it ships with sensible RPG defaults but allows full s
 
 ## Flutter rewrite (0.2.0)
 
-The Flutter desktop app (Windows + Linux) lives alongside the Electron source while it is being ported. It opens the same `.anvil` SQLite project files.
+The Flutter desktop app (Windows + Linux) lives alongside the Electron source while it is being ported. It opens the same `.anvil` SQLite project files. The architecture of the rewrite is `design_notes/Anvil_Implementation_Design_v2_0.md` (ANVL-155).
 
 ### Repository layout
 
