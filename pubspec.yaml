@@ -16,6 +16,7 @@ environment:
 # Dart pub workspace: the Flutter app at the root plus the Flutter-free core.
 workspace:
   - packages/anvil_core
+  - spikes/recipe_save_prototype
 
 dependencies:
   # Data, formula, validation and export logic. Pure Dart; it must never

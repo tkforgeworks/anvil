@@ -1,0 +1,26 @@
+name: recipe_save_prototype
+description: "ANVL-158 throwaway spike: record-level save cycle on the Recipe editor. Not merged."
+publish_to: 'none'
+version: 0.0.1
+
+environment:
+  sdk: ^3.13.2
+  flutter: ">=3.47.2"
+resolution: workspace
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_riverpod: ^3.4.3
+  path: ^1.9.1
+  # sqlite3 3.x bundles SQLite through Dart build hooks; sqlite3_flutter_libs
+  # is end-of-life (0.6.0+eol, "update to version 3.x of package:sqlite3").
+  sqlite3: ^3.8.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
