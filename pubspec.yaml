@@ -1,0 +1,34 @@
+name: anvil
+description: "Desktop RPG data manager: classes, abilities, items, recipes, NPCs and loot tables in one .anvil project file. A TK ForgeWorks product."
+publish_to: 'none'
+
+# X.Y.Z[-rc.N]+BUILD. The release branch name (vX.Y.Z/main) is the source of
+# X.Y.Z; scripts/release/bump-version.{sh,ps1} (ANVL-167) rewrites this line.
+# The manifest holds the upcoming version, per the org convention.
+version: 0.2.0+1
+
+environment:
+  # Floor matches forge-ui (sdk ^3.13.2, Flutter >=3.47.2); the repo pins
+  # Flutter 3.47.5 in .fvmrc, the same SDK the org CI uses.
+  sdk: ^3.13.2
+  flutter: ">=3.47.2"
+
+# Dart pub workspace: the Flutter app at the root plus the Flutter-free core.
+workspace:
+  - packages/anvil_core
+
+dependencies:
+  # Data, formula, validation and export logic. Pure Dart; it must never
+  # depend on package:flutter (see README "Repository layout").
+  anvil_core:
+    path: packages/anvil_core
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
