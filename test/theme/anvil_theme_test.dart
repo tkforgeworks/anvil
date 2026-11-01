@@ -64,9 +64,9 @@ void main() {
       expect(t.dividerTheme.color, const Color(0x1FFFFFFF));
       expect(c.error, const Color(0xFFF44336));
       expect(anvil.primaryEmphasis, const Color(0xFF2563EB));
-      expect(anvil.warning, const Color(0xFFFFA726));
-      expect(anvil.info, const Color(0xFF29B6F6));
-      expect(anvil.success, const Color(0xFF66BB6A));
+      expect(x.warning, const Color(0xFFFFA726));
+      expect(x.info, const Color(0xFF29B6F6));
+      expect(x.success, const Color(0xFF66BB6A));
       expect(anvil.textDisabled, const Color(0x80FFFFFF));
     });
 
@@ -76,17 +76,31 @@ void main() {
       expect(x.textTertiary, c.onSurfaceVariant);
       expect(x.textGhost, anvil.textDisabled);
       expect(x.rowDivider, c.outline);
-      expect(x.onSuccessContainer, anvil.success);
+      expect(x.onSuccessContainer, x.success);
+      expect(x.onWarningContainer, x.warning);
+      expect(x.onInfoContainer, x.info);
     });
 
     test('contrast text follows MUI: white on blue, dark on amber', () {
       expect(c.onPrimary, const Color(0xFFFFFFFF));
       expect(c.onError, const Color(0xFFFFFFFF));
-      expect(anvil.onWarning, const Color(0xDE000000));
+      expect(x.onWarning, const Color(0xDE000000));
     });
 
-    test('styles the scrollbar thumb like the Electron dark theme', () {
-      expect(t.scrollbarTheme.thumbColor!.resolve({}), const Color(0xFF6B6B6B));
+    test('is the forge_ui desktop density', () {
+      expect(t.visualDensity, VisualDensity.compact);
+      expect(
+        t.filledButtonTheme.style!.minimumSize!.resolve({}),
+        const Size(0, 36),
+      );
+      expect(t.filledButtonTheme.style!.visualDensity, VisualDensity.standard);
+    });
+
+    test('keeps the forge_ui desktop scrollbar in the palette', () {
+      final thumb = t.scrollbarTheme.thumbColor!;
+      expect(t.scrollbarTheme.thumbVisibility!.resolve({}), isTrue);
+      expect(thumb.resolve({}), x.textGhost);
+      expect(thumb.resolve({WidgetState.hovered}), x.textTertiary);
     });
   });
 
@@ -94,6 +108,7 @@ void main() {
     final t = anvilTheme(AnvilThemeSpec.light);
     final c = t.colorScheme;
     final anvil = t.extension<AnvilColors>()!;
+    final x = t.extension<ForgeTokens>()!;
 
     test('carries the Electron light palette', () {
       expect(c.brightness, Brightness.light);
@@ -106,22 +121,22 @@ void main() {
       expect(c.outline, const Color(0x1F000000));
       expect(c.error, const Color(0xFFD32F2F));
       expect(anvil.primaryEmphasis, const Color(0xFF1D4ED8));
-      expect(anvil.warning, const Color(0xFFED6C02));
-      expect(anvil.info, const Color(0xFF0288D1));
-      expect(anvil.success, const Color(0xFF2E7D32));
+      expect(x.warning, const Color(0xFFED6C02));
+      expect(x.info, const Color(0xFF0288D1));
+      expect(x.success, const Color(0xFF2E7D32));
       expect(anvil.textDisabled, const Color(0x61000000));
     });
 
-    test('leaves the scrollbar to the platform', () {
-      expect(t.scrollbarTheme.thumbColor, isNull);
-      expect(anvil.scrollbarThumb, isNull);
+    test('shows the scrollbar on desktop too', () {
+      expect(t.scrollbarTheme.thumbVisibility!.resolve({}), isTrue);
+      expect(t.scrollbarTheme.thumbColor!.resolve({}), x.textGhost);
     });
 
     test('darkens intent text on light containers', () {
-      expect(anvil.onWarningContainer, isNot(anvil.warning));
+      expect(x.onWarningContainer, isNot(x.warning));
       expect(
-        anvil.onWarningContainer.computeLuminance(),
-        lessThan(anvil.warning.computeLuminance()),
+        x.onWarningContainer.computeLuminance(),
+        lessThan(x.warning.computeLuminance()),
       );
     });
   });
@@ -135,9 +150,10 @@ void main() {
         t.textTheme.labelSmall!.fontFamily,
         'packages/forge_ui/JetBrains Mono',
       );
-      expect(AnvilType.code().fontFamily, 'packages/forge_ui/JetBrains Mono');
-      expect(AnvilType.code().letterSpacing, 0);
+      expect(ForgeType.code().fontFamily, 'packages/forge_ui/JetBrains Mono');
+      expect(ForgeType.code().letterSpacing, 0);
       expect(AnvilType.numeric().fontFeatures, isNotEmpty);
+      expect(AnvilType.numeric().fontFamily, 'packages/forge_ui/Poppins');
     });
 
     test('the app declares none of its own', () {
@@ -178,13 +194,13 @@ void main() {
       expect(cx.link, dx.link);
       expect(cx.textGhost, dx.textGhost);
       expect(cx.successContainer, dx.successContainer);
+      expect(cx.warning, dx.warning);
+      expect(cx.warningContainer, dx.warningContainer);
+      expect(cx.info, dx.info);
+      expect(cx.success, dx.success);
       final ca = custom.extension<AnvilColors>()!;
       final da = dark.extension<AnvilColors>()!;
       expect(ca.copyWith(primaryEmphasis: da.primaryEmphasis), da);
-      expect(
-        custom.scrollbarTheme.thumbColor!.resolve({}),
-        const Color(0xFF6B6B6B),
-      );
     });
 
     test('the documented sample maps every key', () {
@@ -192,6 +208,7 @@ void main() {
       final t = anvilTheme(AnvilThemeSpec.custom(colors));
       final c = t.colorScheme;
       final anvil = t.extension<AnvilColors>()!;
+      final x = t.extension<ForgeTokens>()!;
       expect(c.brightness, Brightness.dark);
       expect(c.primary, const Color(0xFFBB86FC));
       expect(c.secondary, const Color(0xFF03DAC6));
@@ -201,9 +218,9 @@ void main() {
       expect(c.onSurfaceVariant, const Color(0xFFA0A0A0));
       expect(c.error, const Color(0xFFCF6679));
       expect(c.outline, const Color(0xFF333333));
-      expect(anvil.warning, const Color(0xFFFFB74D));
-      expect(anvil.info, const Color(0xFF64B5F6));
-      expect(anvil.success, const Color(0xFF81C784));
+      expect(x.warning, const Color(0xFFFFB74D));
+      expect(x.info, const Color(0xFF64B5F6));
+      expect(x.success, const Color(0xFF81C784));
       // Not settable from a file: derived like MUI's primary.dark,
       // `darken('#bb86fc', 0.3)` with MUI's channel truncation.
       expect(anvil.primaryEmphasis, const Color(0xFF825DB0));
@@ -227,14 +244,14 @@ void main() {
 
     test('lerp moves between themes', () {
       expect(a.lerp(b, 0), a);
-      expect(a.lerp(b, 1).warning, b.warning);
+      expect(a.lerp(b, 1).textDisabled, b.textDisabled);
       expect(a.lerp(null, 0.5), a);
     });
 
     test('copyWith replaces only what is passed', () {
-      final copy = a.copyWith(info: b.info);
-      expect(copy.info, b.info);
-      expect(copy.warning, a.warning);
+      final copy = a.copyWith(textDisabled: b.textDisabled);
+      expect(copy.textDisabled, b.textDisabled);
+      expect(copy.primaryEmphasis, a.primaryEmphasis);
     });
   });
 }

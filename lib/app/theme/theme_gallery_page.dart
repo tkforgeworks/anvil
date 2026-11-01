@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:forge_ui/forge_ui.dart';
 
-import 'anvil_colors.dart';
 import 'anvil_metrics.dart';
 import 'theme_controller.dart';
 
@@ -152,7 +151,7 @@ class _ThemeGalleryPageState extends State<ThemeGalleryPage> {
               const SizedBox(height: AnvilSpacing.sm),
               Text(
                 selection.customPath!,
-                style: AnvilType.code(color: context.forge.textTertiary),
+                style: ForgeType.code(color: context.forge.textTertiary),
               ),
             ],
             if (error != null) ...[
@@ -165,8 +164,11 @@ class _ThemeGalleryPageState extends State<ThemeGalleryPage> {
     );
   }
 
+  // Wide enough for the controls row at its natural width in any font,
+  // including the fixed-pitch test font: desktop-density buttons size to
+  // their label, so nothing in a Row shrinks to fit.
   Widget _card(String label, Widget child) => SizedBox(
-    width: 360,
+    width: 420,
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -196,9 +198,7 @@ class _ThemeGalleryPageState extends State<ThemeGalleryPage> {
           TextButton(onPressed: () {}, child: const Text('Open editor')),
           IconButton(onPressed: () {}, icon: const Icon(Icons.add)),
           const Spacer(),
-          const Flexible(
-            child: FilledButton(onPressed: null, child: Text('Disabled')),
-          ),
+          const FilledButton(onPressed: null, child: Text('Disabled')),
         ],
       ),
       const SizedBox(height: AnvilSpacing.sm),
@@ -254,12 +254,12 @@ class _ThemeGalleryPageState extends State<ThemeGalleryPage> {
         Text('Modified 3 minutes ago', style: text.bodySmall),
         const SizedBox(height: AnvilSpacing.sm),
         const ForgeMonoLabel('Export key'),
-        Text('class-warrior', style: AnvilType.code()),
+        Text('class-warrior', style: ForgeType.code()),
         const SizedBox(height: AnvilSpacing.xs),
         const ForgeMonoLabel('Formula'),
         Text(
           'floor(base_hp + level * hp_growth)',
-          style: AnvilType.code(color: context.colors.primary),
+          style: ForgeType.code(color: context.colors.primary),
         ),
         const SizedBox(height: AnvilSpacing.xs),
         Text('1,024  ·  87  ·  3,210', style: AnvilType.numeric()),
@@ -268,7 +268,6 @@ class _ThemeGalleryPageState extends State<ThemeGalleryPage> {
   }
 
   Widget _status() {
-    final anvil = context.anvil;
     final c = context.colors;
     final x = context.forge;
     Widget banner(String text, Color fill, Color on) => Container(
@@ -290,11 +289,11 @@ class _ThemeGalleryPageState extends State<ThemeGalleryPage> {
         const SizedBox(height: AnvilSpacing.sm),
         banner(
           '1 warning: soft-deleted reference',
-          anvil.warningContainer,
-          anvil.onWarningContainer,
+          x.warningContainer,
+          x.onWarningContainer,
         ),
         const SizedBox(height: AnvilSpacing.sm),
-        banner('Auto-save in 4 s', anvil.infoContainer, anvil.onInfoContainer),
+        banner('Auto-save in 4 s', x.infoContainer, x.onInfoContainer),
         const SizedBox(height: AnvilSpacing.sm),
         banner('Saved', x.successContainer, x.onSuccessContainer),
         const SizedBox(height: AnvilSpacing.md),

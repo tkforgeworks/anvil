@@ -29,7 +29,6 @@ class AnvilThemeSpec {
     required this.info,
     required this.success,
     required this.divider,
-    this.scrollbarThumb,
   });
 
   /// Anvil Dark: `themes/dark.ts` over MUI's dark defaults.
@@ -48,7 +47,6 @@ class AnvilThemeSpec {
     info: AnvilPalette.darkInfo,
     success: AnvilPalette.darkSuccess,
     divider: AnvilPalette.darkDivider,
-    scrollbarThumb: AnvilPalette.darkScrollbarThumb,
   );
 
   /// Anvil Light: `themes/light.ts` over MUI's light defaults.
@@ -98,7 +96,6 @@ class AnvilThemeSpec {
       info: pick('info', base.info),
       success: pick('success', base.success),
       divider: pick('divider', base.divider),
-      scrollbarThumb: base.scrollbarThumb,
     );
   }
 
@@ -116,7 +113,6 @@ class AnvilThemeSpec {
   final Color info;
   final Color success;
   final Color divider;
-  final Color? scrollbarThumb;
 
   bool get isDark => brightness == Brightness.dark;
 
@@ -136,8 +132,7 @@ class AnvilThemeSpec {
       other.warning == warning &&
       other.info == info &&
       other.success == success &&
-      other.divider == divider &&
-      other.scrollbarThumb == scrollbarThumb;
+      other.divider == divider;
 
   @override
   int get hashCode => Object.hash(
@@ -155,14 +150,14 @@ class AnvilThemeSpec {
     info,
     success,
     divider,
-    scrollbarThumb,
   );
 }
 
-/// Builds Anvil's theme from [spec] on the shared `forgeTheme`: the spec's
-/// colours become the Material [ColorScheme], the `ForgeTokens` and
-/// [AnvilColors]; type, shapes and every component theme come from
-/// `forge_ui`.
+/// Builds Anvil's theme from [spec] on the shared `forgeTheme` at desktop
+/// density: the spec's colours become the Material [ColorScheme], the
+/// `ForgeTokens` (including the warning, info and success intents) and
+/// [AnvilColors]; type, shapes, the scrollbar and every component theme
+/// come from `forge_ui`.
 ///
 /// The MUI → Material 3 mapping: `background.default` is the scaffold
 /// `surface`, `background.paper` is `surfaceContainerLowest` (cards, inputs,
@@ -231,10 +226,8 @@ ThemeData anvilTheme(AnvilThemeSpec spec) {
     skeletonHighlight: dark
         ? scheme.surfaceContainerHighest
         : scheme.surfaceContainerLow,
-  );
-
-  final anvil = AnvilColors(
-    primaryEmphasis: spec.primaryEmphasis,
+    // The MUI status trio, from the spec rather than forge_ui's fixed hues,
+    // so a custom theme file's warning / info / success keys apply.
     warning: spec.warning,
     onWarning: contrastText(spec.warning),
     warningContainer: tint(spec.warning, selected),
@@ -245,23 +238,18 @@ ThemeData anvilTheme(AnvilThemeSpec spec) {
     onInfoContainer: onContainer(spec.info),
     success: spec.success,
     onSuccess: contrastText(spec.success),
-    textDisabled: spec.textDisabled,
-    scrollbarThumb: spec.scrollbarThumb,
   );
 
-  final theme = forgeTheme(
+  final anvil = AnvilColors(
+    primaryEmphasis: spec.primaryEmphasis,
+    textDisabled: spec.textDisabled,
+  );
+
+  return forgeTheme(
     seed: spec.primary,
     colorScheme: scheme,
     tokens: tokens,
     extensions: [anvil],
-  );
-  final thumb = spec.scrollbarThumb;
-  if (thumb == null) return theme;
-  // `scrollbarColor: #6b6b6b <background>` in the Electron dark theme.
-  return theme.copyWith(
-    scrollbarTheme: ScrollbarThemeData(
-      thumbColor: WidgetStatePropertyAll(thumb),
-      thumbVisibility: const WidgetStatePropertyAll(true),
-    ),
+    density: ForgeDensity.desktop,
   );
 }
