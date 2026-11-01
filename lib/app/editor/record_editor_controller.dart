@@ -8,6 +8,7 @@ import 'package:anvil_core/anvil_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../shell/shell_providers.dart';
 import 'clock.dart';
 import 'dirty_editors.dart';
 import 'editor_state.dart';
@@ -110,7 +111,9 @@ abstract class RecordEditorController<T> extends AsyncNotifier<EditorState<T>> {
   /// The only write path, shared by the Save button, Ctrl+S, the leave
   /// prompt and Save all. The blockers are checked here and again in the
   /// repository. On failure the draft is kept, still dirty and undoable,
-  /// and [EditorState.saveError] holds the message.
+  /// and [EditorState.saveError] holds the message. A completed save bumps
+  /// `writeEpochProvider` once, as its contract asks of every write path,
+  /// so the sidebar counts and the project validation refresh.
   Future<SaveOutcome> save() async {
     final current = state.value;
     if (current == null || current.saving) return SaveOutcome.busy;
@@ -128,6 +131,7 @@ abstract class RecordEditorController<T> extends AsyncNotifier<EditorState<T>> {
           persisted: persisted,
         ),
       );
+      ref.read(writeEpochProvider.notifier).bump();
       return SaveOutcome.saved;
     } catch (error) {
       if (ref.mounted) {
@@ -179,6 +183,8 @@ abstract class RecordEditorController<T> extends AsyncNotifier<EditorState<T>> {
           recordId: recordId,
           displayName: displayNameOf(next.draft),
           save: save,
+          discard: discard,
+          blockers: next.blockers,
           saving: saving,
           saveError: saveError,
         ),

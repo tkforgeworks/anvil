@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:anvil/app/editor/clock.dart';
 import 'package:anvil/app/editor/editor_state.dart';
+import 'package:anvil/app/shell/shell_providers.dart';
 import 'package:anvil_core/anvil_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -122,9 +123,11 @@ void main() {
   test('a save rebases to clean and keeps the undo stack', () async {
     controller().setDisplayName('Forge Steel Sword');
     controller().addIngredient('item-herb');
+    expect(container.read(writeEpochProvider), 0);
 
     expect(await controller().save(), SaveOutcome.saved);
 
+    expect(container.read(writeEpochProvider), 1, reason: 'one bump per save');
     expect(store.saves, [swordRecipeId]);
     expect(store.records[swordRecipeId]!.displayName, 'Forge Steel Sword');
     expect(state().isDirty, isFalse);

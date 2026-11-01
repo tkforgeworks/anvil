@@ -3,12 +3,20 @@ import 'dart:ui';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../editor/exit_prompt.dart';
 import '../providers.dart';
+import '../shell/app_router.dart';
 
 /// Listens for the platform's exit request, which both runners forward to
-/// the framework when the window is closed (design §8.8), and logs the
-/// 0.1.6 shutdown line once. Exit is always allowed for now; the shared
-/// editor scaffold (S5) puts the dirty-editor prompt in front of it.
+/// the framework when the window is closed (design §8.8), puts the
+/// dirty-editor prompt (`confirmLeaveAll`) in front of it, and logs the
+/// 0.1.6 shutdown line once the exit goes ahead.
+///
+/// It sits above `MaterialApp.router`, so it shows the prompt through the
+/// router's root navigator ([rootNavigatorKeyProvider]). Cancel in the
+/// prompt, or a Save all that leaves an editor unsaved, answers
+/// [AppExitResponse.cancel] and the window stays open. A second exit
+/// request while the prompt is open is cancelled.
 class AppExitHandler extends ConsumerStatefulWidget {
   const AppExitHandler({super.key, required this.child});
 
@@ -21,6 +29,7 @@ class AppExitHandler extends ConsumerStatefulWidget {
 class _AppExitHandlerState extends ConsumerState<AppExitHandler> {
   late final AppLifecycleListener _listener;
   var _shutdownLogged = false;
+  var _prompting = false;
 
   @override
   void initState() {
@@ -38,6 +47,18 @@ class _AppExitHandlerState extends ConsumerState<AppExitHandler> {
   }
 
   Future<AppExitResponse> _onExitRequested() async {
+    if (_prompting) return AppExitResponse.cancel;
+    final context = ref.read(rootNavigatorKeyProvider).currentContext;
+    if (context != null) {
+      _prompting = true;
+      final bool leave;
+      try {
+        leave = await confirmLeaveAll(context, ref);
+      } finally {
+        _prompting = false;
+      }
+      if (!leave) return AppExitResponse.cancel;
+    }
     _logShutdown();
     return AppExitResponse.exit;
   }

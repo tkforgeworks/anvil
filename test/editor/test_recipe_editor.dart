@@ -95,6 +95,9 @@ class RecipeEditorControllerForTest
   void setDisplayName(String value) =>
       edit((d) => d.copyWith(displayName: value), coalesceKey: 'displayName');
 
+  void setDescription(String value) =>
+      edit((d) => d.copyWith(description: value), coalesceKey: 'description');
+
   void setOutputQuantity(int quantity) =>
       edit((d) => d.copyWith(outputQuantity: quantity));
 
