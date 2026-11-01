@@ -6,6 +6,14 @@ library;
 
 import 'package:anvil/app/editor/editor_state.dart';
 import 'package:anvil/app/editor/record_editor_scope.dart';
+import 'package:anvil/app/editor/widgets/dirty_dot.dart';
+import 'package:anvil/app/editor/widgets/draft_text_field.dart';
+import 'package:anvil/app/editor/widgets/edit_header.dart';
+import 'package:anvil/app/editor/widgets/save_bar.dart';
+import 'package:anvil/app/editor/widgets/validation_banner.dart';
+import 'package:anvil/app/theme/anvil_theme.dart';
+import 'package:anvil_core/anvil_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -108,3 +116,100 @@ class _DraftFieldState extends State<_DraftField> {
   Widget build(BuildContext context) =>
       TextField(controller: _controller, onChanged: widget.onChanged);
 }
+
+/// The recipe editor composed from the shared scaffold (ANVL-187), as a
+/// domain editor is: [RecordEditorScope] around the [EditHeader], a tab
+/// row with [DirtyDot]s from [dirtyTabs], [DraftTextField]s, the
+/// [ValidationBanner] over [issues] and the [SaveBar].
+class TestRecipeScaffoldPage extends ConsumerWidget {
+  const TestRecipeScaffoldPage({
+    super.key,
+    required this.recordId,
+    this.issues = const [],
+    this.onBack,
+    this.onSaveOutcome,
+  });
+
+  final String recordId;
+  final List<ValidationIssue> issues;
+  final VoidCallback? onBack;
+  final ValueChanged<SaveOutcome>? onSaveOutcome;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final provider = testRecipeEditorProvider(recordId);
+    final state = ref.watch(provider).value;
+    final controller = ref.read(provider.notifier);
+    if (state == null) return const Center(child: CircularProgressIndicator());
+    final dirty = dirtyTabs<RecipeDraft>(state.baseline, state.draft, {
+      'details': (a, b) => a.description == b.description,
+      'ingredients': (a, b) => listEquals(a.ingredients, b.ingredients),
+    });
+    return RecordEditorScope(
+      provider: provider,
+      onSaveOutcome: onSaveOutcome,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          EditHeader(
+            provider: provider,
+            backLabel: 'Recipes',
+            onBack: onBack ?? () {},
+            displayNameOf: (d) => d.displayName,
+            exportKeyOf: (d) => d.exportKey,
+            onDisplayNameChanged: controller.setDisplayName,
+            onSaveOutcome: onSaveOutcome,
+          ),
+          Row(
+            children: [
+              const Text('Details'),
+              DirtyDot(
+                key: const Key('dot-details'),
+                visible: dirty.contains('details'),
+              ),
+              const SizedBox(width: 24),
+              const Text('Ingredients'),
+              DirtyDot(
+                key: const Key('dot-ingredients'),
+                visible: dirty.contains('ingredients'),
+              ),
+            ],
+          ),
+          ValidationBanner(issues),
+          Expanded(
+            child: ListView(
+              children: [
+                DraftTextField(
+                  key: const Key('field-description'),
+                  label: 'Description',
+                  value: state.draft.description,
+                  onChanged: controller.setDescription,
+                  issueMessage: fieldIssueText(issues, 'description'),
+                ),
+                TextButton(
+                  key: const Key('add-ingredient'),
+                  onPressed: () => controller.addIngredient(
+                    'item-extra-${state.draft.ingredients.length}',
+                  ),
+                  child: const Text('Add ingredient'),
+                ),
+              ],
+            ),
+          ),
+          SaveBar(provider: provider, onSaveOutcome: onSaveOutcome),
+        ],
+      ),
+    );
+  }
+}
+
+/// [child] in a desktop-sized, Anvil-themed app over [container], as the
+/// scaffold tests mount it.
+Widget scaffoldTestApp(ProviderContainer container, Widget child) =>
+    UncontrolledProviderScope(
+      container: container,
+      child: MaterialApp(
+        theme: anvilTheme(AnvilThemeSpec.dark),
+        home: Scaffold(body: child),
+      ),
+    );

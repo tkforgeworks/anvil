@@ -12,6 +12,14 @@ import 'shell_domain.dart';
 /// Where the welcome page lives, outside the shell.
 const welcomeLocation = '/welcome';
 
+/// The key of the router's root navigator, above the shell's. Code outside
+/// the widget tree below the router, such as `AppExitHandler` (which sits
+/// above `MaterialApp.router`), shows dialogs through its context. One key
+/// per container, so test apps never share a `GlobalKey`.
+final rootNavigatorKeyProvider = Provider<GlobalKey<NavigatorState>>(
+  (ref) => GlobalKey<NavigatorState>(debugLabel: 'root'),
+);
+
 /// The app's one router (design §13.2): `/welcome` while no project is
 /// open, and the shell with the 0.1.6 routes (`App.tsx`) while one is.
 ///
@@ -27,6 +35,7 @@ final routerProvider = Provider<GoRouter>((ref) {
   ref.listen(projectSessionProvider, (_, next) => session.value = next);
 
   final router = GoRouter(
+    navigatorKey: ref.read(rootNavigatorKeyProvider),
     initialLocation: '/',
     refreshListenable: session,
     redirect: (_, state) {

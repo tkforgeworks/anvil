@@ -4,6 +4,7 @@
 library;
 
 import 'package:anvil_core/anvil_core.dart';
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'editor_state.dart';
@@ -15,6 +16,8 @@ final class DirtyEditor {
     required this.recordId,
     required this.displayName,
     required this.save,
+    required this.discard,
+    this.blockers = const [],
     this.saving = false,
     this.saveError,
   });
@@ -27,6 +30,16 @@ final class DirtyEditor {
 
   /// Saves this editor's draft (the controller's `save`).
   final Future<SaveOutcome> Function() save;
+
+  /// Throws this editor's draft back to its baseline (the controller's
+  /// `discard`), which also removes the entry. The exit prompt's Discard
+  /// all calls it.
+  final void Function() discard;
+
+  /// The save-blocking rules the draft breaks; a non-empty list makes
+  /// [save] return `SaveOutcome.blocked`, and the prompts show the first
+  /// message.
+  final List<SaveBlocker> blockers;
 
   /// A save of this editor is in flight.
   final bool saving;
@@ -42,16 +55,27 @@ final class DirtyEditor {
       other.recordId == recordId &&
       other.displayName == displayName &&
       other.save == save &&
+      other.discard == discard &&
+      listEquals(other.blockers, blockers) &&
       other.saving == saving &&
       other.saveError == saveError;
 
   @override
-  int get hashCode =>
-      Object.hash(domain, recordId, displayName, save, saving, saveError);
+  int get hashCode => Object.hash(
+    domain,
+    recordId,
+    displayName,
+    save,
+    discard,
+    Object.hashAll(blockers),
+    saving,
+    saveError,
+  );
 
   @override
   String toString() =>
       'DirtyEditor(${domain.name} $recordId $displayName'
+      '${blockers.isEmpty ? '' : ', ${blockers.length} blocked'}'
       '${saving ? ', saving' : ''}'
       '${saveError == null ? '' : ', error: $saveError'})';
 }
