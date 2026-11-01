@@ -14,7 +14,6 @@ abstract final class AnvilPalette {
   static const darkSecondary = Color(0xFF60A5FA);
   static const darkBackground = Color(0xFF0F172A);
   static const darkPaper = Color(0xFF1E293B);
-  static const darkScrollbarThumb = Color(0xFF6B6B6B);
 
   // MUI dark palette defaults.
   static const darkTextPrimary = Color(0xFFFFFFFF);

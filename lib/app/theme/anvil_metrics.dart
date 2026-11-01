@@ -35,27 +35,10 @@ abstract final class AnvilLayout {
   static const inspectorRailWidth = 260.0;
 }
 
-/// Type styles Anvil needs beyond the `forge_ui` scale: JetBrains Mono as
-/// code (export keys, formulas, log lines) rather than as the uppercase
-/// letterspaced label `ForgeType.mono` is, and tabular figures for numeric
-/// grid cells.
+/// Type styles Anvil needs beyond the `forge_ui` scale. Code and identifiers
+/// (export keys, formulas, paths, log lines) are `ForgeType.code`; this adds
+/// tabular figures for numeric grid cells.
 abstract final class AnvilType {
-  /// Code and identifiers: export keys, formulas, paths.
-  static TextStyle code({
-    double size = 13,
-    FontWeight weight = FontWeight.w400,
-    Color? color,
-    double? height,
-  }) => TextStyle(
-    fontFamily: ForgeType.monoFamily,
-    package: ForgeType.package,
-    fontSize: size,
-    fontWeight: weight,
-    letterSpacing: 0,
-    color: color,
-    height: height,
-  );
-
   /// Numbers that line up in columns: stat grids, weights, counts.
   static TextStyle numeric({
     double size = 14,
