@@ -11,6 +11,7 @@ export 'src/db/project_database.dart';
 export 'src/db/save_descriptions.dart';
 export 'src/db/save_history.dart';
 export 'src/domain/domain.dart';
+export 'src/draft/draft.dart';
 export 'src/export/export.dart';
 export 'src/formula/formula.dart';
 export 'src/logging/anonymize_path.dart';
