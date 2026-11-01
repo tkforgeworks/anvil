@@ -1,20 +1,30 @@
+import 'dart:convert';
 import 'dart:io';
 
-import 'package:anvil/app/theme/theme_controller.dart';
-import 'package:anvil/main.dart';
+import 'package:anvil/app/theme/theme_gallery_page.dart';
 import 'package:anvil_core/anvil_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../app_bootstrap_test.dart' show AppHarness;
 import 'anvil_theme_test.dart' show sampleTheme;
 
 void main() {
-  Future<void> pumpGallery(WidgetTester tester, ThemeController c) async {
+  /// Pumps the app over [settings] and opens the gallery from the
+  /// debug-build home page.
+  Future<AppHarness> pumpGallery(
+    WidgetTester tester, {
+    String? settings,
+  }) async {
     tester.view.physicalSize = const Size(1400, 1600);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
-    await tester.pumpWidget(AnvilApp(controller: c));
+    final harness = AppHarness.create(settingsJson: settings);
+    await tester.pumpWidget(harness.app());
+    await tester.tap(find.text('Open theme gallery'));
     await tester.pumpAndSettle();
+    expect(find.byType(ThemeGalleryPage), findsOneWidget);
+    return harness;
   }
 
   void expectCoreControls() {
@@ -29,7 +39,7 @@ void main() {
   }
 
   testWidgets('renders the core controls in dark', (tester) async {
-    await pumpGallery(tester, ThemeController());
+    await pumpGallery(tester);
     expectCoreControls();
     expect(
       Theme.of(tester.element(find.text('Save'))).brightness,
@@ -39,7 +49,7 @@ void main() {
   });
 
   testWidgets('renders the core controls in light', (tester) async {
-    await pumpGallery(tester, ThemeController(const ThemeSelection.light()));
+    await pumpGallery(tester, settings: '{"theme":"light"}');
     expectCoreControls();
     expect(
       Theme.of(tester.element(find.text('Save'))).brightness,
@@ -49,10 +59,13 @@ void main() {
   });
 
   testWidgets('renders the core controls in custom', (tester) async {
-    final colors = parseCustomThemeSource(sampleTheme).colors!;
     await pumpGallery(
       tester,
-      ThemeController(ThemeSelection.custom(colors: colors, path: '/x.json')),
+      settings: jsonEncode({
+        'theme': 'custom',
+        'customThemePath': '/x.json',
+        'customThemeColors': jsonDecode(sampleTheme),
+      }),
     );
     expectCoreControls();
     expect(find.text('/x.json'), findsOneWidget);
@@ -64,11 +77,10 @@ void main() {
   });
 
   testWidgets('the segmented control switches modes', (tester) async {
-    final controller = ThemeController();
-    await pumpGallery(tester, controller);
+    final harness = await pumpGallery(tester);
     await tester.tap(find.text('Light'));
     await tester.pumpAndSettle();
-    expect(controller.value.mode, AnvilThemeMode.light);
+    expect(harness.store.read().theme, AppThemeMode.light);
     expect(
       Theme.of(tester.element(find.text('Save'))).brightness,
       Brightness.light,
@@ -76,11 +88,9 @@ void main() {
   });
 
   testWidgets('loading an invalid file shows its message', (tester) async {
-    final dir = Directory.systemTemp.createTempSync('anvil-gallery');
-    addTearDown(() => dir.deleteSync(recursive: true));
+    final harness = await pumpGallery(tester);
+    final dir = harness.directory;
     final bad = File('${dir.path}/bad.json')..writeAsStringSync('{"mode": 3}');
-    final controller = ThemeController();
-    await pumpGallery(tester, controller);
 
     await tester.enterText(find.byType(TextField).first, bad.path);
     await tester.tap(find.text('Load'));
@@ -90,7 +100,7 @@ void main() {
       find.text('"mode" must be "dark" or "light", got "3".'),
       findsOneWidget,
     );
-    expect(controller.value.mode, AnvilThemeMode.dark);
+    expect(harness.store.read().theme, AppThemeMode.dark);
 
     final good = File('${dir.path}/good.json')
       ..writeAsStringSync('{"mode": "light", "primary": "#aa0000"}');
@@ -98,8 +108,14 @@ void main() {
     await tester.tap(find.text('Load'));
     await tester.pumpAndSettle();
 
-    expect(controller.value.mode, AnvilThemeMode.custom);
+    final stored = harness.store.read();
+    expect(stored.theme, AppThemeMode.custom);
+    expect(stored.customThemePath, good.path);
     expect(find.text(good.path), findsWidgets);
     expect(find.textContaining('must be'), findsNothing);
+    expect(
+      Theme.of(tester.element(find.text('Save'))).brightness,
+      Brightness.light,
+    );
   });
 }

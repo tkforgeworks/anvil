@@ -29,6 +29,11 @@ constexpr const wchar_t kGetPreferredBrightnessRegValue[] = L"AppsUseLightTheme"
 // The number of Win32Window objects that currently exist.
 static int g_active_window_count = 0;
 
+// The minimum window size Anvil 0.1.6 enforced (BrowserWindow minWidth 1400,
+// minHeight 600), in logical pixels. Design §13.3.
+constexpr int kMinWindowWidth = 1400;
+constexpr int kMinWindowHeight = 600;
+
 using EnableNonClientDpiScaling = BOOL __stdcall(HWND hwnd);
 
 // Scale helper to convert logical scaler values to physical using passed in
@@ -216,6 +221,19 @@ Win32Window::MessageHandler(HWND hwnd,
     case WM_DWMCOLORIZATIONCOLORCHANGED:
       UpdateTheme(hwnd);
       return 0;
+
+    case WM_GETMINMAXINFO: {
+      // Scaled to the DPI of the monitor the window is on, as Create() scales
+      // the initial size. WM_CLOSE needs no handling here: FlutterWindow
+      // passes every message to HandleTopLevelWindowProc first, where the
+      // engine's lifecycle manager turns the last window's WM_CLOSE into a
+      // cancelable exit request to the framework.
+      auto info = reinterpret_cast<MINMAXINFO*>(lparam);
+      double scale_factor = FlutterDesktopGetDpiForHWND(hwnd) / 96.0;
+      info->ptMinTrackSize.x = Scale(kMinWindowWidth, scale_factor);
+      info->ptMinTrackSize.y = Scale(kMinWindowHeight, scale_factor);
+      return 0;
+    }
   }
 
   return DefWindowProc(window_handle_, message, wparam, lparam);

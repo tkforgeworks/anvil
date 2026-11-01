@@ -52,7 +52,20 @@ static void my_application_activate(GApplication* application) {
     gtk_window_set_title(window, "Anvil");
   }
 
-  gtk_window_set_default_size(window, 1280, 720);
+  gtk_window_set_default_size(window, 1400, 800);
+
+  // The minimum size Anvil 0.1.6 enforced (BrowserWindow minWidth 1400,
+  // minHeight 600), in logical pixels. Design §13.3.
+  GdkGeometry geometry = {};
+  geometry.min_width = 1400;
+  geometry.min_height = 600;
+  gtk_window_set_geometry_hints(window, nullptr, &geometry, GDK_HINT_MIN_SIZE);
+
+  // Closing the window needs no handler here: when the view is realized,
+  // FlView connects "delete-event" on its toplevel window, calls
+  // fl_engine_request_app_exit() and stops the event, so the framework's
+  // AppLifecycleListener.onExitRequested decides whether the app quits
+  // (Flutter 3.47.5 engine, shell/platform/linux/fl_view.cc).
 
   g_autoptr(FlDartProject) project = fl_dart_project_new();
   fl_dart_project_set_dart_entrypoint_arguments(

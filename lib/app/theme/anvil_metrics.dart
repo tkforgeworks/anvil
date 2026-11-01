@@ -28,7 +28,9 @@ abstract final class AnvilRadii {
 
 /// Fixed dimensions of the desktop shell, carried over from the Electron app.
 abstract final class AnvilLayout {
-  static const minWindowSize = Size(900, 600);
+  /// The minimum 0.1.6 enforced (`minWidth`/`minHeight` in `src/main/index.ts`);
+  /// the runners set it natively (design §13.3).
+  static const minWindowSize = Size(1400, 600);
   static const titleBarHeight = 36.0;
   static const sidebarWidth = 220.0;
   static const sidebarCollapsedWidth = 56.0;
