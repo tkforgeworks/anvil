@@ -600,7 +600,7 @@ The sidebar lists the six domains with record counts, plus Dashboard, Validation
 
 ### 13.3 Window
 
-0.2.0 uses the native OS window frame. The Electron frameless window with a custom title bar is dropped: it means fewer moving parts and no `window_manager` dependency, which is mid-migration upstream. The `window:*` channels go with it. The minimum window size of 900×600 is set in the runners rather than through a plugin: in `linux/runner/my_application.cc` (GTK geometry hints) and in the Windows window procedure in `windows/runner/win32_window.cpp` (`WM_GETMINMAXINFO`, scaled for DPI) (paths derived from the current runners). 0.1.6's `BrowserWindow` actually sets a minimum width of 1400 (derived from `src/main/index.ts`); 0.2.0 uses 900×600. The project name and save status sit in the app bar.
+0.2.0 uses the native OS window frame. The Electron frameless window with a custom title bar is dropped: it means fewer moving parts and no `window_manager` dependency, which is mid-migration upstream. The `window:*` channels go with it. The minimum window size of 1400×600, the size 0.1.6's `BrowserWindow` enforces (derived from `src/main/index.ts`; decided 2026-10-31), is set in the runners rather than through a plugin: in `linux/runner/my_application.cc` (GTK geometry hints) and in the Windows window procedure in `windows/runner/win32_window.cpp` (`WM_GETMINMAXINFO`, scaled for DPI) (paths derived from the current runners). The project name and save status sit in the app bar.
 
 ### 13.4 Menu and shortcuts
 
@@ -776,7 +776,7 @@ Proposed child tickets, in dependency order, each about one working session and 
 
 | # | Summary | Goal | After |
 | :---- | :---- | :---- | :---- |
-| S1 | App bootstrap: error zones, logging, providers, persisted theme and minimum window size | `main()` with `runZonedGuarded` and the error hooks, `ProviderScope` with the root overrides, the theme driven by app settings, and 900×600 set in both runners, which forward close requests to the framework. | C3 |
+| S1 | App bootstrap: error zones, logging, providers, persisted theme and minimum window size | `main()` with `runZonedGuarded` and the error hooks, `ProviderScope` with the root overrides, the theme driven by app settings, and the 1400×600 minimum set in both runners, which forward close requests to the framework. | C3 |
 | S2 | Welcome page and project lifecycle UI | Create dialog with folder picker, open, recent list with remove and clear, and the lock-conflict, upgrade-copy and recovery-mode dialogs. | C2, S1 |
 | S3 | Shell route, sidebar and app bar | `go_router` configuration, sidebar with counts, badges and collapse, project name in the app bar, and the route-or-dialog editor helper. The save status indicator is ANVL-163. | S2 |
 | S4 | Hamburger menu and shortcut registry on MenuAnchor and Shortcuts/Actions | The five menu sections, the 24 shortcuts as intents with user overrides, dispatch of Save, Undo and Redo to the focused editor, the cheatsheet dialog and UI zoom; no `UndoTextIntent` binding. | S3 |
