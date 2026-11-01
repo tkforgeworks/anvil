@@ -397,7 +397,7 @@ Save-blocking rules are pure functions per domain in the core. They run in the n
 - a syntax error in a class's derived stat override formula, or a metadata field key that is not an identifier (`^[a-zA-Z_][a-zA-Z0-9_]*$`), as 0.1.6 blocks;
 - a recipe whose output item is also one of its ingredients (ANVL-158 AC7).
 
-Everything else stays a validation issue that blocks export, not save: broken or soft-deleted references, empty required custom fields, formula runtime errors and stat growth formula errors, which 0.1.6 also saved and flagged (derived from `StatGrowthEditor.tsx`).
+Everything else stays a validation issue that blocks export, not save: broken or soft-deleted references, empty required custom fields, formula runtime errors and unknown formula variables, which 0.1.6 also saved and flagged (derived from `StatGrowthEditor.tsx`). A stat growth formula that is empty or fails to parse is a blocker since ANVL-164, where 0.1.6 saved it (§8.9 lists every blocker).
 
 ### 8.7 Keyboard layering
 
@@ -415,6 +415,84 @@ Pickers inside editors avoid `DropdownMenu`, which contains an `EditableText` an
 - **Leave guard** (ANVL-161). `PopScope(canPop: !isDirty)` with `onPopInvokedWithResult` asks Save / Discard / Cancel. Save is disabled while blocked, and a failing save keeps the user in the editor. The modal editing mode uses the same guard on its dialog route.
 - **Exit, close and switch.** A registry of dirty editors is consulted by `AppLifecycleListener.onExitRequested` and by the close-project and open-project commands, offering Save all / Discard all / Cancel. Both runners must forward window close requests to the framework (ANVL-158 "Not covered"). 0.1.6 never asked, because auto-save had already written everything (derived from `src/main/index.ts`).
 - **List actions** (ANVL-166). Soft delete, restore and duplicate from a list are instant and show an Undo snackbar that applies the inverse action. A bulk soft delete still shows the 0.1.6 impact summary before it runs, then offers the same Undo. Hard delete and Empty Trash keep their confirmations, because they cannot be undone.
+
+### 8.9 Save blockers
+
+The rule (ANVL-164). Each domain has one pure function in `packages/anvil_core/lib/src/domain/` (`classSaveBlockers`, `abilitySaveBlockers`, `itemSaveBlockers`, `recipeSaveBlockers`, `lootTableSaveBlockers`, `npcSaveBlockers`) that takes a draft and returns a list of `SaveBlocker(field, message)`, empty when the draft can be saved. The editor controller calls it through `blockersFor` on every edit and `save()` refuses while the list is non-empty; the repository `save` calls it again before it opens the transaction and throws `SaveBlocked` with the messages. A blocked save therefore never starts a transaction and writes nothing. Project-wide validation (§10) runs after a successful save and never blocks it. Trimming applies to the display name and export key checks; the fields below are draft paths, with `[i]` the zero-based list index.
+
+The export key clash is a repository check, not a blocker function: the repository throws `DuplicateExportKey` before SQLite's `UNIQUE` would, and the soft-deleted rows count, as they do for the constraint.
+
+**Character classes**
+
+| Field | Message |
+| :---- | :---- |
+| `displayName` | Display name is required. |
+| `exportKey` | Export key is required. |
+| `abilityIds[i]` (repeats) | This ability is already assigned to the class. |
+| `statGrowth` | Stat growth levels must be at least 1. |
+| `statGrowthFormulas.<statId>` (empty or blank) | Stat growth formula is required. |
+| `statGrowthFormulas.<statId>` (syntax error) | the formula engine's message from `validateFormula` |
+| `derivedStatOverrides.<derivedStatId>` | the formula engine's message from `validateFormula` (`Formula is empty` for a blank override) |
+| `metadataFields[i].fieldKey` (empty) | Metadata field key is required. |
+| `metadataFields[i].fieldKey` (not an identifier) | Letters, digits, underscores only. Must start with a letter. |
+| `metadataFields[i].fieldKey` (repeats) | Metadata field key "<key>" is used more than once. |
+
+A metadata key must match `^[a-zA-Z_][a-zA-Z0-9_]*$`. Stat growth formulas and derived stat overrides get the same syntax check; their unknown variables and runtime errors depend on the project's stats and max level, not on the draft, so they stay with validation. 0.1.6 saved a growth formula with a syntax error or an empty one (switching a stat to formula mode starts with an empty formula) and flagged it afterwards; 0.2.0 refuses both. This supersedes the last paragraph of §8.6 for those two cases.
+
+**Abilities**
+
+| Field | Message |
+| :---- | :---- |
+| `displayName` | Display name is required. |
+| `exportKey` | Export key is required. |
+
+**Items**
+
+| Field | Message |
+| :---- | :---- |
+| `displayName` | Display name is required. |
+| `exportKey` | Export key is required. |
+| `itemCategoryId` | Item category is required. |
+| `rarityId` | Rarity is required. |
+
+**Crafting recipes**
+
+| Field | Message |
+| :---- | :---- |
+| `displayName` | Display name is required. |
+| `exportKey` | Export key is required. |
+| `outputItemId` | Output item is required. |
+| `outputQuantity` | Output quantity must be at least 1. |
+| `ingredients[i].quantity` | Ingredient N: quantity must be at least 1. |
+| `ingredients[i].itemId` (repeats) | Ingredient N: the item is already an ingredient. |
+| `ingredients[i].itemId` (the output item) | A recipe ingredient cannot be the same item as the output item. |
+
+N is the one-based position, `i + 1`.
+
+**Loot tables**
+
+| Field | Message |
+| :---- | :---- |
+| `displayName` | Display name is required. |
+| `exportKey` | Export key is required. |
+| `entries[i].weight` | Entry N: weight must be at least 1. |
+| `entries[i].quantityMin` | Entry N: minimum quantity must be at least 1. |
+| `entries[i].quantityMax` | Entry N: maximum quantity cannot be less than the minimum. |
+
+**NPCs**
+
+| Field | Message |
+| :---- | :---- |
+| `displayName` | Display name is required. |
+| `exportKey` | Export key is required. |
+| `npcTypeId` | NPC type is required. |
+| `classAssignments[i].level` | Class assignment N: level must be at least 1. |
+| `classAssignments[i].classId` (repeats) | This class is already assigned to the NPC. |
+| `abilityIds[i]` (repeats) | This ability is already assigned to the NPC. |
+
+**Project Settings dialog.** The dialog buffers its lists and commits them in one save (§13.5), and its Save is disabled by a list of messages in `ProjectSettingsState.blockers` rather than by a core function: `Game title is required.`; per row of the five buffered lists, `<Kind> display name is required.`, `<Kind> "<name>" needs an export key.`, and, for a new or changed key only, `<Kind> "<name>": Export key may only contain lowercase letters, digits, "_" and "-".` (stored keys are left alone); a new or changed derived stat formula that fails `validateFormula` disables the row dialog's Add or Save. A duplicate name or key is refused at the moment of the edit with the 0.1.6 message, and a delete of a row in use is refused at click time through `checkInUse`.
+
+**Not blockers.** These stay validation issues, reported after the save (§10) and blocking export instead: a broken or soft-deleted reference (an assigned ability, a stat, a category, a rarity, an item, a class, an NPC type or a loot table that no longer exists, subject to the soft-delete severity setting); an empty required custom field; an unknown variable in a formula; a formula runtime error, at level 1 for derived stats and at any level from 1 to the max level for stat growth; and a dependency cycle between derived stats. An NPC class level above the project's max level is neither a blocker nor a validation issue.
 
 ---
 
