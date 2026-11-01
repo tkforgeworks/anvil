@@ -1,0 +1,10 @@
+[
+  {
+    "domain": "classes",
+    "recordId": "8cb0cf2e-a3f2-47ad-ad82-158dc9eb3d8a",
+    "recordDisplayName": "Warrior",
+    "field": "derivedStat:Max HP",
+    "severity": "warning",
+    "message": "Formula for 'Max HP' failed at level 1: Unknown variable 'constitution'"
+  }
+]

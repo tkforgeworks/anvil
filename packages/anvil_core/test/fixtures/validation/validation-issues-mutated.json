@@ -1,0 +1,346 @@
+[
+  {
+    "domain": "items",
+    "recordId": "mut-item-z-broken-category",
+    "recordDisplayName": "Broken Category Item",
+    "field": "itemCategoryId",
+    "severity": "error",
+    "message": "References nonexistent item category 'missing-category'."
+  },
+  {
+    "domain": "items",
+    "recordId": "mut-item-a-broken-rarity",
+    "recordDisplayName": "Broken Rarity Item",
+    "field": "rarityId",
+    "severity": "error",
+    "message": "References nonexistent rarity 'missing-rarity'."
+  },
+  {
+    "domain": "recipes",
+    "recordId": "mut-recipe-broken",
+    "recordDisplayName": "Broken Recipe",
+    "field": "outputItemId",
+    "severity": "error",
+    "message": "References nonexistent output item 'missing-item'."
+  },
+  {
+    "domain": "recipes",
+    "recordId": "mut-recipe-cursed",
+    "recordDisplayName": "Cursed Recipe",
+    "field": "outputItemId",
+    "severity": "error",
+    "message": "References soft-deleted output item 'Cursed Dagger'."
+  },
+  {
+    "domain": "recipes",
+    "recordId": "mut-recipe-broken",
+    "recordDisplayName": "Broken Recipe",
+    "field": "craftingStationId",
+    "severity": "error",
+    "message": "References nonexistent crafting station 'missing-station'."
+  },
+  {
+    "domain": "recipes",
+    "recordId": "mut-recipe-broken",
+    "recordDisplayName": "Broken Recipe",
+    "field": "craftingSpecializationId",
+    "severity": "error",
+    "message": "References nonexistent crafting specialization 'missing-specialization'."
+  },
+  {
+    "domain": "npcs",
+    "recordId": "mut-npc-broken",
+    "recordDisplayName": "Broken NPC",
+    "field": "npcTypeId",
+    "severity": "error",
+    "message": "References nonexistent NPC type 'missing-npc-type'."
+  },
+  {
+    "domain": "npcs",
+    "recordId": "mut-npc-broken",
+    "recordDisplayName": "Broken NPC",
+    "field": "lootTableId",
+    "severity": "error",
+    "message": "References nonexistent loot table 'missing-loot-table'."
+  },
+  {
+    "domain": "npcs",
+    "recordId": "mut-npc-retired-loot",
+    "recordDisplayName": "Retired Loot NPC",
+    "field": "lootTableId",
+    "severity": "error",
+    "message": "References soft-deleted loot table 'Retired Drops'."
+  },
+  {
+    "domain": "classes",
+    "recordId": "8cb0cf2e-a3f2-47ad-ad82-158dc9eb3d8a",
+    "recordDisplayName": "Warrior",
+    "field": "abilityAssignments",
+    "severity": "error",
+    "message": "Assignment references nonexistent ability 'missing-ability'."
+  },
+  {
+    "domain": "classes",
+    "recordId": "a7b87a4c-f898-4ebd-bfca-a8163101fc77",
+    "recordDisplayName": "Mage",
+    "field": "abilityAssignments",
+    "severity": "error",
+    "message": "Assignment references nonexistent ability 'missing-ability-b'."
+  },
+  {
+    "domain": "classes",
+    "recordId": "a7b87a4c-f898-4ebd-bfca-a8163101fc77",
+    "recordDisplayName": "Mage",
+    "field": "abilityAssignments",
+    "severity": "error",
+    "message": "Assignment references nonexistent ability 'missing-ability-z'."
+  },
+  {
+    "domain": "classes",
+    "recordId": "8cb0cf2e-a3f2-47ad-ad82-158dc9eb3d8a",
+    "recordDisplayName": "Warrior",
+    "field": "abilityAssignments",
+    "severity": "error",
+    "message": "Assignment references soft-deleted ability 'Retired Move'."
+  },
+  {
+    "domain": "recipes",
+    "recordId": "a7a5c929-8193-457c-bedd-eea367abf255",
+    "recordDisplayName": "Forge Iron Sword",
+    "field": "ingredients",
+    "severity": "error",
+    "message": "Assignment references nonexistent ingredient item 'missing-ingredient'."
+  },
+  {
+    "domain": "recipes",
+    "recordId": "a7a5c929-8193-457c-bedd-eea367abf255",
+    "recordDisplayName": "Forge Iron Sword",
+    "field": "ingredients",
+    "severity": "error",
+    "message": "Assignment references soft-deleted ingredient item 'Cursed Dagger'."
+  },
+  {
+    "domain": "npcs",
+    "recordId": "9516c484-83f0-488a-a9d5-a7ce0f006d7f",
+    "recordDisplayName": "Goblin Raider",
+    "field": "classAssignments",
+    "severity": "error",
+    "message": "Assignment references nonexistent class 'missing-class'."
+  },
+  {
+    "domain": "npcs",
+    "recordId": "9516c484-83f0-488a-a9d5-a7ce0f006d7f",
+    "recordDisplayName": "Goblin Raider",
+    "field": "classAssignments",
+    "severity": "error",
+    "message": "Assignment references soft-deleted class 'Retired Class'."
+  },
+  {
+    "domain": "npcs",
+    "recordId": "1fdfd4c3-bf59-405d-9a77-f4ad056d82b4",
+    "recordDisplayName": "Marla the Merchant",
+    "field": "abilityAssignments",
+    "severity": "error",
+    "message": "Assignment references nonexistent ability 'missing-ability'."
+  },
+  {
+    "domain": "npcs",
+    "recordId": "1fdfd4c3-bf59-405d-9a77-f4ad056d82b4",
+    "recordDisplayName": "Marla the Merchant",
+    "field": "abilityAssignments",
+    "severity": "error",
+    "message": "Assignment references soft-deleted ability 'Retired Move'."
+  },
+  {
+    "domain": "loot-tables",
+    "recordId": "1e11b296-71a9-4976-887b-d0f32e25becb",
+    "recordDisplayName": "Goblin Drops",
+    "field": "entries",
+    "severity": "error",
+    "message": "Assignment references nonexistent item 'missing-loot-item'."
+  },
+  {
+    "domain": "loot-tables",
+    "recordId": "1e11b296-71a9-4976-887b-d0f32e25becb",
+    "recordDisplayName": "Goblin Drops",
+    "field": "entries",
+    "severity": "error",
+    "message": "Assignment references soft-deleted item 'Cursed Dagger'."
+  },
+  {
+    "domain": "items",
+    "recordId": "mut-item-weapon-novalue",
+    "recordDisplayName": "Unfinished Axe",
+    "field": "custom:damage",
+    "severity": "error",
+    "message": "Required field 'damage' is empty."
+  },
+  {
+    "domain": "items",
+    "recordId": "mut-item-weapon-empty",
+    "recordDisplayName": "Blank Bow",
+    "field": "custom:damage",
+    "severity": "error",
+    "message": "Required field 'damage' is empty."
+  },
+  {
+    "domain": "npcs",
+    "recordId": "mut-npc-retired-loot",
+    "recordDisplayName": "Retired Loot NPC",
+    "field": "custom:aggression",
+    "severity": "error",
+    "message": "Required field 'aggression' is empty."
+  },
+  {
+    "domain": "npcs",
+    "recordId": "mut-npc-blank",
+    "recordDisplayName": "Blank Aggression NPC",
+    "field": "custom:aggression",
+    "severity": "error",
+    "message": "Required field 'aggression' is empty."
+  },
+  {
+    "domain": "derived-stats",
+    "recordId": "mut-ds-broken",
+    "recordDisplayName": "Broken Stat",
+    "field": "formula",
+    "severity": "error",
+    "message": "Formula syntax error: Unexpected end of formula"
+  },
+  {
+    "domain": "classes",
+    "recordId": "a7b87a4c-f898-4ebd-bfca-a8163101fc77",
+    "recordDisplayName": "Mage",
+    "field": "derivedStat:Magic Power",
+    "severity": "error",
+    "message": "Override formula for 'Magic Power' has syntax error: Unexpected '/' at position 0"
+  },
+  {
+    "domain": "classes",
+    "recordId": "8cb0cf2e-a3f2-47ad-ad82-158dc9eb3d8a",
+    "recordDisplayName": "Warrior",
+    "field": "derivedStat:Max HP",
+    "severity": "warning",
+    "message": "Formula for 'Max HP' failed at level 1: Unknown variable 'constitution'"
+  },
+  {
+    "domain": "classes",
+    "recordId": "8cb0cf2e-a3f2-47ad-ad82-158dc9eb3d8a",
+    "recordDisplayName": "Warrior",
+    "field": "derivedStat:Chain X",
+    "severity": "warning",
+    "message": "Formula for 'Chain X' failed at level 1: Unknown variable 'chain_y'"
+  },
+  {
+    "domain": "classes",
+    "recordId": "8cb0cf2e-a3f2-47ad-ad82-158dc9eb3d8a",
+    "recordDisplayName": "Warrior",
+    "field": "derivedStat:Chain Y",
+    "severity": "warning",
+    "message": "Formula for 'Chain Y' failed at level 1: Unknown variable 'chain_x'"
+  },
+  {
+    "domain": "classes",
+    "recordId": "8cb0cf2e-a3f2-47ad-ad82-158dc9eb3d8a",
+    "recordDisplayName": "Warrior",
+    "field": "derivedStat:Cycle A",
+    "severity": "warning",
+    "message": "Formula for 'Cycle A' failed at level 1: Unknown variable 'cycle_b'"
+  },
+  {
+    "domain": "classes",
+    "recordId": "8cb0cf2e-a3f2-47ad-ad82-158dc9eb3d8a",
+    "recordDisplayName": "Warrior",
+    "field": "derivedStat:Cycle B",
+    "severity": "warning",
+    "message": "Formula for 'Cycle B' failed at level 1: Unknown variable 'cycle_a'"
+  },
+  {
+    "domain": "classes",
+    "recordId": "a7b87a4c-f898-4ebd-bfca-a8163101fc77",
+    "recordDisplayName": "Mage",
+    "field": "derivedStat:Chain Y",
+    "severity": "warning",
+    "message": "Formula for 'Chain Y' failed at level 1: Unknown variable 'chain_x'"
+  },
+  {
+    "domain": "classes",
+    "recordId": "a7b87a4c-f898-4ebd-bfca-a8163101fc77",
+    "recordDisplayName": "Mage",
+    "field": "derivedStat:Cycle A",
+    "severity": "warning",
+    "message": "Formula for 'Cycle A' failed at level 1: Unknown variable 'cycle_b'"
+  },
+  {
+    "domain": "classes",
+    "recordId": "a7b87a4c-f898-4ebd-bfca-a8163101fc77",
+    "recordDisplayName": "Mage",
+    "field": "derivedStat:Cycle B",
+    "severity": "warning",
+    "message": "Formula for 'Cycle B' failed at level 1: Unknown variable 'cycle_a'"
+  },
+  {
+    "domain": "classes",
+    "recordId": "a7b87a4c-f898-4ebd-bfca-a8163101fc77",
+    "recordDisplayName": "Mage",
+    "field": "derivedStat:Speed Ratio",
+    "severity": "warning",
+    "message": "Formula for 'Speed Ratio' failed at level 1: Division by zero"
+  },
+  {
+    "domain": "derived-stats",
+    "recordId": "mut-ds-cycle-b",
+    "recordDisplayName": "Cycle B",
+    "field": "formula",
+    "severity": "error",
+    "message": "Derived stat is part of a dependency cycle: Cycle B → Cycle A → Cycle B."
+  },
+  {
+    "domain": "derived-stats",
+    "recordId": "mut-ds-cycle-a",
+    "recordDisplayName": "Cycle A",
+    "field": "formula",
+    "severity": "error",
+    "message": "Derived stat is part of a dependency cycle: Cycle B → Cycle A → Cycle B."
+  },
+  {
+    "domain": "classes",
+    "recordId": "8cb0cf2e-a3f2-47ad-ad82-158dc9eb3d8a",
+    "recordDisplayName": "Warrior",
+    "field": "derivedStatOverrides",
+    "severity": "error",
+    "message": "Override formulas create a dependency cycle: Chain Y → Chain X → Chain Y."
+  },
+  {
+    "domain": "classes",
+    "recordId": "8cb0cf2e-a3f2-47ad-ad82-158dc9eb3d8a",
+    "recordDisplayName": "Warrior",
+    "field": "statGrowthFormula:Dexterity",
+    "severity": "error",
+    "message": "Stat growth formula for Dexterity fails at level 3: Division by zero"
+  },
+  {
+    "domain": "classes",
+    "recordId": "8cb0cf2e-a3f2-47ad-ad82-158dc9eb3d8a",
+    "recordDisplayName": "Warrior",
+    "field": "statGrowthFormula:Strength",
+    "severity": "warning",
+    "message": "Stat growth formula for Strength references unknown variable(s): bonus, extra. Only \"level\" and \"max_level\" are available."
+  },
+  {
+    "domain": "classes",
+    "recordId": "8cb0cf2e-a3f2-47ad-ad82-158dc9eb3d8a",
+    "recordDisplayName": "Warrior",
+    "field": "statGrowthFormula:Strength",
+    "severity": "error",
+    "message": "Stat growth formula for Strength fails at level 1: Unknown variable 'bonus'"
+  },
+  {
+    "domain": "classes",
+    "recordId": "a7b87a4c-f898-4ebd-bfca-a8163101fc77",
+    "recordDisplayName": "Mage",
+    "field": "statGrowthFormula:Strength",
+    "severity": "error",
+    "message": "Stat growth formula for Strength: Unexpected end of formula"
+  }
+]
