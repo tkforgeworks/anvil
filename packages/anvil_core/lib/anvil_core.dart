@@ -9,6 +9,7 @@ export 'src/db/migrations/migration_runner.dart'
 export 'src/db/migrations/migrations.dart';
 export 'src/db/project_database.dart';
 export 'src/domain/domain.dart';
+export 'src/formula/formula.dart';
 export 'src/logging/anonymize_path.dart';
 export 'src/logging/app_logger.dart';
 export 'src/logging/log_rotation.dart';
