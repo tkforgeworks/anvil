@@ -4,19 +4,23 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../editor/exit_prompt.dart';
+import '../project/project_lifecycle.dart';
 import '../providers.dart';
 import '../shell/app_router.dart';
 
 /// Listens for the platform's exit request, which both runners forward to
 /// the framework when the window is closed (design §8.8), puts the
-/// dirty-editor prompt (`confirmLeaveAll`) in front of it, and logs the
-/// 0.1.6 shutdown line once the exit goes ahead.
+/// dirty-editor prompt (`confirmLeaveAll`) in front of it, closes the open
+/// project once the exit goes ahead (a `TRUNCATE` checkpoint, the handle
+/// closed and the lock released, design §12.6), and logs the 0.1.6
+/// shutdown line.
 ///
 /// It sits above `MaterialApp.router`, so it shows the prompt through the
 /// router's root navigator ([rootNavigatorKeyProvider]). Cancel in the
 /// prompt, or a Save all that leaves an editor unsaved, answers
 /// [AppExitResponse.cancel] and the window stays open. A second exit
-/// request while the prompt is open is cancelled.
+/// request while the prompt is open is cancelled. A failed close is logged
+/// by the lifecycle notifier and does not hold the exit up.
 class AppExitHandler extends ConsumerStatefulWidget {
   const AppExitHandler({super.key, required this.child});
 
@@ -59,8 +63,20 @@ class _AppExitHandlerState extends ConsumerState<AppExitHandler> {
       }
       if (!leave) return AppExitResponse.cancel;
     }
+    await _closeProject();
     _logShutdown();
     return AppExitResponse.exit;
+  }
+
+  Future<void> _closeProject() async {
+    if (ref.read(projectSessionProvider) == null) return;
+    try {
+      await ref.read(projectLifecycleProvider.notifier).closeProject();
+    } catch (e, stack) {
+      ref
+          .read(appLoggerProvider)
+          .error('Project close on exit failed', e, stack);
+    }
   }
 
   // An exit request is followed by detach on some platforms; log once.
