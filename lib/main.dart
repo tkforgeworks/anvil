@@ -11,8 +11,9 @@ import 'package:path_provider/path_provider.dart';
 import 'app/bootstrap/app_lifecycle.dart';
 import 'app/bootstrap/error_hooks.dart';
 import 'app/providers.dart';
-import 'app/shell/placeholder_home_page.dart';
+import 'app/shell/project_open_placeholder.dart';
 import 'app/theme/theme_selection.dart';
+import 'app/welcome/welcome_page.dart';
 
 /// Bootstrap (design §4.2, §14.2): everything runs inside one guarded zone
 /// so an error anywhere after the logger exists is logged once.
@@ -66,8 +67,9 @@ void main() {
 String _join(String directory, String name) =>
     '$directory${Platform.pathSeparator}$name';
 
-/// Root widget: the persisted theme drives one `MaterialApp`. The welcome
-/// page and shell (ANVL-148) replace the placeholder home.
+/// Root widget: the persisted theme drives one `MaterialApp`, whose home is
+/// the welcome page while no project is open and the open-project
+/// placeholder while one is, until the shell (ANVL-185) replaces it.
 class AnvilApp extends ConsumerWidget {
   const AnvilApp({super.key});
 
@@ -78,8 +80,19 @@ class AnvilApp extends ConsumerWidget {
         title: 'Anvil',
         debugShowCheckedModeBanner: false,
         theme: ref.watch(themeDataProvider),
-        home: const PlaceholderHomePage(),
+        home: const AnvilHome(),
       ),
     );
   }
+}
+
+/// The welcome page when no project is open, else the open project.
+class AnvilHome extends ConsumerWidget {
+  const AnvilHome({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) =>
+      ref.watch(projectSessionProvider) == null
+      ? const WelcomePage()
+      : const ProjectOpenPlaceholder();
 }

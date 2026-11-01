@@ -72,7 +72,7 @@ const _upsertProjectInfo = '''INSERT INTO project_info (id, project_name, game_t
 ///
 /// `SqliteException` never escapes a public method; failures arrive as the
 /// types in `project_errors.dart` or as [ProjectRecovery].
-final class ProjectService {
+class ProjectService {
   ProjectService({required this.supportDirectory, DateTime Function()? clock})
     : _clock = clock ?? DateTime.now,
       _recents = RecentProjectsStore(
