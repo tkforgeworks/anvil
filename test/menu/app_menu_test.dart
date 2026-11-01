@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:anvil/app/menu/menu_commands.dart';
 import 'package:anvil/app/menu/ui_scale.dart';
 import 'package:anvil/app/providers.dart';
+import 'package:anvil/app/settings/app_settings_dialog.dart';
+import 'package:anvil/app/settings/project/project_settings_dialog.dart';
 import 'package:anvil/app/shell/shell_providers.dart';
 import 'package:anvil/app/welcome/create_project_dialog.dart';
 import 'package:anvil_core/anvil_core.dart';
@@ -327,21 +329,38 @@ void main() {
     expect(File(copy.filePath).existsSync(), isTrue);
   }, variant: linux);
 
-  testWidgets('placeholders and Help links', (tester) async {
+  testWidgets('the settings rows open the real dialogs; Help links', (
+    tester,
+  ) async {
     final harness = await MenuHarness.pump(tester);
+    int tabIndex() =>
+        DefaultTabController.of(tester.element(find.byType(TabBar))).index;
+    Future<void> close() async {
+      await tester.tap(find.byTooltip('Close').last);
+      await tester.pumpAndSettle();
+    }
+
     await openSection(tester, 'File');
     await tester.tap(row(MenuCommand.appSettings));
     await tester.pumpAndSettle();
-    expect(find.text('Coming in ANVL-189'), findsOneWidget);
-    await tester.tap(find.text('Close'));
-    await tester.pumpAndSettle();
+    expect(find.byType(AppSettingsDialog), findsOneWidget);
+    await close();
+    expect(find.byType(AppSettingsDialog), findsNothing);
 
     await openSection(tester, 'Project');
     await tester.tap(row(MenuCommand.projectSettings));
     await tester.pumpAndSettle();
-    expect(find.text('Coming in ANVL-190'), findsOneWidget);
-    await tester.tap(find.text('Close'));
+    expect(find.byType(ProjectSettingsDialog), findsOneWidget);
+    expect(tabIndex(), ProjectSettingsTab.general.index);
+    await close();
+
+    await openSection(tester, 'Project');
+    await tester.tap(row(MenuCommand.customFieldSchemas));
     await tester.pumpAndSettle();
+    expect(find.byType(ProjectSettingsDialog), findsOneWidget);
+    expect(tabIndex(), ProjectSettingsTab.customFields.index);
+    await close();
+    expect(find.byType(ProjectSettingsDialog), findsNothing);
 
     await openSection(tester, 'Help');
     await tester.tap(row(MenuCommand.documentation));
@@ -353,5 +372,44 @@ void main() {
       Uri.parse('https://anvil.tkforgeworks.com/docs'),
       Uri.parse('https://anvil.tkforgeworks.com/bugs'),
     ]);
+  }, variant: linux);
+
+  testWidgets('a shortcut captured in Application Settings applies to the '
+      'menu and the keyboard without a restart', (tester) async {
+    final harness = await MenuHarness.pump(tester);
+    await openSection(tester, 'File');
+    await tester.tap(row(MenuCommand.appSettings));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(Tab, 'Shortcuts'));
+    await tester.pumpAndSettle();
+    final binding = find.byKey(
+      const ValueKey('shortcut-binding-toggle-sidebar'),
+    );
+    await tester.ensureVisible(binding);
+    await tester.pumpAndSettle();
+    await tester.tap(binding);
+    await tester.pumpAndSettle();
+    await ctrl(tester, LogicalKeyboardKey.keyB, shift: true);
+    expect(harness.app.settingsFile['customShortcuts'], {
+      'toggle-sidebar': 'Ctrl+Shift+B',
+    });
+    await tester.tap(find.byTooltip('Close'));
+    await tester.pumpAndSettle();
+
+    await openSection(tester, 'View');
+    expect(
+      rowWidget(tester, MenuCommand.toggleSidebar).shortcut,
+      isA<SingleActivator>()
+          .having((a) => a.trigger, 'trigger', LogicalKeyboardKey.keyB)
+          .having((a) => a.shift, 'shift', isTrue),
+    );
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+
+    final collapsed = harness.container!.read(sidebarCollapsedProvider);
+    await ctrl(tester, LogicalKeyboardKey.keyB, shift: true);
+    expect(harness.container!.read(sidebarCollapsedProvider), !collapsed);
   }, variant: linux);
 }

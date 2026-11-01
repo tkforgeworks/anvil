@@ -109,4 +109,28 @@ void main() {
     notifier().setTheme(AppThemeMode.dark);
     expect(state().editingMode, EditingMode.fullPage);
   });
+
+  test('shortcut overrides are set, removed and cleared through the file', () {
+    notifier().setCustomShortcut('export', 'Ctrl+Shift+E');
+    notifier().setCustomShortcut('save', 'Ctrl+Alt+S');
+    expect(harness.settingsFile['customShortcuts'], {
+      'export': 'Ctrl+Shift+E',
+      'save': 'Ctrl+Alt+S',
+    });
+    expect(state().customShortcuts, harness.store.read().customShortcuts);
+
+    notifier().setCustomShortcut('save', null);
+    expect(harness.settingsFile['customShortcuts'], {'export': 'Ctrl+Shift+E'});
+
+    // Removing the last override stores null, as 0.1.6 did.
+    notifier().setCustomShortcut('export', null);
+    expect(state().customShortcuts, isNull);
+    expect(harness.settingsFile['customShortcuts'], isNull);
+
+    notifier().setCustomShortcut('export', 'Ctrl+Shift+E');
+    notifier().clearCustomShortcuts();
+    expect(state().customShortcuts, isNull);
+    expect(harness.settingsFile['customShortcuts'], isNull);
+    expect(settingsLogLines(), hasLength(6));
+  });
 }

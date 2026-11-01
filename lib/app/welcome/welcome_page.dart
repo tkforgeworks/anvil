@@ -4,8 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forge_ui/forge_ui.dart';
 
 import '../project/project_lifecycle.dart';
-import '../providers.dart';
-import '../settings/theme_mode_selector.dart';
+import '../settings/app_settings_dialog.dart';
 import '../theme/anvil_metrics.dart';
 import '../theme/theme_gallery_page.dart';
 import 'create_project_dialog.dart';
@@ -289,7 +288,6 @@ class _Footer extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final settings = ref.watch(appSettingsProvider);
     final caption = context.text.bodySmall?.copyWith(
       color: context.colors.onSurfaceVariant,
     );
@@ -311,10 +309,15 @@ class _Footer extends ConsumerWidget {
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: AnvilSpacing.md),
-        // Until the app settings dialog (ANVL-189) takes it over.
-        const ForgeMonoLabel('Theme'),
-        const SizedBox(height: AnvilSpacing.sm),
-        ThemeModeSelector(settings: settings),
+        // The menu lives in the shell's app bar, which the welcome page
+        // does not show; this keeps the settings reachable with no project
+        // open, as 0.1.6's always-visible title bar menu did.
+        IconButton(
+          key: const ValueKey('welcome-app-settings'),
+          tooltip: 'Application Settings',
+          icon: const Icon(Icons.settings_outlined),
+          onPressed: () => showAppSettingsDialog(context, ref),
+        ),
         if (kDebugMode) ...[
           const SizedBox(height: AnvilSpacing.sm),
           TextButton(
