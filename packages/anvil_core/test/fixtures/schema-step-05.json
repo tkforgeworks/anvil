@@ -1,0 +1,206 @@
+[
+  {
+    "type": "index",
+    "name": "idx_abilities_active",
+    "tbl_name": "abilities",
+    "sql": "CREATE INDEX idx_abilities_active ON abilities(deleted_at)"
+  },
+  {
+    "type": "index",
+    "name": "idx_classes_active",
+    "tbl_name": "classes",
+    "sql": "CREATE INDEX idx_classes_active ON classes(deleted_at)"
+  },
+  {
+    "type": "index",
+    "name": "idx_custom_field_values_record",
+    "tbl_name": "custom_field_values",
+    "sql": "CREATE INDEX idx_custom_field_values_record\n      ON custom_field_values(domain, record_id)"
+  },
+  {
+    "type": "index",
+    "name": "idx_items_active",
+    "tbl_name": "items",
+    "sql": "CREATE INDEX idx_items_active ON items(deleted_at)"
+  },
+  {
+    "type": "index",
+    "name": "idx_loot_tables_active",
+    "tbl_name": "loot_tables",
+    "sql": "CREATE INDEX idx_loot_tables_active ON loot_tables(deleted_at)"
+  },
+  {
+    "type": "index",
+    "name": "idx_npcs_active",
+    "tbl_name": "npcs",
+    "sql": "CREATE INDEX idx_npcs_active ON npcs(deleted_at)"
+  },
+  {
+    "type": "index",
+    "name": "idx_recipes_active",
+    "tbl_name": "recipes",
+    "sql": "CREATE INDEX idx_recipes_active ON recipes(deleted_at)"
+  },
+  {
+    "type": "table",
+    "name": "abilities",
+    "tbl_name": "abilities",
+    "sql": "CREATE TABLE abilities (\n      id          TEXT PRIMARY KEY,\n      display_name TEXT NOT NULL,\n      export_key TEXT NOT NULL UNIQUE,\n      description TEXT NOT NULL DEFAULT '',\n      ability_type TEXT NOT NULL DEFAULT '',\n      resource_cost REAL NOT NULL DEFAULT 0,\n      cooldown REAL NOT NULL DEFAULT 0,\n      stat_modifiers_json TEXT NOT NULL DEFAULT '{}',\n      created_at TEXT NOT NULL DEFAULT (datetime('now')),\n      updated_at TEXT NOT NULL DEFAULT (datetime('now')),\n      deleted_at TEXT\n    , resource_type TEXT NOT NULL DEFAULT '')"
+  },
+  {
+    "type": "table",
+    "name": "affinities",
+    "tbl_name": "affinities",
+    "sql": "CREATE TABLE affinities (\n      id          TEXT PRIMARY KEY,\n      display_name TEXT NOT NULL,\n      export_key TEXT NOT NULL UNIQUE,\n      description TEXT NOT NULL DEFAULT '',\n      sort_order INTEGER NOT NULL DEFAULT 0,\n      created_at TEXT NOT NULL DEFAULT (datetime('now')),\n      updated_at TEXT NOT NULL DEFAULT (datetime('now'))\n    )"
+  },
+  {
+    "type": "table",
+    "name": "class_ability_assignments",
+    "tbl_name": "class_ability_assignments",
+    "sql": "CREATE TABLE class_ability_assignments (\n      class_id TEXT NOT NULL REFERENCES classes(id) ON DELETE CASCADE,\n      ability_id TEXT NOT NULL REFERENCES abilities(id),\n      sort_order INTEGER NOT NULL DEFAULT 0,\n      PRIMARY KEY (class_id, ability_id)\n    )"
+  },
+  {
+    "type": "table",
+    "name": "class_derived_stat_overrides",
+    "tbl_name": "class_derived_stat_overrides",
+    "sql": "CREATE TABLE class_derived_stat_overrides (\n      class_id        TEXT NOT NULL REFERENCES classes(id) ON DELETE CASCADE,\n      derived_stat_id TEXT NOT NULL REFERENCES derived_stat_definitions(id) ON DELETE CASCADE,\n      formula         TEXT NOT NULL,\n      created_at      TEXT NOT NULL DEFAULT (datetime('now')),\n      updated_at      TEXT NOT NULL DEFAULT (datetime('now')),\n      PRIMARY KEY (class_id, derived_stat_id)\n    )"
+  },
+  {
+    "type": "table",
+    "name": "class_metadata_fields",
+    "tbl_name": "class_metadata_fields",
+    "sql": "CREATE TABLE class_metadata_fields (\n      class_id  TEXT NOT NULL REFERENCES classes(id) ON DELETE CASCADE,\n      field_key TEXT NOT NULL,\n      value     REAL NOT NULL DEFAULT 0,\n      created_at TEXT NOT NULL DEFAULT (datetime('now')),\n      updated_at TEXT NOT NULL DEFAULT (datetime('now')),\n      PRIMARY KEY (class_id, field_key)\n    )"
+  },
+  {
+    "type": "table",
+    "name": "class_stat_growth",
+    "tbl_name": "class_stat_growth",
+    "sql": "CREATE TABLE class_stat_growth (\n      class_id TEXT NOT NULL REFERENCES classes(id) ON DELETE CASCADE,\n      stat_id TEXT NOT NULL REFERENCES stats(id),\n      level INTEGER NOT NULL CHECK (level > 0),\n      value REAL NOT NULL,\n      PRIMARY KEY (class_id, stat_id, level)\n    )"
+  },
+  {
+    "type": "table",
+    "name": "classes",
+    "tbl_name": "classes",
+    "sql": "CREATE TABLE classes (\n      id          TEXT PRIMARY KEY,\n      display_name TEXT NOT NULL,\n      export_key TEXT NOT NULL UNIQUE,\n      description TEXT NOT NULL DEFAULT '',\n      resource_multiplier REAL NOT NULL DEFAULT 1,\n      created_at TEXT NOT NULL DEFAULT (datetime('now')),\n      updated_at TEXT NOT NULL DEFAULT (datetime('now')),\n      deleted_at TEXT\n    )"
+  },
+  {
+    "type": "table",
+    "name": "crafting_specializations",
+    "tbl_name": "crafting_specializations",
+    "sql": "CREATE TABLE crafting_specializations (\n      id          TEXT PRIMARY KEY,\n      display_name TEXT NOT NULL,\n      export_key TEXT NOT NULL UNIQUE,\n      description TEXT NOT NULL DEFAULT '',\n      sort_order INTEGER NOT NULL DEFAULT 0,\n      created_at TEXT NOT NULL DEFAULT (datetime('now')),\n      updated_at TEXT NOT NULL DEFAULT (datetime('now'))\n    )"
+  },
+  {
+    "type": "table",
+    "name": "crafting_stations",
+    "tbl_name": "crafting_stations",
+    "sql": "CREATE TABLE crafting_stations (\n      id          TEXT PRIMARY KEY,\n      display_name TEXT NOT NULL,\n      export_key TEXT NOT NULL UNIQUE,\n      description TEXT NOT NULL DEFAULT '',\n      sort_order INTEGER NOT NULL DEFAULT 0,\n      created_at TEXT NOT NULL DEFAULT (datetime('now')),\n      updated_at TEXT NOT NULL DEFAULT (datetime('now'))\n    )"
+  },
+  {
+    "type": "table",
+    "name": "custom_field_definitions",
+    "tbl_name": "custom_field_definitions",
+    "sql": "CREATE TABLE custom_field_definitions (\n      id TEXT PRIMARY KEY,\n      scope_type TEXT NOT NULL CHECK (scope_type IN ('item_category', 'npc_type')),\n      scope_id TEXT NOT NULL,\n      field_name TEXT NOT NULL,\n      field_type TEXT NOT NULL CHECK (field_type IN ('text', 'integer', 'decimal', 'boolean', 'enum')),\n      default_value TEXT,\n      enum_options_json TEXT,\n      is_required INTEGER NOT NULL DEFAULT 0 CHECK (is_required IN (0, 1)),\n      is_searchable INTEGER NOT NULL DEFAULT 0 CHECK (is_searchable IN (0, 1)),\n      sort_order INTEGER NOT NULL DEFAULT 0,\n      created_at TEXT NOT NULL DEFAULT (datetime('now')),\n      updated_at TEXT NOT NULL DEFAULT (datetime('now')),\n      UNIQUE (scope_type, scope_id, field_name)\n    )"
+  },
+  {
+    "type": "table",
+    "name": "custom_field_values",
+    "tbl_name": "custom_field_values",
+    "sql": "CREATE TABLE custom_field_values (\n      domain TEXT NOT NULL CHECK (domain IN ('items', 'npcs')),\n      record_id TEXT NOT NULL,\n      field_definition_id TEXT NOT NULL REFERENCES custom_field_definitions(id) ON DELETE CASCADE,\n      value TEXT,\n      updated_at TEXT NOT NULL DEFAULT (datetime('now')),\n      PRIMARY KEY (domain, record_id, field_definition_id)\n    )"
+  },
+  {
+    "type": "table",
+    "name": "custom_templates",
+    "tbl_name": "custom_templates",
+    "sql": "CREATE TABLE custom_templates (\n      id          TEXT PRIMARY KEY,\n      name        TEXT NOT NULL,\n      description TEXT NOT NULL DEFAULT '',\n      template_source TEXT NOT NULL DEFAULT '',\n      format      TEXT NOT NULL DEFAULT 'text',\n      created_at  TEXT NOT NULL DEFAULT (datetime('now')),\n      updated_at  TEXT NOT NULL DEFAULT (datetime('now'))\n    )"
+  },
+  {
+    "type": "table",
+    "name": "derived_stat_definitions",
+    "tbl_name": "derived_stat_definitions",
+    "sql": "CREATE TABLE derived_stat_definitions (\n      id          TEXT PRIMARY KEY,\n      display_name TEXT NOT NULL,\n      export_key TEXT NOT NULL UNIQUE,\n      formula     TEXT NOT NULL,\n      output_type TEXT NOT NULL DEFAULT 'integer' CHECK (output_type IN ('integer', 'float')),\n      rounding_mode TEXT NOT NULL DEFAULT 'round' CHECK (rounding_mode IN ('floor', 'round', 'none')),\n      sort_order INTEGER NOT NULL DEFAULT 0,\n      created_at TEXT NOT NULL DEFAULT (datetime('now')),\n      updated_at TEXT NOT NULL DEFAULT (datetime('now'))\n    )"
+  },
+  {
+    "type": "table",
+    "name": "item_categories",
+    "tbl_name": "item_categories",
+    "sql": "CREATE TABLE item_categories (\n      id          TEXT PRIMARY KEY,\n      display_name TEXT NOT NULL,\n      export_key TEXT NOT NULL UNIQUE,\n      description TEXT NOT NULL DEFAULT '',\n      sort_order INTEGER NOT NULL DEFAULT 0,\n      created_at TEXT NOT NULL DEFAULT (datetime('now')),\n      updated_at TEXT NOT NULL DEFAULT (datetime('now'))\n    )"
+  },
+  {
+    "type": "table",
+    "name": "items",
+    "tbl_name": "items",
+    "sql": "CREATE TABLE items (\n      id          TEXT PRIMARY KEY,\n      display_name TEXT NOT NULL,\n      export_key TEXT NOT NULL UNIQUE,\n      description TEXT NOT NULL DEFAULT '',\n      item_category_id TEXT NOT NULL REFERENCES item_categories(id),\n      rarity_id TEXT NOT NULL REFERENCES rarities(id),\n      created_at TEXT NOT NULL DEFAULT (datetime('now')),\n      updated_at TEXT NOT NULL DEFAULT (datetime('now')),\n      deleted_at TEXT\n    )"
+  },
+  {
+    "type": "table",
+    "name": "loot_table_entries",
+    "tbl_name": "loot_table_entries",
+    "sql": "CREATE TABLE loot_table_entries (\n      id TEXT PRIMARY KEY,\n      loot_table_id TEXT NOT NULL REFERENCES loot_tables(id) ON DELETE CASCADE,\n      item_id TEXT NOT NULL REFERENCES items(id),\n      weight INTEGER NOT NULL CHECK (weight > 0),\n      quantity_min INTEGER NOT NULL DEFAULT 1 CHECK (quantity_min > 0),\n      quantity_max INTEGER NOT NULL DEFAULT 1 CHECK (quantity_max >= quantity_min),\n      conditional_flags TEXT NOT NULL DEFAULT '{}',\n      sort_order INTEGER NOT NULL DEFAULT 0\n    )"
+  },
+  {
+    "type": "table",
+    "name": "loot_tables",
+    "tbl_name": "loot_tables",
+    "sql": "CREATE TABLE loot_tables (\n      id          TEXT PRIMARY KEY,\n      display_name TEXT NOT NULL,\n      export_key TEXT NOT NULL UNIQUE,\n      description TEXT NOT NULL DEFAULT '',\n      created_at TEXT NOT NULL DEFAULT (datetime('now')),\n      updated_at TEXT NOT NULL DEFAULT (datetime('now')),\n      deleted_at TEXT\n    )"
+  },
+  {
+    "type": "table",
+    "name": "npc_ability_assignments",
+    "tbl_name": "npc_ability_assignments",
+    "sql": "CREATE TABLE npc_ability_assignments (\n      npc_id TEXT NOT NULL REFERENCES npcs(id) ON DELETE CASCADE,\n      ability_id TEXT NOT NULL REFERENCES abilities(id),\n      sort_order INTEGER NOT NULL DEFAULT 0,\n      PRIMARY KEY (npc_id, ability_id)\n    )"
+  },
+  {
+    "type": "table",
+    "name": "npc_class_assignments",
+    "tbl_name": "npc_class_assignments",
+    "sql": "CREATE TABLE npc_class_assignments (\n      npc_id TEXT NOT NULL REFERENCES npcs(id) ON DELETE CASCADE,\n      class_id TEXT NOT NULL REFERENCES classes(id),\n      level INTEGER NOT NULL CHECK (level > 0),\n      sort_order INTEGER NOT NULL DEFAULT 0,\n      PRIMARY KEY (npc_id, class_id)\n    )"
+  },
+  {
+    "type": "table",
+    "name": "npc_types",
+    "tbl_name": "npc_types",
+    "sql": "CREATE TABLE npc_types (\n      id          TEXT PRIMARY KEY,\n      display_name TEXT NOT NULL,\n      export_key TEXT NOT NULL UNIQUE,\n      description TEXT NOT NULL DEFAULT '',\n      sort_order INTEGER NOT NULL DEFAULT 0,\n      created_at TEXT NOT NULL DEFAULT (datetime('now')),\n      updated_at TEXT NOT NULL DEFAULT (datetime('now'))\n    )"
+  },
+  {
+    "type": "table",
+    "name": "npcs",
+    "tbl_name": "npcs",
+    "sql": "CREATE TABLE npcs (\n      id          TEXT PRIMARY KEY,\n      display_name TEXT NOT NULL,\n      export_key TEXT NOT NULL UNIQUE,\n      description TEXT NOT NULL DEFAULT '',\n      npc_type_id TEXT NOT NULL REFERENCES npc_types(id),\n      loot_table_id TEXT REFERENCES loot_tables(id),\n      combat_stats_json TEXT NOT NULL DEFAULT '{}',\n      created_at TEXT NOT NULL DEFAULT (datetime('now')),\n      updated_at TEXT NOT NULL DEFAULT (datetime('now')),\n      deleted_at TEXT\n    )"
+  },
+  {
+    "type": "table",
+    "name": "project_info",
+    "tbl_name": "project_info",
+    "sql": "CREATE TABLE project_info (\n      id          INTEGER PRIMARY KEY CHECK (id = 1),\n      project_name   TEXT    NOT NULL DEFAULT '',\n      game_title     TEXT    NOT NULL DEFAULT '',\n      schema_version INTEGER NOT NULL DEFAULT 1,\n      max_level      INTEGER NOT NULL DEFAULT 50,\n      soft_delete_reference_severity TEXT NOT NULL DEFAULT 'Warning'\n        CHECK (soft_delete_reference_severity IN ('Warning', 'Error')),\n      created_at     TEXT    NOT NULL DEFAULT (datetime('now')),\n      updated_at     TEXT    NOT NULL DEFAULT (datetime('now'))\n    )"
+  },
+  {
+    "type": "table",
+    "name": "rarities",
+    "tbl_name": "rarities",
+    "sql": "CREATE TABLE rarities (\n      id          TEXT PRIMARY KEY,\n      display_name TEXT NOT NULL,\n      export_key TEXT NOT NULL UNIQUE,\n      color_hex   TEXT NOT NULL DEFAULT '#FFFFFF',\n      sort_order  INTEGER NOT NULL DEFAULT 0,\n      created_at TEXT NOT NULL DEFAULT (datetime('now')),\n      updated_at TEXT NOT NULL DEFAULT (datetime('now'))\n    )"
+  },
+  {
+    "type": "table",
+    "name": "recipe_ingredients",
+    "tbl_name": "recipe_ingredients",
+    "sql": "CREATE TABLE recipe_ingredients (\n      recipe_id TEXT NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,\n      item_id TEXT NOT NULL REFERENCES items(id),\n      quantity INTEGER NOT NULL DEFAULT 1 CHECK (quantity > 0),\n      sort_order INTEGER NOT NULL DEFAULT 0,\n      PRIMARY KEY (recipe_id, item_id)\n    )"
+  },
+  {
+    "type": "table",
+    "name": "recipes",
+    "tbl_name": "recipes",
+    "sql": "CREATE TABLE recipes (\n      id          TEXT PRIMARY KEY,\n      display_name TEXT NOT NULL,\n      export_key TEXT NOT NULL UNIQUE,\n      description TEXT NOT NULL DEFAULT '',\n      output_item_id TEXT NOT NULL REFERENCES items(id),\n      output_quantity INTEGER NOT NULL DEFAULT 1 CHECK (output_quantity > 0),\n      crafting_station_id TEXT REFERENCES crafting_stations(id),\n      crafting_specialization_id TEXT REFERENCES crafting_specializations(id),\n      created_at TEXT NOT NULL DEFAULT (datetime('now')),\n      updated_at TEXT NOT NULL DEFAULT (datetime('now')),\n      deleted_at TEXT\n    )"
+  },
+  {
+    "type": "table",
+    "name": "schema_migrations",
+    "tbl_name": "schema_migrations",
+    "sql": "CREATE TABLE schema_migrations (\n      filename   TEXT PRIMARY KEY,\n      applied_at TEXT NOT NULL\n    )"
+  },
+  {
+    "type": "table",
+    "name": "stats",
+    "tbl_name": "stats",
+    "sql": "CREATE TABLE stats (\n      id          TEXT PRIMARY KEY,\n      display_name TEXT NOT NULL,\n      export_key TEXT NOT NULL UNIQUE,\n      description TEXT NOT NULL DEFAULT '',\n      sort_order INTEGER NOT NULL DEFAULT 0,\n      created_at TEXT NOT NULL DEFAULT (datetime('now')),\n      updated_at TEXT NOT NULL DEFAULT (datetime('now'))\n    )"
+  }
+]

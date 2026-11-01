@@ -1,0 +1,7 @@
+# {{ project.game_title }} - Items
+{% for item in items %}
+## {{ item.display_name }} ({{ item.export_key }})
+Category: {{ item.item_category_id | export_key }}
+Rarity: {{ item.rarity_id | export_key }}
+{{ item.description }}
+{% endfor %}

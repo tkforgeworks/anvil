@@ -1,0 +1,5 @@
+1/2 MAGE, 2/2 WARRIOR
+fireball=12 slash=5 
+x1 Healing Potion true Spike Fixture a;b
+has items
+str {"id":"stat-strength","display_name":"Strength","export_key":"str","sort_order":10} 25 3 1-2-3

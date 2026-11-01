@@ -1,0 +1,26 @@
+# Forge & Fable - Items
+
+## Healing Potion (healing_potion)
+Category: item-category-consumable
+Rarity: rarity-common
+Restores 50 HP
+
+## Iron Ingot (iron_ingot)
+Category: item-category-crafting-resource
+Rarity: rarity-common
+Smelted iron.
+
+## Iron Sword (iron_sword)
+Category: item-category-weapon
+Rarity: rarity-uncommon
+A sturdy, reliable blade
+
+## Leather Strip (leather_strip)
+Category: item-category-crafting-resource
+Rarity: rarity-common
+
+
+## Moonpetal Herb (moonpetal_herb)
+Category: item-category-crafting-resource
+Rarity: rarity-rare
+

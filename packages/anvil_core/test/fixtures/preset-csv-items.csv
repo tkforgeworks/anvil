@@ -1,0 +1,6 @@
+export_key,display_name,description,item_category,rarity
+healing_potion,Healing Potion,Restores 50 HP,consumable,common
+iron_ingot,Iron Ingot,Smelted iron.,crafting_resource,common
+iron_sword,Iron Sword,"A sturdy, reliable blade",weapon,uncommon
+leather_strip,Leather Strip,,crafting_resource,common
+moonpetal_herb,Moonpetal Herb,,crafting_resource,rare
