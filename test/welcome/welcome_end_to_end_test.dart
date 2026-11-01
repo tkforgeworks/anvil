@@ -12,6 +12,10 @@ import 'package:flutter_test/flutter_test.dart';
 import '../app_bootstrap_test.dart' show AppHarness;
 import '../dialogs/fakes.dart';
 
+import 'package:anvil/app/menu/menu_commands.dart';
+
+import '../menu/menu_harness.dart' show openSection;
+
 /// The real `ProjectService` (from the root providers) on a temporary
 /// support directory, over a copy of the 0.1.6 fixture; only the native
 /// dialog is faked.
@@ -52,7 +56,10 @@ void main() {
       expect(metadata.filePath, path);
       expect(File('$path.lock').existsSync(), isTrue);
 
-      await tester.tap(find.text('Close Project'));
+      await openSection(tester, 'File');
+      await tester.tap(
+        find.byKey(ValueKey('menu-${MenuCommand.closeProject.id}')),
+      );
       await tester.pumpAndSettle();
 
       expect(find.byType(WelcomePage), findsOneWidget);

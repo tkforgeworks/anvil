@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:anvil_core/anvil_core.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../editor/dirty_editors.dart';
+import '../editor/exit_prompt.dart';
 import '../providers.dart';
 import '../welcome/welcome_page.dart';
 import 'app_shell.dart';
@@ -28,6 +32,11 @@ final rootNavigatorKeyProvider = Provider<GlobalKey<NavigatorState>>(
 /// dashboard once a session exists. The provider never watches the session,
 /// so the router lives as long as the app; a listener feeds the session
 /// into [GoRouter.refreshListenable] instead.
+///
+/// Each full-page editor route has the leave guard (design §8.8) as its
+/// `onExit`: go_router calls it whenever the route leaves the match list,
+/// including for another record of the same domain (the matched location
+/// differs), and a false answer keeps the editor.
 final routerProvider = Provider<GoRouter>((ref) {
   final session = ValueNotifier<ProjectSession?>(
     ref.read(projectSessionProvider),
@@ -59,6 +68,12 @@ final routerProvider = Provider<GoRouter>((ref) {
               pageBuilder: (_, state) => NoTransitionPage(
                 child: editorBuilders[domain]!(state.pathParameters['id']!),
               ),
+              onExit: (context, state) => _leaveEditorRoute(
+                ref,
+                context,
+                domain,
+                state.pathParameters['id']!,
+              ),
             ),
           ],
           _page('/validation', validationPage),
@@ -80,3 +95,24 @@ GoRoute _page(String path, Widget Function() build) => GoRoute(
   path: path,
   pageBuilder: (_, _) => NoTransitionPage(child: build()),
 );
+
+/// The full-page editor's leave guard: true at once (keeping the route
+/// change synchronous) when the editor for [id] is clean, else the answer
+/// of `confirmLeaveEditor`. Also true at once once the session is gone,
+/// because closing the project ran the project-level guard first and the
+/// redirect to the welcome page must not be held up.
+FutureOr<bool> _leaveEditorRoute(
+  Ref ref,
+  BuildContext context,
+  ShellDomain domain,
+  String id,
+) {
+  if (ref.read(projectSessionProvider) == null) return true;
+  final entry = findDirtyEditor(
+    ref.read(dirtyEditorsProvider),
+    domain.saveDomain,
+    id,
+  );
+  if (entry == null) return true;
+  return confirmLeaveEditor(context, entry);
+}
