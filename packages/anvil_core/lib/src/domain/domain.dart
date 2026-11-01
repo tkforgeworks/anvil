@@ -12,3 +12,5 @@ export 'npc_stat_block.dart';
 export 'npc_types.dart';
 export 'recipe_types.dart';
 export 'record_list_mode.dart';
+export 'save_blocker.dart';
+export 'used_by.dart';
