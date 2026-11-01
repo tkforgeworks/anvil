@@ -259,6 +259,51 @@ class ProjectLifecycleNotifier extends Notifier<ProjectLifecycleState> {
         : ProjectLifecycleState.failed(failure);
   }
 
+  /// Save As (0.1.6 `saveProjectAs`): snapshots the open project to [path]
+  /// (`.anvil` appended if missing), moves the lock there and makes the copy
+  /// the open project; the original is closed. The same path does nothing.
+  ///
+  /// Returns null on success, or the message to show on failure, when the
+  /// original stays open. Either way the state ends idle: the shell, not the
+  /// welcome page, reports the failure.
+  Future<String?> saveAs(String path) async {
+    final session = ref.read(projectSessionProvider);
+    if (_busy || session == null) return null;
+    state = const ProjectLifecycleState.busy('Saving a copy');
+    try {
+      final copy = await _service.saveAs(session, path);
+      if (!identical(copy, session)) {
+        _activate(copy, 'Project saved to new location');
+      }
+      state = const ProjectLifecycleState.idle();
+      return null;
+    } catch (e, stack) {
+      _log.error('Save-as failed', e, stack);
+      state = const ProjectLifecycleState.idle();
+      return e is ProjectLifecycleFailure ? e.message : describeProjectError(e);
+    }
+  }
+
+  /// Writes a backup snapshot of the open project to [path]
+  /// (0.1.6 `backupProject`); the open project does not change. Returns
+  /// null on success or the failure message, and ends idle as [saveAs].
+  Future<String?> backup(String path) async {
+    final session = ref.read(projectSessionProvider);
+    if (_busy || session == null) return null;
+    state = const ProjectLifecycleState.busy('Backing up project');
+    try {
+      await _service.backup(session, path);
+      _log.info('Project backup created');
+      _log.debug('Project backup created: ${anonymizePath(path)}');
+      state = const ProjectLifecycleState.idle();
+      return null;
+    } catch (e, stack) {
+      _log.error('Project backup failed', e, stack);
+      state = const ProjectLifecycleState.idle();
+      return e is ProjectLifecycleFailure ? e.message : describeProjectError(e);
+    }
+  }
+
   /// Removes one entry from the recent list.
   void removeRecent(String path) =>
       _changeRecents(() => _service.removeRecent(path));

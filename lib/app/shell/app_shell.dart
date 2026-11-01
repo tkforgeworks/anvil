@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forge_ui/forge_ui.dart';
 
+import '../menu/app_menu.dart';
 import '../project/project_lifecycle.dart';
 import '../providers.dart';
 import '../theme/anvil_metrics.dart';
@@ -39,7 +40,7 @@ class AppShell extends ConsumerWidget {
         title: Row(
           children: [
             // The hamburger menu (ANVL-186) takes this slot.
-            const SizedBox.shrink(key: menuSlotKey),
+            const AppMenuButton(key: menuSlotKey),
             Flexible(child: Text(name, overflow: TextOverflow.ellipsis)),
           ],
         ),
