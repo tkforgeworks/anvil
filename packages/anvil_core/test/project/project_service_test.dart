@@ -491,6 +491,47 @@ void main() {
       await service.close(session);
     });
 
+    test('backup and Save As carry a save still in the WAL file', () async {
+      final path = fixture().copyFixture();
+      final session = await openOk(path);
+      final mainBefore = File(path).readAsBytesSync();
+      session.database.saveTransaction('WAL save - Test changed', (tx) {
+        tx.execute("UPDATE project_info SET game_title = 'WAL title'");
+      });
+      // The commit is in the -wal file only; the main file is untouched.
+      expect(File('$path-wal').lengthSync(), greaterThan(0));
+      expect(File(path).readAsBytesSync(), mainBefore);
+
+      void expectSaveIn(String copyPath) {
+        final check = fixture().track(ProjectDatabase.openReadOnly(copyPath));
+        check.integrityCheck();
+        expect(
+          check.handle
+              .select('SELECT game_title FROM project_info')
+              .single['game_title'],
+          'WAL title',
+        );
+        expect(
+          check.handle
+              .select(
+                'SELECT COUNT(*) AS n FROM save_history '
+                "WHERE description = 'WAL save - Test changed'",
+              )
+              .single['n'],
+          1,
+        );
+        check.close();
+      }
+
+      final backupPath = fixture().pathFor('wal-backup.anvil');
+      await service.backup(session, backupPath);
+      expectSaveIn(backupPath);
+
+      final copy = await service.saveAs(session, fixture().pathFor('wal-copy'));
+      await service.close(copy);
+      expectSaveIn(copy.filePath);
+    });
+
     test('refuses the open file itself', () async {
       final path = fixture().copyFixture();
       final session = await openOk(path);

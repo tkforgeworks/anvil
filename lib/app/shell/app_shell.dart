@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forge_ui/forge_ui.dart';
 
 import '../menu/app_menu.dart';
+import '../project/checkpoint_scheduler.dart';
 import '../project/project_lifecycle.dart';
 import '../providers.dart';
 import '../theme/anvil_metrics.dart';
+import 'save_status_indicator.dart';
 import 'sidebar.dart';
 
 /// The open project's frame (0.1.6 `AppShell.tsx`, design §13.2, §13.3):
@@ -30,6 +32,7 @@ class AppShell extends ConsumerWidget {
     // still watching a provider when it throws gets the error reported.
     final session = ref.watch(projectSessionProvider);
     if (session == null) return const SizedBox.shrink();
+    ref.watch(checkpointSchedulerProvider);
     final name = session.metadata.projectName;
     final busy = ref.watch(projectLifecycleProvider) is LifecycleBusy;
     return Scaffold(
@@ -45,8 +48,7 @@ class AppShell extends ConsumerWidget {
           ],
         ),
         actions: [
-          // The save status indicator (ANVL-163) takes this slot.
-          const SizedBox.shrink(key: saveStatusSlotKey),
+          const SaveStatusIndicator(key: saveStatusSlotKey),
           // Until the menu's File section (ANVL-186) takes it over.
           TextButton(
             onPressed: busy
