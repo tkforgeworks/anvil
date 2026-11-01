@@ -2,6 +2,9 @@
 /// (design §11).
 library;
 
+export 'context_assembler.dart';
+export 'export_scope.dart';
+export 'export_service.dart';
 export 'presets.dart'
     show CsvExport, CsvFile, renderCsv, renderFlatJson, renderNestedJson;
 export 'render_isolate.dart';

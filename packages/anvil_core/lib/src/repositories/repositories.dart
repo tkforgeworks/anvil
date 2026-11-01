@@ -15,3 +15,5 @@ export 'sqlite_item_repository.dart';
 export 'sqlite_loot_table_repository.dart';
 export 'sqlite_meta_repository.dart';
 export 'sqlite_recipe_repository.dart';
+export 'sqlite_template_repository.dart';
+export 'template_repository.dart';

@@ -1,5 +1,5 @@
 /// The core's domain vocabulary: list rows, create inputs, drafts, meta
-/// types, custom fields and the NPC stat block.
+/// types, custom fields, custom templates and the NPC stat block.
 library;
 
 export 'ability_save_blockers.dart';
@@ -7,6 +7,7 @@ export 'ability_types.dart';
 export 'class_save_blockers.dart';
 export 'class_types.dart';
 export 'custom_fields.dart';
+export 'custom_template.dart';
 export 'item_save_blockers.dart';
 export 'item_types.dart';
 export 'loot_table_save_blockers.dart';
