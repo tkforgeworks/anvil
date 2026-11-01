@@ -40,6 +40,9 @@ dependencies:
   # The native folder picker and the .anvil open dialog (Flutter team
   # plugin). Only lib/app/dialogs/file_dialogs.dart imports it.
   file_selector: ^1.1.0
+  # Routing (design §13.2): the shell route with the sidebar and app bar
+  # and one route per page. Only lib/app/shell/ imports it.
+  go_router: ^18.1.2
 
 dev_dependencies:
   flutter_test:

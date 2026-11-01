@@ -1,6 +1,7 @@
 import 'dart:io';
 
-import 'package:anvil/app/shell/project_open_placeholder.dart';
+import 'package:anvil/app/providers.dart';
+import 'package:anvil/app/shell/app_shell.dart';
 import 'package:anvil/app/welcome/create_project_dialog.dart';
 import 'package:anvil/app/welcome/welcome_page.dart';
 import 'package:anvil_core/anvil_core.dart';
@@ -160,11 +161,14 @@ void main() {
 
     expect(harness.service.calls, ['create New World | Saga | $parent']);
     expect(find.byType(CreateProjectDialog), findsNothing);
-    expect(find.byType(ProjectOpenPlaceholder), findsOneWidget);
+    expect(find.byType(AppShell), findsOneWidget);
     expect(find.text('New World'), findsOneWidget);
-    expect(find.text('Saga'), findsOneWidget);
+    final metadata = appContainer(tester)
+        .read(projectSessionProvider)!
+        .metadata;
+    expect(metadata.gameTitle, 'Saga');
     final file = '$parent/New World/database/New World.anvil';
-    expect(find.text(file), findsOneWidget);
+    expect(metadata.filePath, file);
     expect(File(file).existsSync(), isTrue);
 
     await tester.tap(find.text('Close Project'));

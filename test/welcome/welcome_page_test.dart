@@ -1,5 +1,6 @@
 import 'package:anvil/app/project/project_lifecycle.dart';
-import 'package:anvil/app/shell/project_open_placeholder.dart';
+import 'package:anvil/app/providers.dart';
+import 'package:anvil/app/shell/app_shell.dart';
 import 'package:anvil/app/welcome/recent_projects_list.dart';
 import 'package:anvil/app/welcome/upgrade_project_dialog.dart';
 import 'package:anvil/app/welcome/welcome_page.dart';
@@ -163,14 +164,14 @@ void main() {
     await tester.tap(find.text('Open file...'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Upgrade Copy'));
-    await pumpUntil(
-      tester,
-      () => find.byType(ProjectOpenPlaceholder).evaluate().isNotEmpty,
-    );
+    await pumpUntil(tester, () => find.byType(AppShell).evaluate().isNotEmpty);
 
     expect(harness.service.calls, contains('upgradeCopy /p/old.anvil'));
     expect(find.text('Spike Fixture'), findsOneWidget);
-    expect(find.text(harness.service.upgradeTarget!), findsOneWidget);
+    expect(
+      appContainer(tester).read(projectSessionProvider)!.filePath,
+      harness.service.upgradeTarget,
+    );
 
     await tester.tap(find.text('Close Project'));
     await tester.pumpAndSettle();
