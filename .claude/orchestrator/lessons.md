@@ -18,8 +18,14 @@
 - Golden-test repos: stack dependent branches on the previous ticket's tip in the same worktree (FU-11 → FU-9, FU-10 → FU-12) and let the main thread rebase/regenerate goldens when two branches touch the same PNGs. Conflicts were only the eight full-page gallery PNGs; `git checkout --ours` + `--update-goldens` resolved them in one pass.
 - Agents reliably report `example/pubspec.lock` being rewritten by `pub get`; tell them up front to `git checkout -- example/pubspec.lock` before reporting.
 - Design-doc drafting from a decisions list is delegable to `worker-heavy` at higher effort; the decisions themselves are not.
+- 2026-11-01, ANVL-171: `worker-heavy` was right for the sqlite3 port + runner + parity tests (T-006, accepted first time, 53 tests); `worker` at lower effort was right for extending the vitest fixture generator and running it from the Electron tree (T-007, accepted first time). Two agents in parallel on disjoint files with a shared file contract (`schema-step-0N.json` shape spelled out in both briefs) worked: the step test was written against the contract and went green when the dumps landed.
 
 ## Repo gotchas for briefs
+- anvil_core: Electron SQL ported byte for byte needs `'''\n    CREATE ...` (escaped leading newline), because Dart drops the newline right after `'''` while the TS template literal keeps it; the tests compare whitespace-normalized, so this is for `sqlite_master` text fidelity only.
+- anvil_core: `sample-0.1.6.anvil` is in rollback-journal mode (`delete`), not WAL, because the generator opened it without the WAL pragma; `ProjectDatabase.open` switches a copy to WAL, `openReadOnly` cannot. Real 0.1.6 files are WAL.
+- anvil_core: to corrupt a fixture copy for an integrity_check test, overwrite row data inside a populated page (the `stats` page), not unused space; the brief's "page 3 + 200" offset landed in free space and SQLite reported `ok`.
+- anvil_core: `Isolate.resolvePackageUriSync` does not work under `flutter_tester`; test support locates `test/fixtures/` from the working directory (package dir or repo root).
+- Electron tree: `better-sqlite3` is compiled for Electron's ABI; `npm rebuild better-sqlite3` before a Node/vitest run, `npm run rebuild` after. Both worked on 2026-11-01.
 - forge-ui: `flutter_test` runs as Android, so Material adds no `Scrollbar` and no desktop behaviour unless the test sets `debugDefaultTargetPlatformOverride` (and clears it before the body returns) or uses a platform variant.
 - forge-ui: the full-page gallery goldens (`gallery_*_{light,dark}.png`, 8 files) change on ANY gallery edit, including an app-bar icon; section goldens under `components/` change only for their section.
 
