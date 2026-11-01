@@ -1,12 +1,14 @@
-/// What every shell route shows until its ticket lands. Each later ticket
-/// replaces its entries here, so the router and `openEditor` never change:
-/// the route and the editor dialog both build editors from
-/// [editorBuilders].
+/// What every shell route shows until its ticket lands, and the registry
+/// of the pages that have landed. Each domain ticket replaces its entries
+/// here (a later map entry overrides the placeholder), so the router and
+/// `openEditor` never change: the route and the editor dialog both build
+/// editors from [editorBuilders].
 library;
 
 import 'package:flutter/material.dart';
 import 'package:forge_ui/forge_ui.dart';
 
+import '../domains/abilities/abilities_pages.dart';
 import '../theme/anvil_metrics.dart';
 import 'shell_domain.dart';
 
@@ -40,6 +42,7 @@ final Map<ShellDomain, Widget Function()> listPageBuilders = {
   for (final domain in ShellDomain.values)
     domain: () =>
         PagePlaceholder(domain.label, ticket: _domainTickets[domain]!),
+  ShellDomain.abilities: abilitiesListPage,
 };
 
 /// Each domain's editor for one record id: the page at
@@ -47,6 +50,7 @@ final Map<ShellDomain, Widget Function()> listPageBuilders = {
 final Map<ShellDomain, Widget Function(String id)> editorBuilders = {
   for (final domain in ShellDomain.values)
     domain: (id) => EditorPlaceholder(domain, id),
+  ShellDomain.abilities: abilityEditor,
 };
 
 /// A page that is not built yet: its title, centred, and the ticket that
