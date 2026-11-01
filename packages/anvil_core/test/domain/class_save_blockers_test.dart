@@ -64,9 +64,34 @@ void main() {
     ]);
   });
 
-  test('stat growth formulas never block, even empty or broken', () {
+  test('a stat growth formula with a syntax error blocks with the '
+      "engine's message", () {
     final draft = _valid().copyWith(
-      statGrowthFormulas: {'a': '', 'b': '1 +', 'c': 'unknown_var'},
+      statGrowthFormulas: {'ok': '10 + level', 'bad': '1 +'},
+    );
+    expect(classSaveBlockers(draft), [
+      SaveBlocker('statGrowthFormulas.bad', validateFormula('1 +')!),
+    ]);
+  });
+
+  test('an empty or blank stat growth formula blocks as required', () {
+    final draft = _valid().copyWith(statGrowthFormulas: {'a': '', 'b': '  '});
+    expect(classSaveBlockers(draft), [
+      const SaveBlocker(
+        'statGrowthFormulas.a',
+        'Stat growth formula is required.',
+      ),
+      const SaveBlocker(
+        'statGrowthFormulas.b',
+        'Stat growth formula is required.',
+      ),
+    ]);
+  });
+
+  test('unknown variables and runtime errors in a growth formula do not '
+      'block', () {
+    final draft = _valid().copyWith(
+      statGrowthFormulas: {'a': 'unknown_var * 2', 'b': 'level / 0'},
     );
     expect(classSaveBlockers(draft), isEmpty);
   });
@@ -139,6 +164,7 @@ void main() {
       displayName: '',
       exportKey: '',
       statGrowth: {const StatGrowthKey('s', 0): 1},
+      statGrowthFormulas: const {'g': '*'},
       abilityIds: const ['a', 'a'],
       derivedStatOverrides: const {'d': '('},
       metadataFields: const [ClassMetadataField(fieldKey: '9', value: 0)],
@@ -148,6 +174,7 @@ void main() {
       'exportKey',
       'abilityIds[1]',
       'statGrowth',
+      'statGrowthFormulas.g',
       'derivedStatOverrides.d',
       'metadataFields[0].fieldKey',
     ]);

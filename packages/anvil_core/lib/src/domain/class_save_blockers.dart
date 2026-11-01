@@ -10,11 +10,13 @@ const String _invalidMetadataKey =
     'Letters, digits, underscores only. Must start with a letter.';
 
 /// The rules that keep a class draft from saving (design §8.6), in field
-/// order: identity, ability assignments, stat growth, derived stat
-/// overrides, metadata fields. Empty when the draft can be saved.
+/// order: identity, ability assignments, stat growth, stat growth formulas,
+/// derived stat overrides, metadata fields. Empty when the draft can be saved.
 ///
 /// Broken references (an assigned ability or a stat that no longer exists)
-/// are not blockers; they are validation issues.
+/// are not blockers; they are validation issues. So are a stat growth
+/// formula's unknown variables and its runtime errors, which depend on the
+/// project's stats and max level rather than on the draft alone.
 List<SaveBlocker> classSaveBlockers(ClassDraft draft) {
   final blockers = <SaveBlocker>[];
   if (draft.displayName.trim().isEmpty) {
@@ -42,6 +44,20 @@ List<SaveBlocker> classSaveBlockers(ClassDraft draft) {
     blockers.add(
       const SaveBlocker('statGrowth', 'Stat growth levels must be at least 1.'),
     );
+  }
+
+  // A stat is in formula mode while it has an entry here, and 0.1.6 let the
+  // formula sit empty (switching a stat to formula mode starts with ''),
+  // showing 'Formula is empty' but saving it anyway. 0.2.0 refuses both an
+  // empty formula and a syntax error.
+  for (final growth in draft.statGrowthFormulas.entries) {
+    final field = 'statGrowthFormulas.${growth.key}';
+    if (growth.value.trim().isEmpty) {
+      blockers.add(SaveBlocker(field, 'Stat growth formula is required.'));
+      continue;
+    }
+    final error = validateFormula(growth.value);
+    if (error != null) blockers.add(SaveBlocker(field, error));
   }
 
   // 0.1.6 refused to save while an enabled override had a syntax error, and
