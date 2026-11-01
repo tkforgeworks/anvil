@@ -35,6 +35,10 @@ abstract final class AnvilLayout {
   static const sidebarWidth = 220.0;
   static const sidebarCollapsedWidth = 56.0;
   static const inspectorRailWidth = 260.0;
+
+  /// The editor dialog's maximum width in the modal editing mode: MUI's
+  /// `lg` breakpoint, which 0.1.6's `EditorModal` used (`maxWidth="lg"`).
+  static const editorDialogMaxWidth = 1200.0;
 }
 
 /// Type styles Anvil needs beyond the `forge_ui` scale. Code and identifiers

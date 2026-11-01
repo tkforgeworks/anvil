@@ -1,7 +1,8 @@
 import 'dart:io';
 
 import 'package:anvil/app/dialogs/file_dialogs.dart';
-import 'package:anvil/app/shell/project_open_placeholder.dart';
+import 'package:anvil/app/providers.dart';
+import 'package:anvil/app/shell/app_shell.dart';
 import 'package:anvil/app/welcome/welcome_page.dart';
 import 'package:anvil/main.dart';
 import 'package:flutter/material.dart';
@@ -40,12 +41,15 @@ void main() {
       await tester.tap(find.text('Open file...'));
       await pumpUntil(
         tester,
-        () => find.byType(ProjectOpenPlaceholder).evaluate().isNotEmpty,
+        () => find.byType(AppShell).evaluate().isNotEmpty,
       );
 
       expect(find.text('Spike Fixture'), findsOneWidget);
-      expect(find.text('Forge & Fable'), findsOneWidget);
-      expect(find.text(path), findsOneWidget);
+      final metadata = appContainer(tester)
+          .read(projectSessionProvider)!
+          .metadata;
+      expect(metadata.gameTitle, 'Forge & Fable');
+      expect(metadata.filePath, path);
       expect(File('$path.lock').existsSync(), isTrue);
 
       await tester.tap(find.text('Close Project'));

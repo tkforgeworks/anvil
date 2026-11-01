@@ -1,0 +1,138 @@
+import 'package:anvil/app/shell/app_shell.dart';
+import 'package:anvil/app/shell/placeholders.dart';
+import 'package:anvil/app/shell/shell_domain.dart';
+import 'package:anvil/app/shell/sidebar.dart';
+import 'package:anvil/app/welcome/welcome_page.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
+
+import 'shell_harness.dart';
+
+/// The 0.1.6 route table (`App.tsx`) with the page each one shows until its
+/// ticket lands.
+const pages = {
+  '/': ('Dashboard', 'ANVL-198'),
+  '/classes': ('Classes', 'ANVL-195'),
+  '/abilities': ('Abilities', 'ANVL-191'),
+  '/items': ('Items', 'ANVL-192'),
+  '/recipes': ('Recipes', 'ANVL-193'),
+  '/npcs': ('NPCs', 'ANVL-197'),
+  '/loot-tables': ('Loot Tables', 'ANVL-194'),
+  '/validation': ('Validation', 'ANVL-198'),
+  '/recycle-bin': ('Recycle Bin', 'ANVL-199'),
+  '/export': ('Export', 'ANVL-200'),
+};
+
+const editors = {
+  '/classes/c-1': (ShellDomain.classes, 'c-1'),
+  '/abilities/a-1': (ShellDomain.abilities, 'a-1'),
+  '/items/i-1': (ShellDomain.items, 'i-1'),
+  '/recipes/r-1': (ShellDomain.recipes, 'r-1'),
+  '/npcs/n-1': (ShellDomain.npcs, 'n-1'),
+  '/loot-tables/l-1': (ShellDomain.lootTables, 'l-1'),
+};
+
+void main() {
+  testWidgets(
+    'no session shows the welcome page; opening redirects to the dashboard '
+    'in the shell; closing returns to welcome',
+    (tester) async {
+      final harness = await ShellHarness.pump(tester);
+      await tester.pumpAndSettle();
+
+      expect(harness.location, '/welcome');
+      expect(find.byType(WelcomePage), findsOneWidget);
+      expect(find.byType(AppShell), findsNothing);
+
+      await harness.openProject(tester);
+
+      expect(harness.location, '/');
+      expect(find.byType(WelcomePage), findsNothing);
+      expect(
+        find.descendant(
+          of: find.byType(AppBar),
+          matching: find.text('Spike Fixture'),
+        ),
+        findsOneWidget,
+      );
+      expect(find.byType(Sidebar), findsOneWidget);
+      expect(find.byKey(AppShell.menuSlotKey), findsOneWidget);
+      expect(find.byKey(AppShell.saveStatusSlotKey), findsOneWidget);
+      final dashboard = tester.widget<PagePlaceholder>(
+        find.byType(PagePlaceholder),
+      );
+      expect(dashboard.title, 'Dashboard');
+
+      // The welcome location is not reachable while a project is open.
+      tester.element(find.byType(Sidebar)).go('/welcome');
+      await tester.pumpAndSettle();
+      expect(harness.location, '/');
+
+      await tester.tap(find.text('Close Project'));
+      await tester.pumpAndSettle();
+
+      expect(harness.location, '/welcome');
+      expect(find.byType(WelcomePage), findsOneWidget);
+      expect(find.byType(AppShell), findsNothing);
+    },
+    variant: linux,
+  );
+
+  testWidgets(
+    'every route renders its placeholder inside the shell, and the sidebar '
+    'reaches every page',
+    (tester) async {
+      final harness = await ShellHarness.pump(tester);
+      await harness.openProject(tester);
+
+      for (final MapEntry(key: path, value: (title, ticket)) in pages.entries) {
+        tester.element(find.byType(Sidebar)).go(path);
+        await tester.pumpAndSettle();
+
+        expect(harness.location, path);
+        expect(find.byType(AppShell), findsOneWidget, reason: path);
+        final page = tester.widget<PagePlaceholder>(
+          find.descendant(
+            of: find.byType(AppShell),
+            matching: find.byType(PagePlaceholder),
+          ),
+        );
+        expect((page.title, page.ticket), (title, ticket), reason: path);
+        expect(find.text('Coming in $ticket'), findsOneWidget, reason: path);
+      }
+
+      for (final MapEntry(key: path, value: (domain, id)) in editors.entries) {
+        tester.element(find.byType(Sidebar)).go(path);
+        await tester.pumpAndSettle();
+
+        expect(harness.location, path);
+        final editor = tester.widget<EditorPlaceholder>(
+          find.descendant(
+            of: find.byType(AppShell),
+            matching: find.byType(EditorPlaceholder),
+          ),
+        );
+        expect((editor.domain, editor.id), (domain, id), reason: path);
+        // The editor route highlights its list's entry.
+        final label = tester.widget<Text>(
+          find.descendant(
+            of: find.byType(Sidebar),
+            matching: find.text(domain.label),
+          ),
+        );
+        expect(label.style?.fontWeight, FontWeight.w600, reason: path);
+      }
+
+      // Every sidebar entry navigates to its page.
+      for (final MapEntry(key: path, value: (title, _)) in pages.entries) {
+        await tester.tap(
+          find.descendant(of: find.byType(Sidebar), matching: find.text(title)),
+        );
+        await tester.pumpAndSettle();
+        expect(harness.location, path, reason: title);
+      }
+    },
+    variant: linux,
+  );
+}
