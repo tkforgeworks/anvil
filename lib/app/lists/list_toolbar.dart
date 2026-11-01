@@ -67,51 +67,35 @@ class _ListToolbarState extends State<ListToolbar> {
 
   @override
   Widget build(BuildContext context) {
+    final search = SizedBox(
+      width: ListToolbar.searchWidth,
+      child: TextField(
+        key: ListToolbar.searchKey,
+        controller: _search,
+        onChanged: widget.onSearchChanged,
+        decoration: const InputDecoration(
+          hintText: 'Search...',
+          prefixIcon: Icon(Icons.search, size: 20),
+          isDense: true,
+        ),
+      ),
+    );
+    // The search, filters and sort wrap onto a second line when the page
+    // is too narrow for one (two filter pickers at the 1400 px minimum
+    // window with the sidebar open); the view toggle and New stay on the
+    // first line at the right.
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
-          width: ListToolbar.searchWidth,
-          child: TextField(
-            key: ListToolbar.searchKey,
-            controller: _search,
-            onChanged: widget.onSearchChanged,
-            decoration: const InputDecoration(
-              hintText: 'Search...',
-              prefixIcon: Icon(Icons.search, size: 20),
-              isDense: true,
-            ),
+        Expanded(
+          child: Wrap(
+            spacing: AnvilSpacing.md,
+            runSpacing: AnvilSpacing.sm,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [search, ?widget.filterSlot, _sortPicker()],
           ),
         ),
-        if (widget.filterSlot case final slot?) ...[
-          const SizedBox(width: AnvilSpacing.md),
-          slot,
-        ],
         const SizedBox(width: AnvilSpacing.md),
-        SizedBox(
-          width: ListToolbar.sortWidth,
-          child: InputDecorator(
-            decoration: const InputDecoration(
-              labelText: 'Sort by',
-              isDense: true,
-            ),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                key: ListToolbar.sortKey,
-                value: widget.sortLabel,
-                isDense: true,
-                isExpanded: true,
-                items: [
-                  for (final label in widget.sortLabels)
-                    DropdownMenuItem(value: label, child: Text(label)),
-                ],
-                onChanged: (label) {
-                  if (label != null) widget.onSortChanged(label);
-                },
-              ),
-            ),
-          ),
-        ),
-        const Spacer(),
         SegmentedButton<ListViewMode>(
           key: ListToolbar.modeKey,
           showSelectedIcon: false,
@@ -133,4 +117,26 @@ class _ListToolbarState extends State<ListToolbar> {
       ],
     );
   }
+
+  Widget _sortPicker() => SizedBox(
+    width: ListToolbar.sortWidth,
+    child: InputDecorator(
+      decoration: const InputDecoration(labelText: 'Sort by', isDense: true),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          key: ListToolbar.sortKey,
+          value: widget.sortLabel,
+          isDense: true,
+          isExpanded: true,
+          items: [
+            for (final label in widget.sortLabels)
+              DropdownMenuItem(value: label, child: Text(label)),
+          ],
+          onChanged: (label) {
+            if (label != null) widget.onSortChanged(label);
+          },
+        ),
+      ),
+    ),
+  );
 }
