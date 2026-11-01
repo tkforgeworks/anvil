@@ -16,6 +16,9 @@ import 'shell_domain.dart';
 /// [EditorDialog] over the current page, whose location does not change.
 ///
 /// The setting is read at call time, so a change applies to the next open.
+/// Leaving a dirty editor is guarded where it is left, not here: by the
+/// editor route's `onExit` in full page (another record included), by the
+/// dialog's `PopScope` in modal.
 void openEditor(
   BuildContext context,
   WidgetRef ref,
@@ -30,7 +33,8 @@ void openEditor(
         showDialog<void>(
           context: context,
           builder: (_) => EditorDialog(
-            title: domain.editorTitle,
+            domain: domain,
+            id: id,
             child: editorBuilders[domain]!(id),
           ),
         ),

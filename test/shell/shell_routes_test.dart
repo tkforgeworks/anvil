@@ -1,3 +1,4 @@
+import 'package:anvil/app/menu/menu_commands.dart';
 import 'package:anvil/app/shell/app_shell.dart';
 import 'package:anvil/app/shell/placeholders.dart';
 import 'package:anvil/app/shell/shell_domain.dart';
@@ -7,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
+import '../menu/menu_harness.dart' show openSection;
 import 'shell_harness.dart';
 
 /// The 0.1.6 route table (`App.tsx`) with the page each one shows until its
@@ -69,7 +71,10 @@ void main() {
       await tester.pumpAndSettle();
       expect(harness.location, '/');
 
-      await tester.tap(find.text('Close Project'));
+      await openSection(tester, 'File');
+      await tester.tap(
+        find.byKey(ValueKey('menu-${MenuCommand.closeProject.id}')),
+      );
       await tester.pumpAndSettle();
 
       expect(harness.location, '/welcome');

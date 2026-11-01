@@ -4,7 +4,6 @@ import 'package:forge_ui/forge_ui.dart';
 
 import '../menu/app_menu.dart';
 import '../project/checkpoint_scheduler.dart';
-import '../project/project_lifecycle.dart';
 import '../providers.dart';
 import '../theme/anvil_metrics.dart';
 import 'save_status_indicator.dart';
@@ -34,7 +33,6 @@ class AppShell extends ConsumerWidget {
     if (session == null) return const SizedBox.shrink();
     ref.watch(checkpointSchedulerProvider);
     final name = session.metadata.projectName;
-    final busy = ref.watch(projectLifecycleProvider) is LifecycleBusy;
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
@@ -49,13 +47,6 @@ class AppShell extends ConsumerWidget {
         ),
         actions: [
           const SaveStatusIndicator(key: saveStatusSlotKey),
-          // Until the menu's File section (ANVL-186) takes it over.
-          TextButton(
-            onPressed: busy
-                ? null
-                : ref.read(projectLifecycleProvider.notifier).closeProject,
-            child: const Text('Close Project'),
-          ),
           const SizedBox(width: AnvilSpacing.sm),
         ],
       ),

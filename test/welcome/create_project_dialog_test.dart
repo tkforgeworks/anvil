@@ -10,6 +10,10 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../dialogs/fakes.dart';
 
+import 'package:anvil/app/menu/menu_commands.dart';
+
+import '../menu/menu_harness.dart' show openSection;
+
 final linux = TargetPlatformVariant.only(TargetPlatform.linux);
 
 void main() {
@@ -171,7 +175,10 @@ void main() {
     expect(metadata.filePath, file);
     expect(File(file).existsSync(), isTrue);
 
-    await tester.tap(find.text('Close Project'));
+    await openSection(tester, 'File');
+    await tester.tap(
+      find.byKey(ValueKey('menu-${MenuCommand.closeProject.id}')),
+    );
     await tester.pumpAndSettle();
     expect(find.byType(WelcomePage), findsOneWidget);
     // The page re-read the list: the new project is on it.

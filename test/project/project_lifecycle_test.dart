@@ -9,6 +9,10 @@ import 'package:flutter_test/flutter_test.dart';
 import '../dialogs/fakes.dart';
 
 void main() {
+  // The default leave guard looks up the root navigator's GlobalKey, which
+  // needs a binding; with none mounted it answers true at once.
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   late LifecycleHarness harness;
   late ProviderContainer container;
 

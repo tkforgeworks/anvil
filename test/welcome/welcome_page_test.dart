@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:anvil/app/project/project_lifecycle.dart';
 import 'package:anvil/app/providers.dart';
 import 'package:anvil/app/shell/app_shell.dart';
@@ -9,6 +10,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../dialogs/fakes.dart';
+
+import 'package:anvil/app/menu/menu_commands.dart';
+
+import '../menu/menu_harness.dart' show openSection;
 
 final linux = TargetPlatformVariant.only(TargetPlatform.linux);
 
@@ -173,7 +178,10 @@ void main() {
       harness.service.upgradeTarget,
     );
 
-    await tester.tap(find.text('Close Project'));
+    await openSection(tester, 'File');
+    await tester.tap(
+      find.byKey(ValueKey('menu-${MenuCommand.closeProject.id}')),
+    );
     await tester.pumpAndSettle();
     expect(find.byType(WelcomePage), findsOneWidget);
   }, variant: linux);

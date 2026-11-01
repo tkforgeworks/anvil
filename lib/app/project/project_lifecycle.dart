@@ -8,6 +8,7 @@ import 'package:anvil_core/anvil_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../dialogs/file_dialogs.dart';
+import '../editor/exit_prompt.dart';
 import '../providers.dart';
 
 /// What the lifecycle UI shows besides the welcome page itself.
@@ -144,6 +145,10 @@ final recentProjectsProvider = Provider.autoDispose<List<RecentProject>>(
 ///
 /// `build()` watches nothing; the service, logger, dialogs and session are
 /// read at call time. While [LifecycleBusy], new intents are ignored.
+///
+/// Every intent that closes the open project ([openPath], [create],
+/// [closeProject], [saveAs]) first asks [leaveGuardProvider], before it
+/// goes busy, and does nothing when the guard answers to stay.
 class ProjectLifecycleNotifier extends Notifier<ProjectLifecycleState> {
   @override
   ProjectLifecycleState build() => const ProjectLifecycleState.idle();
@@ -155,6 +160,7 @@ class ProjectLifecycleNotifier extends Notifier<ProjectLifecycleState> {
   bool get _busy => state is LifecycleBusy;
 
   /// Asks for a `.anvil` file and opens it; a cancelled dialog does nothing.
+  /// The leave guard runs once, in [openPath], after the file is picked.
   Future<void> openWithDialog() async {
     if (_busy) return;
     final path = await ref.read(fileDialogsProvider).pickAnvilFile();
@@ -166,7 +172,7 @@ class ProjectLifecycleNotifier extends Notifier<ProjectLifecycleState> {
   /// idle with the session set, [LifecycleNeedsUpgrade], [LifecycleRecovery]
   /// or, for a lock conflict, [LifecycleFailed] with 0.1.6's lock message.
   Future<void> openPath(String path) async {
-    if (_busy) return;
+    if (_busy || !await _mayLeave()) return;
     state = const ProjectLifecycleState.busy('Opening project');
     await _closeCurrent();
     try {
@@ -191,13 +197,14 @@ class ProjectLifecycleNotifier extends Notifier<ProjectLifecycleState> {
   /// Creates a project in [parentDirectory] and makes it current, closing
   /// the current project first as 0.1.6 did. Returns whether it succeeded;
   /// on failure the state is [LifecycleFailed] with the core's message (the
-  /// core has already removed anything it created).
+  /// core has already removed anything it created). When the leave guard
+  /// answers to stay it returns false with the state unchanged.
   Future<bool> create(
     String projectName,
     String gameTitle,
     String parentDirectory,
   ) async {
-    if (_busy) return false;
+    if (_busy || !await _mayLeave()) return false;
     state = const ProjectLifecycleState.busy('Creating project');
     await _closeCurrent();
     try {
@@ -252,6 +259,7 @@ class ProjectLifecycleNotifier extends Notifier<ProjectLifecycleState> {
   /// checkpoint fails, which is then reported as [LifecycleFailed].
   Future<void> closeProject() async {
     if (_busy || ref.read(projectSessionProvider) == null) return;
+    if (!await _mayLeave()) return;
     state = const ProjectLifecycleState.busy('Closing project');
     final failure = await _closeCurrent();
     state = failure == null
@@ -265,10 +273,11 @@ class ProjectLifecycleNotifier extends Notifier<ProjectLifecycleState> {
   ///
   /// Returns null on success, or the message to show on failure, when the
   /// original stays open. Either way the state ends idle: the shell, not the
-  /// welcome page, reports the failure.
+  /// welcome page, reports the failure. When the leave guard answers to
+  /// stay it returns null and does nothing.
   Future<String?> saveAs(String path) async {
     final session = ref.read(projectSessionProvider);
-    if (_busy || session == null) return null;
+    if (_busy || session == null || !await _mayLeave()) return null;
     state = const ProjectLifecycleState.busy('Saving a copy');
     try {
       final copy = await _service.saveAs(session, path);
@@ -322,6 +331,13 @@ class ProjectLifecycleNotifier extends Notifier<ProjectLifecycleState> {
       case LifecycleIdle() || LifecycleBusy():
         break;
     }
+  }
+
+  /// The leave guard: true when no project is open or nothing unsaved
+  /// stands in the way, else the user's answer. Read at call time.
+  Future<bool> _mayLeave() async {
+    if (ref.read(projectSessionProvider) == null) return true;
+    return ref.read(leaveGuardProvider)();
   }
 
   void _activate(ProjectSession session, String verb) {
