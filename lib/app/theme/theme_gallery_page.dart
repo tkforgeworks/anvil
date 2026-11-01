@@ -1,22 +1,24 @@
+import 'package:anvil_core/anvil_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forge_ui/forge_ui.dart';
 
+import '../providers.dart';
+import '../settings/app_settings_notifier.dart';
+import '../shell/placeholder_home_page.dart';
 import 'anvil_metrics.dart';
-import 'theme_controller.dart';
 
 /// Renders the core controls under the current theme and switches between
-/// Dark, Light and Custom. The app's home until the shell lands (ANVL-148);
-/// after that it stays reachable as a developer screen.
-class ThemeGalleryPage extends StatefulWidget {
-  const ThemeGalleryPage({super.key, required this.controller});
-
-  final ThemeController controller;
+/// Dark, Light and Custom through the persisted app settings. A developer
+/// screen, opened from the debug-build home page.
+class ThemeGalleryPage extends ConsumerStatefulWidget {
+  const ThemeGalleryPage({super.key});
 
   @override
-  State<ThemeGalleryPage> createState() => _ThemeGalleryPageState();
+  ConsumerState<ThemeGalleryPage> createState() => _ThemeGalleryPageState();
 }
 
-class _ThemeGalleryPageState extends State<ThemeGalleryPage> {
+class _ThemeGalleryPageState extends ConsumerState<ThemeGalleryPage> {
   final _pathController = TextEditingController();
   var _chipSelected = true;
   var _switchOn = true;
@@ -31,12 +33,13 @@ class _ThemeGalleryPageState extends State<ThemeGalleryPage> {
   void _load() {
     final path = _pathController.text.trim();
     if (path.isEmpty) return;
-    widget.controller.loadCustomFile(path);
+    ref.read(appSettingsProvider.notifier).setCustomThemeFile(path);
   }
 
   @override
   Widget build(BuildContext context) {
-    final selection = widget.controller.value;
+    final settings = ref.watch(appSettingsProvider);
+    final error = ref.watch(customThemeErrorProvider);
     return Scaffold(
       appBar: AppBar(title: const Text('Anvil theme gallery')),
       body: SingleChildScrollView(
@@ -44,7 +47,7 @@ class _ThemeGalleryPageState extends State<ThemeGalleryPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _modeSection(selection),
+            _modeSection(settings, error),
             const SizedBox(height: AnvilSpacing.lg),
             Wrap(
               spacing: AnvilSpacing.lg,
@@ -92,8 +95,7 @@ class _ThemeGalleryPageState extends State<ThemeGalleryPage> {
     );
   }
 
-  Widget _modeSection(ThemeSelection selection) {
-    final error = selection.customError;
+  Widget _modeSection(AppSettings settings, String? error) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(AnvilSpacing.md),
@@ -102,29 +104,7 @@ class _ThemeGalleryPageState extends State<ThemeGalleryPage> {
           children: [
             const ForgeMonoLabel('Theme'),
             const SizedBox(height: AnvilSpacing.sm),
-            SegmentedButton<AnvilThemeMode>(
-              segments: [
-                const ButtonSegment(
-                  value: AnvilThemeMode.dark,
-                  label: Text('Dark'),
-                ),
-                const ButtonSegment(
-                  value: AnvilThemeMode.light,
-                  label: Text('Light'),
-                ),
-                ButtonSegment(
-                  value: AnvilThemeMode.custom,
-                  label: const Text('Custom'),
-                  enabled: selection.customColors != null,
-                ),
-              ],
-              selected: {selection.mode},
-              onSelectionChanged: (modes) => switch (modes.single) {
-                AnvilThemeMode.dark => widget.controller.selectDark(),
-                AnvilThemeMode.light => widget.controller.selectLight(),
-                AnvilThemeMode.custom => widget.controller.selectCustom(),
-              },
-            ),
+            ThemeModeSelector(settings: settings),
             const SizedBox(height: AnvilSpacing.md),
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,
@@ -147,10 +127,10 @@ class _ThemeGalleryPageState extends State<ThemeGalleryPage> {
                 ),
               ],
             ),
-            if (selection.customPath != null) ...[
+            if (settings.customThemePath != null) ...[
               const SizedBox(height: AnvilSpacing.sm),
               Text(
-                selection.customPath!,
+                settings.customThemePath!,
                 style: ForgeType.code(color: context.forge.textTertiary),
               ),
             ],
