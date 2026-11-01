@@ -1,0 +1,2302 @@
+{
+ "generator": "packages/anvil_core/test/fixtures/formula/build-formula-corpus.test.ts",
+ "engine": "src/main/formula/engine.ts (Electron 0.1.6)",
+ "encoding": "Numbers are JSON numbers, except NaN, Infinity, -Infinity and negative zero, which are the strings 'NaN', 'Infinity', '-Infinity' and '-0'. A case with 'repeat' instead of 'formula' is open × depth + core + close × depth.",
+ "cases": [
+  {
+   "formula": "1",
+   "bindings": {},
+   "value": 1,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "42",
+   "bindings": {},
+   "value": 42,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "1 + 2",
+   "bindings": {},
+   "value": 3,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "1 + 2 * 3",
+   "bindings": {},
+   "value": 7,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "(1 + 2) * 3",
+   "bindings": {},
+   "value": 9,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "note": "left associative",
+   "formula": "10 - 4 - 3",
+   "bindings": {},
+   "value": 3,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "note": "left associative",
+   "formula": "100 / 10 / 5",
+   "bindings": {},
+   "value": 2,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "2 * 3 / 4",
+   "bindings": {},
+   "value": 1.5,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "1 - 2 + 3",
+   "bindings": {},
+   "value": 2,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "((((1))))",
+   "bindings": {},
+   "value": 1,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "(1 + (2 * (3 - (4 / 2))))",
+   "bindings": {},
+   "value": 3,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "((1 + 2) * (3 + 4))",
+   "bindings": {},
+   "value": 21,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "0.1 + 0.2",
+   "bindings": {},
+   "value": 0.30000000000000004,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "0.1 * 3",
+   "bindings": {},
+   "value": 0.30000000000000004,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "1 / 3",
+   "bindings": {},
+   "value": 0.3333333333333333,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "2 / 3 * 3",
+   "bindings": {},
+   "value": 2,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "1 + 2 * 3 - 4 / 5",
+   "bindings": {},
+   "value": 6.2,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "8 - 2 * 3 + 1",
+   "bindings": {},
+   "value": 3,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "1.2.3",
+   "bindings": {},
+   "value": 1.2,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": ".5",
+   "bindings": {},
+   "value": 0.5,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "5.",
+   "bindings": {},
+   "value": 5,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": ".",
+   "bindings": {},
+   "value": null,
+   "error": "Unexpected character '.' at position 0",
+   "isSyntaxError": true,
+   "validate": "Unexpected character '.' at position 0",
+   "variables": []
+  },
+  {
+   "formula": ".5.5",
+   "bindings": {},
+   "value": 0.5,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "1..2",
+   "bindings": {},
+   "value": 1,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "..5",
+   "bindings": {},
+   "value": null,
+   "error": "Unexpected character '.' at position 0",
+   "isSyntaxError": true,
+   "validate": "Unexpected character '.' at position 0",
+   "variables": []
+  },
+  {
+   "formula": "1.5.5 + 1",
+   "bindings": {},
+   "value": 2.5,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "007",
+   "bindings": {},
+   "value": 7,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "0.000",
+   "bindings": {},
+   "value": 0,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "1e5",
+   "bindings": {},
+   "value": null,
+   "error": "Unexpected 'e5' at position 1",
+   "isSyntaxError": true,
+   "validate": "Unexpected 'e5' at position 1",
+   "variables": []
+  },
+  {
+   "formula": "1 . 5",
+   "bindings": {},
+   "value": null,
+   "error": "Unexpected character '.' at position 2",
+   "isSyntaxError": true,
+   "validate": "Unexpected character '.' at position 2",
+   "variables": []
+  },
+  {
+   "formula": "99999999999999999999",
+   "bindings": {},
+   "value": 100000000000000000000,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "123456789.123456789",
+   "bindings": {},
+   "value": 123456789.12345679,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "3.14159265358979323846",
+   "bindings": {},
+   "value": 3.141592653589793,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "note": "1e-324 rounds to zero",
+   "formula": "0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001",
+   "bindings": {},
+   "value": 0,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "note": "divisor literal rounds to zero",
+   "formula": "1 / 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001",
+   "bindings": {},
+   "value": null,
+   "error": "Division by zero",
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "note": "denormal divisor",
+   "formula": "1 / 0.00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001",
+   "bindings": {},
+   "value": "Infinity",
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "note": "literal overflows to Infinity",
+   "formula": "1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+   "bindings": {},
+   "value": "Infinity",
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 * 10",
+   "bindings": {},
+   "value": "Infinity",
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 - 1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+   "bindings": {},
+   "value": "NaN",
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "-1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+   "bindings": {},
+   "value": "-Infinity",
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "-3",
+   "bindings": {},
+   "value": -3,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "--3",
+   "bindings": {},
+   "value": 3,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "---3",
+   "bindings": {},
+   "value": -3,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "-(2)",
+   "bindings": {},
+   "value": -2,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "2*-3",
+   "bindings": {},
+   "value": -6,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "2 - -3",
+   "bindings": {},
+   "value": 5,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "-2 * -3",
+   "bindings": {},
+   "value": 6,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "- 3",
+   "bindings": {},
+   "value": -3,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "-x",
+   "bindings": {
+    "x": 4
+   },
+   "value": -4,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "x"
+   ]
+  },
+  {
+   "formula": "-0",
+   "bindings": {},
+   "value": "-0",
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "-(0)",
+   "bindings": {},
+   "value": "-0",
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "0 * -1",
+   "bindings": {},
+   "value": "-0",
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "-0 + 0",
+   "bindings": {},
+   "value": 0,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "-0 - 0",
+   "bindings": {},
+   "value": "-0",
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "-min(1, 2)",
+   "bindings": {},
+   "value": -1,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "-",
+   "bindings": {},
+   "value": null,
+   "error": "Unexpected end of formula",
+   "isSyntaxError": true,
+   "validate": "Unexpected end of formula",
+   "variables": []
+  },
+  {
+   "formula": "2 * -",
+   "bindings": {},
+   "value": null,
+   "error": "Unexpected end of formula",
+   "isSyntaxError": true,
+   "validate": "Unexpected end of formula",
+   "variables": []
+  },
+  {
+   "formula": "+3",
+   "bindings": {},
+   "value": null,
+   "error": "Unexpected '+' at position 0",
+   "isSyntaxError": true,
+   "validate": "Unexpected '+' at position 0",
+   "variables": []
+  },
+  {
+   "formula": "2 + + 3",
+   "bindings": {},
+   "value": null,
+   "error": "Unexpected '+' at position 4",
+   "isSyntaxError": true,
+   "validate": "Unexpected '+' at position 4",
+   "variables": []
+  },
+  {
+   "formula": "-(-(q))",
+   "bindings": {
+    "q": 2
+   },
+   "value": 2,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "q"
+   ]
+  },
+  {
+   "formula": "1 / 0",
+   "bindings": {},
+   "value": null,
+   "error": "Division by zero",
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "1 / 0.0",
+   "bindings": {},
+   "value": null,
+   "error": "Division by zero",
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "1 / -0",
+   "bindings": {},
+   "value": null,
+   "error": "Division by zero",
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "1 / -0.0",
+   "bindings": {},
+   "value": null,
+   "error": "Division by zero",
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "0 / 0",
+   "bindings": {},
+   "value": null,
+   "error": "Division by zero",
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "x / y",
+   "bindings": {
+    "x": 1,
+    "y": 0
+   },
+   "value": null,
+   "error": "Division by zero",
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "x",
+    "y"
+   ]
+  },
+  {
+   "formula": "1 / (2 - 2)",
+   "bindings": {},
+   "value": null,
+   "error": "Division by zero",
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "1 / (0.1 + 0.2 - 0.3)",
+   "bindings": {},
+   "value": 18014398509481984,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "x / 0",
+   "bindings": {},
+   "value": null,
+   "error": "Unknown variable 'x'",
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "x"
+   ]
+  },
+  {
+   "formula": "1 / 0 + y",
+   "bindings": {},
+   "value": null,
+   "error": "Division by zero",
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "y"
+   ]
+  },
+  {
+   "formula": "y + 1 / 0",
+   "bindings": {},
+   "value": null,
+   "error": "Unknown variable 'y'",
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "y"
+   ]
+  },
+  {
+   "formula": "0 / x",
+   "bindings": {
+    "x": 0
+   },
+   "value": null,
+   "error": "Division by zero",
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "x"
+   ]
+  },
+  {
+   "formula": "1 / x",
+   "bindings": {
+    "x": "NaN"
+   },
+   "value": "NaN",
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "x"
+   ]
+  },
+  {
+   "formula": "1 / x",
+   "bindings": {
+    "x": "Infinity"
+   },
+   "value": 0,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "x"
+   ]
+  },
+  {
+   "formula": "-1 / x",
+   "bindings": {
+    "x": "Infinity"
+   },
+   "value": "-0",
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "x"
+   ]
+  },
+  {
+   "formula": "1 / x",
+   "bindings": {
+    "x": "-0"
+   },
+   "value": null,
+   "error": "Division by zero",
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "x"
+   ]
+  },
+  {
+   "formula": "5 / 2",
+   "bindings": {},
+   "value": 2.5,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "min(1, 2)",
+   "bindings": {},
+   "value": 1,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "max(1, 2)",
+   "bindings": {},
+   "value": 2,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "min(3, 1, 2)",
+   "bindings": {},
+   "value": 1,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "max(3, 1, 2, 5)",
+   "bindings": {},
+   "value": 5,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "min(7)",
+   "bindings": {},
+   "value": 7,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "min()",
+   "bindings": {},
+   "value": "Infinity",
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "max()",
+   "bindings": {},
+   "value": "-Infinity",
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "floor()",
+   "bindings": {},
+   "value": "NaN",
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "ceil()",
+   "bindings": {},
+   "value": "NaN",
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "floor(2.7)",
+   "bindings": {},
+   "value": 2,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "floor(-2.7)",
+   "bindings": {},
+   "value": -3,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "ceil(2.1)",
+   "bindings": {},
+   "value": 3,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "ceil(-2.1)",
+   "bindings": {},
+   "value": -2,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "floor(-0.5)",
+   "bindings": {},
+   "value": -1,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "ceil(-0.5)",
+   "bindings": {},
+   "value": "-0",
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "floor(1, 2)",
+   "bindings": {},
+   "value": 1,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "ceil(1.5, 99)",
+   "bindings": {},
+   "value": 2,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "note": "extra args are still evaluated",
+   "formula": "floor(1, foo(2))",
+   "bindings": {},
+   "value": null,
+   "error": "Unknown function 'foo'",
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "min(0, -0)",
+   "bindings": {},
+   "value": "-0",
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "min(-0, 0)",
+   "bindings": {},
+   "value": "-0",
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "max(-0, 0)",
+   "bindings": {},
+   "value": 0,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "max(0, -0)",
+   "bindings": {},
+   "value": 0,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "min(1, x)",
+   "bindings": {
+    "x": "NaN"
+   },
+   "value": "NaN",
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "x"
+   ]
+  },
+  {
+   "formula": "max(x)",
+   "bindings": {
+    "x": "NaN"
+   },
+   "value": "NaN",
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "x"
+   ]
+  },
+  {
+   "formula": "floor(x)",
+   "bindings": {
+    "x": "Infinity"
+   },
+   "value": "Infinity",
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "x"
+   ]
+  },
+  {
+   "formula": "ceil(x)",
+   "bindings": {
+    "x": "-Infinity"
+   },
+   "value": "-Infinity",
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "x"
+   ]
+  },
+  {
+   "formula": "floor(x)",
+   "bindings": {
+    "x": "NaN"
+   },
+   "value": "NaN",
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "x"
+   ]
+  },
+  {
+   "formula": "floor(min())",
+   "bindings": {},
+   "value": "Infinity",
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "ceil(max())",
+   "bindings": {},
+   "value": "-Infinity",
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "floor(max(1.5, 2.5))",
+   "bindings": {},
+   "value": 2,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "max(min(1, 2), min(3, 4))",
+   "bindings": {},
+   "value": 3,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "min(max(1, floor(2.9)), ceil(0.1))",
+   "bindings": {},
+   "value": 1,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "MIN(1, 2)",
+   "bindings": {},
+   "value": null,
+   "error": "Unknown function 'MIN'",
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "Floor(1.5)",
+   "bindings": {},
+   "value": null,
+   "error": "Unknown function 'Floor'",
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "sqrt(4)",
+   "bindings": {},
+   "value": null,
+   "error": "Unknown function 'sqrt'",
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "pow(2, 3)",
+   "bindings": {},
+   "value": null,
+   "error": "Unknown function 'pow'",
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "foo(x)",
+   "bindings": {},
+   "value": null,
+   "error": "Unknown function 'foo'",
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "x"
+   ]
+  },
+  {
+   "formula": "min(x, foo(1))",
+   "bindings": {
+    "x": 1
+   },
+   "value": null,
+   "error": "Unknown function 'foo'",
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "x"
+   ]
+  },
+  {
+   "formula": "min(y, 1)",
+   "bindings": {},
+   "value": null,
+   "error": "Unknown variable 'y'",
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "y"
+   ]
+  },
+  {
+   "formula": "min",
+   "bindings": {},
+   "value": null,
+   "error": "Unknown variable 'min'",
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "min + 1",
+   "bindings": {
+    "min": 5
+   },
+   "value": 6,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "min(min, 1)",
+   "bindings": {
+    "min": 0
+   },
+   "value": 0,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "floor + ceil",
+   "bindings": {
+    "floor": 1,
+    "ceil": 2
+   },
+   "value": 3,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "min (1, 2)",
+   "bindings": {},
+   "value": 1,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "min(1,2)",
+   "bindings": {},
+   "value": 1,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "min( 1 , 2 )",
+   "bindings": {},
+   "value": 1,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "max(1, min(2, max(3, min(4, 5))))",
+   "bindings": {},
+   "value": 2,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "min(1,)",
+   "bindings": {},
+   "value": null,
+   "error": "Unexpected ')' at position 6",
+   "isSyntaxError": true,
+   "validate": "Unexpected ')' at position 6",
+   "variables": []
+  },
+  {
+   "formula": "min(,1)",
+   "bindings": {},
+   "value": null,
+   "error": "Unexpected ',' at position 4",
+   "isSyntaxError": true,
+   "validate": "Unexpected ',' at position 4",
+   "variables": []
+  },
+  {
+   "formula": "min(1 2)",
+   "bindings": {},
+   "value": null,
+   "error": "Expected RPAREN but found '2' at position 6",
+   "isSyntaxError": true,
+   "validate": "Expected RPAREN but found '2' at position 6",
+   "variables": []
+  },
+  {
+   "formula": "min(1",
+   "bindings": {},
+   "value": null,
+   "error": "Expected RPAREN but found '' at position 5",
+   "isSyntaxError": true,
+   "validate": "Expected RPAREN but found '' at position 5",
+   "variables": []
+  },
+  {
+   "formula": "min(",
+   "bindings": {},
+   "value": null,
+   "error": "Unexpected end of formula",
+   "isSyntaxError": true,
+   "validate": "Unexpected end of formula",
+   "variables": []
+  },
+  {
+   "formula": "min(1, 2",
+   "bindings": {},
+   "value": null,
+   "error": "Expected RPAREN but found '' at position 8",
+   "isSyntaxError": true,
+   "validate": "Expected RPAREN but found '' at position 8",
+   "variables": []
+  },
+  {
+   "formula": "min(1, 2))",
+   "bindings": {},
+   "value": null,
+   "error": "Unexpected ')' at position 9",
+   "isSyntaxError": true,
+   "validate": "Unexpected ')' at position 9",
+   "variables": []
+  },
+  {
+   "formula": "floor((1)",
+   "bindings": {},
+   "value": null,
+   "error": "Expected RPAREN but found '' at position 9",
+   "isSyntaxError": true,
+   "validate": "Expected RPAREN but found '' at position 9",
+   "variables": []
+  },
+  {
+   "formula": "min(1,,2)",
+   "bindings": {},
+   "value": null,
+   "error": "Unexpected ',' at position 6",
+   "isSyntaxError": true,
+   "validate": "Unexpected ',' at position 6",
+   "variables": []
+  },
+  {
+   "formula": "min)",
+   "bindings": {},
+   "value": null,
+   "error": "Unexpected ')' at position 3",
+   "isSyntaxError": true,
+   "validate": "Unexpected ')' at position 3",
+   "variables": []
+  },
+  {
+   "formula": "(1 + 2",
+   "bindings": {},
+   "value": null,
+   "error": "Expected RPAREN but found '' at position 6",
+   "isSyntaxError": true,
+   "validate": "Expected RPAREN but found '' at position 6",
+   "variables": []
+  },
+  {
+   "formula": "1 + 2)",
+   "bindings": {},
+   "value": null,
+   "error": "Unexpected ')' at position 5",
+   "isSyntaxError": true,
+   "validate": "Unexpected ')' at position 5",
+   "variables": []
+  },
+  {
+   "formula": "()",
+   "bindings": {},
+   "value": null,
+   "error": "Unexpected ')' at position 1",
+   "isSyntaxError": true,
+   "validate": "Unexpected ')' at position 1",
+   "variables": []
+  },
+  {
+   "formula": "(",
+   "bindings": {},
+   "value": null,
+   "error": "Unexpected end of formula",
+   "isSyntaxError": true,
+   "validate": "Unexpected end of formula",
+   "variables": []
+  },
+  {
+   "formula": ")",
+   "bindings": {},
+   "value": null,
+   "error": "Unexpected ')' at position 0",
+   "isSyntaxError": true,
+   "validate": "Unexpected ')' at position 0",
+   "variables": []
+  },
+  {
+   "formula": "(1,2)",
+   "bindings": {},
+   "value": null,
+   "error": "Expected RPAREN but found ',' at position 2",
+   "isSyntaxError": true,
+   "validate": "Expected RPAREN but found ',' at position 2",
+   "variables": []
+  },
+  {
+   "formula": "(1)(2)",
+   "bindings": {},
+   "value": null,
+   "error": "Unexpected '(' at position 3",
+   "isSyntaxError": true,
+   "validate": "Unexpected '(' at position 3",
+   "variables": []
+  },
+  {
+   "formula": "2(3)",
+   "bindings": {},
+   "value": null,
+   "error": "Unexpected '(' at position 1",
+   "isSyntaxError": true,
+   "validate": "Unexpected '(' at position 1",
+   "variables": []
+  },
+  {
+   "formula": "1, 2",
+   "bindings": {},
+   "value": null,
+   "error": "Unexpected ',' at position 1",
+   "isSyntaxError": true,
+   "validate": "Unexpected ',' at position 1",
+   "variables": []
+  },
+  {
+   "formula": ",",
+   "bindings": {},
+   "value": null,
+   "error": "Unexpected ',' at position 0",
+   "isSyntaxError": true,
+   "validate": "Unexpected ',' at position 0",
+   "variables": []
+  },
+  {
+   "formula": "1 +",
+   "bindings": {},
+   "value": null,
+   "error": "Unexpected end of formula",
+   "isSyntaxError": true,
+   "validate": "Unexpected end of formula",
+   "variables": []
+  },
+  {
+   "formula": "* 2",
+   "bindings": {},
+   "value": null,
+   "error": "Unexpected '*' at position 0",
+   "isSyntaxError": true,
+   "validate": "Unexpected '*' at position 0",
+   "variables": []
+  },
+  {
+   "formula": "1 * / 2",
+   "bindings": {},
+   "value": null,
+   "error": "Unexpected '/' at position 4",
+   "isSyntaxError": true,
+   "validate": "Unexpected '/' at position 4",
+   "variables": []
+  },
+  {
+   "formula": "1 2 3",
+   "bindings": {},
+   "value": null,
+   "error": "Unexpected '2' at position 2",
+   "isSyntaxError": true,
+   "validate": "Unexpected '2' at position 2",
+   "variables": []
+  },
+  {
+   "formula": "((1)",
+   "bindings": {},
+   "value": null,
+   "error": "Expected RPAREN but found '' at position 4",
+   "isSyntaxError": true,
+   "validate": "Expected RPAREN but found '' at position 4",
+   "variables": []
+  },
+  {
+   "formula": "(1))",
+   "bindings": {},
+   "value": null,
+   "error": "Unexpected ')' at position 3",
+   "isSyntaxError": true,
+   "validate": "Unexpected ')' at position 3",
+   "variables": []
+  },
+  {
+   "formula": "1 + #",
+   "bindings": {},
+   "value": null,
+   "error": "Unexpected character '#' at position 4",
+   "isSyntaxError": true,
+   "validate": "Unexpected character '#' at position 4",
+   "variables": []
+  },
+  {
+   "formula": "1 % 2",
+   "bindings": {},
+   "value": null,
+   "error": "Unexpected character '%' at position 2",
+   "isSyntaxError": true,
+   "validate": "Unexpected character '%' at position 2",
+   "variables": []
+  },
+  {
+   "formula": "2 ^ 3",
+   "bindings": {},
+   "value": null,
+   "error": "Unexpected character '^' at position 2",
+   "isSyntaxError": true,
+   "validate": "Unexpected character '^' at position 2",
+   "variables": []
+  },
+  {
+   "formula": "a.b",
+   "bindings": {},
+   "value": null,
+   "error": "Unexpected character '.' at position 1",
+   "isSyntaxError": true,
+   "validate": "Unexpected character '.' at position 1",
+   "variables": []
+  },
+  {
+   "formula": "x$",
+   "bindings": {},
+   "value": null,
+   "error": "Unexpected character '$' at position 1",
+   "isSyntaxError": true,
+   "validate": "Unexpected character '$' at position 1",
+   "variables": []
+  },
+  {
+   "formula": "é + 1",
+   "bindings": {},
+   "value": null,
+   "error": "Unexpected character 'é' at position 0",
+   "isSyntaxError": true,
+   "validate": "Unexpected character 'é' at position 0",
+   "variables": []
+  },
+  {
+   "note": "lexer errors win over parse errors",
+   "formula": "1 + 2 )#",
+   "bindings": {},
+   "value": null,
+   "error": "Unexpected character '#' at position 7",
+   "isSyntaxError": true,
+   "validate": "Unexpected character '#' at position 7",
+   "variables": []
+  },
+  {
+   "formula": "1 = 1",
+   "bindings": {},
+   "value": null,
+   "error": "Unexpected character '=' at position 2",
+   "isSyntaxError": true,
+   "validate": "Unexpected character '=' at position 2",
+   "variables": []
+  },
+  {
+   "formula": "x;",
+   "bindings": {},
+   "value": null,
+   "error": "Unexpected character ';' at position 1",
+   "isSyntaxError": true,
+   "validate": "Unexpected character ';' at position 1",
+   "variables": []
+  },
+  {
+   "formula": "[1]",
+   "bindings": {},
+   "value": null,
+   "error": "Unexpected character '[' at position 0",
+   "isSyntaxError": true,
+   "validate": "Unexpected character '[' at position 0",
+   "variables": []
+  },
+  {
+   "note": "astral character: the message holds the lone high surrogate",
+   "formula": "😀",
+   "bindings": {},
+   "value": null,
+   "error": "Unexpected character '\ud83d' at position 0",
+   "isSyntaxError": true,
+   "validate": "Unexpected character '\ud83d' at position 0",
+   "variables": []
+  },
+  {
+   "formula": "1 + 2 @ 3",
+   "bindings": {},
+   "value": null,
+   "error": "Unexpected character '@' at position 6",
+   "isSyntaxError": true,
+   "validate": "Unexpected character '@' at position 6",
+   "variables": []
+  },
+  {
+   "formula": "1\u0000",
+   "bindings": {},
+   "value": null,
+   "error": "Unexpected character '\u0000' at position 1",
+   "isSyntaxError": true,
+   "validate": "Unexpected character '\u0000' at position 1",
+   "variables": []
+  },
+  {
+   "formula": "\"1\"",
+   "bindings": {},
+   "value": null,
+   "error": "Unexpected character '\"' at position 0",
+   "isSyntaxError": true,
+   "validate": "Unexpected character '\"' at position 0",
+   "variables": []
+  },
+  {
+   "formula": "",
+   "bindings": {},
+   "value": null,
+   "error": "Formula is empty",
+   "isSyntaxError": true,
+   "validate": "Formula is empty",
+   "variables": []
+  },
+  {
+   "formula": "   ",
+   "bindings": {},
+   "value": null,
+   "error": "Formula is empty",
+   "isSyntaxError": true,
+   "validate": "Formula is empty",
+   "variables": []
+  },
+  {
+   "formula": "\t\n",
+   "bindings": {},
+   "value": null,
+   "error": "Formula is empty",
+   "isSyntaxError": true,
+   "validate": "Formula is empty",
+   "variables": []
+  },
+  {
+   "formula": " ",
+   "bindings": {},
+   "value": null,
+   "error": "Formula is empty",
+   "isSyntaxError": true,
+   "validate": "Formula is empty",
+   "variables": []
+  },
+  {
+   "formula": "﻿",
+   "bindings": {},
+   "value": null,
+   "error": "Formula is empty",
+   "isSyntaxError": true,
+   "validate": "Formula is empty",
+   "variables": []
+  },
+  {
+   "note": "NEL is not JavaScript whitespace",
+   "formula": "",
+   "bindings": {},
+   "value": null,
+   "error": "Unexpected character '' at position 0",
+   "isSyntaxError": true,
+   "validate": "Unexpected character '' at position 0",
+   "variables": []
+  },
+  {
+   "formula": "᠎",
+   "bindings": {},
+   "value": null,
+   "error": "Unexpected character '᠎' at position 0",
+   "isSyntaxError": true,
+   "validate": "Unexpected character '᠎' at position 0",
+   "variables": []
+  },
+  {
+   "formula": "​",
+   "bindings": {},
+   "value": null,
+   "error": "Unexpected character '​' at position 0",
+   "isSyntaxError": true,
+   "validate": "Unexpected character '​' at position 0",
+   "variables": []
+  },
+  {
+   "formula": "  1 　",
+   "bindings": {},
+   "value": 1,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "  2  ",
+   "bindings": {},
+   "value": 2,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "\u000b\f3",
+   "bindings": {},
+   "value": 3,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": " 1 + 2 ",
+   "bindings": {},
+   "value": 3,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "1\n+\n2",
+   "bindings": {},
+   "value": 3,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "\t1\t*\t2\t",
+   "bindings": {},
+   "value": 2,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "1+2",
+   "bindings": {},
+   "value": 3,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "1\r\n+ 2",
+   "bindings": {},
+   "value": 3,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "formula": "x",
+   "bindings": {
+    "x": 5
+   },
+   "value": 5,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "x"
+   ]
+  },
+  {
+   "formula": "x",
+   "bindings": {},
+   "value": null,
+   "error": "Unknown variable 'x'",
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "x"
+   ]
+  },
+  {
+   "formula": "_x1",
+   "bindings": {
+    "_x1": 3
+   },
+   "value": 3,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "_x1"
+   ]
+  },
+  {
+   "formula": "__",
+   "bindings": {
+    "__": 1
+   },
+   "value": 1,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "__"
+   ]
+  },
+  {
+   "formula": "level_2",
+   "bindings": {
+    "level_2": 9
+   },
+   "value": 9,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "level_2"
+   ]
+  },
+  {
+   "formula": "X",
+   "bindings": {
+    "x": 1
+   },
+   "value": null,
+   "error": "Unknown variable 'X'",
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "X"
+   ]
+  },
+  {
+   "formula": "1x",
+   "bindings": {},
+   "value": null,
+   "error": "Unexpected 'x' at position 1",
+   "isSyntaxError": true,
+   "validate": "Unexpected 'x' at position 1",
+   "variables": []
+  },
+  {
+   "formula": "x y",
+   "bindings": {},
+   "value": null,
+   "error": "Unexpected 'y' at position 2",
+   "isSyntaxError": true,
+   "validate": "Unexpected 'y' at position 2",
+   "variables": []
+  },
+  {
+   "formula": "x + y",
+   "bindings": {
+    "x": 1
+   },
+   "value": null,
+   "error": "Unknown variable 'y'",
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "x",
+    "y"
+   ]
+  },
+  {
+   "formula": "x + x + y + x",
+   "bindings": {
+    "x": 1,
+    "y": 2
+   },
+   "value": 5,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "x",
+    "y"
+   ]
+  },
+  {
+   "formula": "b + a * c - a",
+   "bindings": {
+    "a": 1,
+    "b": 2,
+    "c": 3
+   },
+   "value": 4,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "b",
+    "a",
+    "c"
+   ]
+  },
+  {
+   "formula": "max(c, b) + floor(a)",
+   "bindings": {
+    "a": 1.5,
+    "b": 2,
+    "c": 3
+   },
+   "value": 4,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "c",
+    "b",
+    "a"
+   ]
+  },
+  {
+   "formula": "foo(z)",
+   "bindings": {},
+   "value": null,
+   "error": "Unknown function 'foo'",
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "z"
+   ]
+  },
+  {
+   "note": "extra bindings are ignored",
+   "formula": "x + y",
+   "bindings": {
+    "x": 1,
+    "y": 2,
+    "z": 3
+   },
+   "value": 3,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "x",
+    "y"
+   ]
+  },
+  {
+   "formula": "x",
+   "bindings": {
+    "x": "-0"
+   },
+   "value": "-0",
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "x"
+   ]
+  },
+  {
+   "formula": "x + 1",
+   "bindings": {
+    "x": "Infinity"
+   },
+   "value": "Infinity",
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "x"
+   ]
+  },
+  {
+   "formula": "x * 0",
+   "bindings": {
+    "x": "Infinity"
+   },
+   "value": "NaN",
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "x"
+   ]
+  },
+  {
+   "formula": "x - x",
+   "bindings": {
+    "x": "Infinity"
+   },
+   "value": "NaN",
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "x"
+   ]
+  },
+  {
+   "formula": "x",
+   "bindings": {
+    "x": "NaN"
+   },
+   "value": "NaN",
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "x"
+   ]
+  },
+  {
+   "formula": "x * 2",
+   "bindings": {
+    "x": 1e+308
+   },
+   "value": "Infinity",
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "x"
+   ]
+  },
+  {
+   "formula": "x",
+   "bindings": {
+    "x": 5e-324
+   },
+   "value": 5e-324,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "x"
+   ]
+  },
+  {
+   "formula": "floor(base_hp + level * hp_growth)",
+   "bindings": {
+    "base_hp": 50,
+    "level": 10,
+    "hp_growth": 7.5
+   },
+   "value": 125,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "base_hp",
+    "level",
+    "hp_growth"
+   ]
+  },
+  {
+   "formula": "floor(base_hp + level * hp_growth)",
+   "bindings": {
+    "base_hp": 50,
+    "level": 1,
+    "hp_growth": 7.3
+   },
+   "value": 57,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "base_hp",
+    "level",
+    "hp_growth"
+   ]
+  },
+  {
+   "formula": "max(1, strength * 0.5)",
+   "bindings": {
+    "strength": 1
+   },
+   "value": 1,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "strength"
+   ]
+  },
+  {
+   "formula": "max(1, strength * 0.5)",
+   "bindings": {
+    "strength": 31
+   },
+   "value": 15.5,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "strength"
+   ]
+  },
+  {
+   "formula": "strength * 2 + agility",
+   "bindings": {
+    "strength": 12,
+    "agility": 7
+   },
+   "value": 31,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "strength",
+    "agility"
+   ]
+  },
+  {
+   "formula": "floor(intelligence * 1.5 + level / 2)",
+   "bindings": {
+    "intelligence": 11,
+    "level": 3
+   },
+   "value": 18,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "intelligence",
+    "level"
+   ]
+  },
+  {
+   "formula": "ceil(level / max_level * 100)",
+   "bindings": {
+    "level": 7,
+    "max_level": 50
+   },
+   "value": 15,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "level",
+    "max_level"
+   ]
+  },
+  {
+   "formula": "level * level * 0.5 + 10",
+   "bindings": {
+    "level": 13
+   },
+   "value": 94.5,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "level"
+   ]
+  },
+  {
+   "formula": "floor(10 + level * 1.25)",
+   "bindings": {
+    "level": 17
+   },
+   "value": 31,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "level"
+   ]
+  },
+  {
+   "formula": "min(100, floor(dexterity / 4 + level))",
+   "bindings": {
+    "dexterity": 300,
+    "level": 40
+   },
+   "value": 100,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "dexterity",
+    "level"
+   ]
+  },
+  {
+   "formula": "(strength + constitution) / 2",
+   "bindings": {
+    "strength": 9,
+    "constitution": 14
+   },
+   "value": 11.5,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "strength",
+    "constitution"
+   ]
+  },
+  {
+   "formula": "max(0, armor - penetration)",
+   "bindings": {
+    "armor": 5,
+    "penetration": 12
+   },
+   "value": 0,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "armor",
+    "penetration"
+   ]
+  },
+  {
+   "formula": "floor(base_mp * resource_multiplier)",
+   "bindings": {
+    "base_mp": 33,
+    "resource_multiplier": 1.1
+   },
+   "value": 36,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "base_mp",
+    "resource_multiplier"
+   ]
+  },
+  {
+   "formula": "attack_power + floor(strength / 3) - 1",
+   "bindings": {
+    "attack_power": 20,
+    "strength": 10
+   },
+   "value": 22,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "attack_power",
+    "strength"
+   ]
+  },
+  {
+   "formula": "max_level - level",
+   "bindings": {
+    "max_level": 50,
+    "level": 50
+   },
+   "value": 0,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "max_level",
+    "level"
+   ]
+  },
+  {
+   "repeat": {
+    "open": "(",
+    "core": "1",
+    "close": ")",
+    "depth": 500
+   },
+   "bindings": {},
+   "value": 1,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "repeat": {
+    "open": "-",
+    "core": "1",
+    "close": "",
+    "depth": 501
+   },
+   "bindings": {},
+   "value": -1,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  },
+  {
+   "repeat": {
+    "open": "x+",
+    "core": "x",
+    "close": "",
+    "depth": 500
+   },
+   "bindings": {
+    "x": 1
+   },
+   "value": 501,
+   "error": null,
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": [
+    "x"
+   ]
+  },
+  {
+   "note": "parse overflows",
+   "repeat": {
+    "open": "(",
+    "core": "1",
+    "close": ")",
+    "depth": 200000
+   },
+   "bindings": {},
+   "value": null,
+   "error": "Formula evaluation failed",
+   "isSyntaxError": false,
+   "validate": "Invalid formula",
+   "variables": []
+  },
+  {
+   "note": "parse overflows",
+   "repeat": {
+    "open": "-",
+    "core": "1",
+    "close": "",
+    "depth": 200000
+   },
+   "bindings": {},
+   "value": null,
+   "error": "Formula evaluation failed",
+   "isSyntaxError": false,
+   "validate": "Invalid formula",
+   "variables": []
+  },
+  {
+   "note": "parses iteratively, evaluation and variable collection overflow",
+   "repeat": {
+    "open": "x+",
+    "core": "x",
+    "close": "",
+    "depth": 200000
+   },
+   "bindings": {
+    "x": 1
+   },
+   "value": null,
+   "error": "Formula evaluation failed",
+   "isSyntaxError": false,
+   "validate": null,
+   "variables": []
+  }
+ ]
+}
