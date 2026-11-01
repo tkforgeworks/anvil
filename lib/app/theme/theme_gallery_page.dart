@@ -5,7 +5,7 @@ import 'package:forge_ui/forge_ui.dart';
 
 import '../providers.dart';
 import '../settings/app_settings_notifier.dart';
-import '../shell/placeholder_home_page.dart';
+import '../settings/theme_mode_selector.dart';
 import 'anvil_metrics.dart';
 
 /// Renders the core controls under the current theme and switches between

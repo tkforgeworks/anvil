@@ -3,8 +3,8 @@ import 'dart:io';
 import 'dart:ui' show AppExitResponse;
 
 import 'package:anvil/app/providers.dart';
-import 'package:anvil/app/shell/placeholder_home_page.dart';
 import 'package:anvil/app/theme/theme_gallery_page.dart';
+import 'package:anvil/app/welcome/welcome_page.dart';
 import 'package:anvil/main.dart';
 import 'package:anvil_core/anvil_core.dart';
 import 'package:flutter/material.dart';
@@ -85,7 +85,7 @@ void main() {
 
       // First frame, before any settling or interaction.
       expect(appBrightness(tester), Brightness.light);
-      expect(find.byType(PlaceholderHomePage), findsOneWidget);
+      expect(find.byType(WelcomePage), findsOneWidget);
       expect(find.byType(ThemeGalleryPage), findsNothing);
 
       await tester.tap(find.text('Dark'));

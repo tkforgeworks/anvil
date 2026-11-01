@@ -37,6 +37,9 @@ dependencies:
   # The application support directory for settings, recent projects and
   # logs (design §14). A plugin, so it lives in the app, not the core.
   path_provider: ^2.1.5
+  # The native folder picker and the .anvil open dialog (Flutter team
+  # plugin). Only lib/app/dialogs/file_dialogs.dart imports it.
+  file_selector: ^1.1.0
 
 dev_dependencies:
   flutter_test:
