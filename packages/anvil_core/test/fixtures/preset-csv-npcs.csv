@@ -1,0 +1,3 @@
+export_key,display_name,description,npc_type,loot_table
+goblin_raider,Goblin Raider,"Small, mean, numerous",enemy,goblin_drops
+marla_merchant,Marla the Merchant,,merchant,

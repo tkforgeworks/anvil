@@ -1,0 +1,576 @@
+{
+  "project": {
+    "name": "Spike Fixture",
+    "game_title": "Forge & Fable",
+    "schema_version": 7,
+    "max_level": 20
+  },
+  "classes": [
+    {
+      "id": "a7b87a4c-f898-4ebd-bfca-a8163101fc77",
+      "display_name": "Mage",
+      "export_key": "mage",
+      "description": "Glass cannon, comma, \"quoted\"",
+      "resource_multiplier": 0.8,
+      "stat_growth": [
+        {
+          "stat_id": "stat-intelligence",
+          "level": 1,
+          "value": 12
+        },
+        {
+          "stat_id": "stat-intelligence",
+          "level": 2,
+          "value": 16
+        },
+        {
+          "stat_id": "stat-intelligence",
+          "level": 3,
+          "value": 20
+        },
+        {
+          "stat_id": "stat-intelligence",
+          "level": 4,
+          "value": 24
+        },
+        {
+          "stat_id": "stat-intelligence",
+          "level": 5,
+          "value": 28
+        },
+        {
+          "stat_id": "stat-intelligence",
+          "level": 6,
+          "value": 32
+        },
+        {
+          "stat_id": "stat-intelligence",
+          "level": 7,
+          "value": 36
+        },
+        {
+          "stat_id": "stat-intelligence",
+          "level": 8,
+          "value": 40
+        },
+        {
+          "stat_id": "stat-intelligence",
+          "level": 9,
+          "value": 44
+        },
+        {
+          "stat_id": "stat-intelligence",
+          "level": 10,
+          "value": 48
+        },
+        {
+          "stat_id": "stat-intelligence",
+          "level": 11,
+          "value": 52
+        },
+        {
+          "stat_id": "stat-intelligence",
+          "level": 12,
+          "value": 56
+        },
+        {
+          "stat_id": "stat-intelligence",
+          "level": 13,
+          "value": 60
+        },
+        {
+          "stat_id": "stat-intelligence",
+          "level": 14,
+          "value": 64
+        },
+        {
+          "stat_id": "stat-intelligence",
+          "level": 15,
+          "value": 68
+        },
+        {
+          "stat_id": "stat-intelligence",
+          "level": 16,
+          "value": 72
+        },
+        {
+          "stat_id": "stat-intelligence",
+          "level": 17,
+          "value": 76
+        },
+        {
+          "stat_id": "stat-intelligence",
+          "level": 18,
+          "value": 80
+        },
+        {
+          "stat_id": "stat-intelligence",
+          "level": 19,
+          "value": 84
+        },
+        {
+          "stat_id": "stat-intelligence",
+          "level": 20,
+          "value": 88
+        },
+        {
+          "stat_id": "stat-wisdom",
+          "level": 1,
+          "value": 19
+        },
+        {
+          "stat_id": "stat-wisdom",
+          "level": 2,
+          "value": 18
+        },
+        {
+          "stat_id": "stat-wisdom",
+          "level": 3,
+          "value": 17
+        },
+        {
+          "stat_id": "stat-wisdom",
+          "level": 4,
+          "value": 16
+        },
+        {
+          "stat_id": "stat-wisdom",
+          "level": 5,
+          "value": 15
+        },
+        {
+          "stat_id": "stat-wisdom",
+          "level": 6,
+          "value": 14
+        },
+        {
+          "stat_id": "stat-wisdom",
+          "level": 7,
+          "value": 13
+        },
+        {
+          "stat_id": "stat-wisdom",
+          "level": 8,
+          "value": 12
+        },
+        {
+          "stat_id": "stat-wisdom",
+          "level": 9,
+          "value": 11
+        },
+        {
+          "stat_id": "stat-wisdom",
+          "level": 10,
+          "value": 10
+        },
+        {
+          "stat_id": "stat-wisdom",
+          "level": 11,
+          "value": 9
+        },
+        {
+          "stat_id": "stat-wisdom",
+          "level": 12,
+          "value": 8
+        },
+        {
+          "stat_id": "stat-wisdom",
+          "level": 13,
+          "value": 7
+        },
+        {
+          "stat_id": "stat-wisdom",
+          "level": 14,
+          "value": 6
+        },
+        {
+          "stat_id": "stat-wisdom",
+          "level": 15,
+          "value": 5
+        },
+        {
+          "stat_id": "stat-wisdom",
+          "level": 16,
+          "value": 4
+        },
+        {
+          "stat_id": "stat-wisdom",
+          "level": 17,
+          "value": 3
+        },
+        {
+          "stat_id": "stat-wisdom",
+          "level": 18,
+          "value": 2
+        },
+        {
+          "stat_id": "stat-wisdom",
+          "level": 19,
+          "value": 1
+        },
+        {
+          "stat_id": "stat-wisdom",
+          "level": 20,
+          "value": 0
+        }
+      ],
+      "abilities": [
+        {
+          "ability_export_key": "fireball",
+          "sort_order": 0
+        },
+        {
+          "ability_export_key": "slash",
+          "sort_order": 1
+        }
+      ],
+      "derived_stat_overrides": [],
+      "metadata": {}
+    },
+    {
+      "id": "8cb0cf2e-a3f2-47ad-ad82-158dc9eb3d8a",
+      "display_name": "Warrior",
+      "export_key": "warrior",
+      "description": "Front-line fighter",
+      "resource_multiplier": 1.25,
+      "stat_growth": [
+        {
+          "stat_id": "stat-strength",
+          "level": 1,
+          "value": 12
+        },
+        {
+          "stat_id": "stat-strength",
+          "level": 2,
+          "value": 14
+        },
+        {
+          "stat_id": "stat-strength",
+          "level": 3,
+          "value": 16
+        },
+        {
+          "stat_id": "stat-strength",
+          "level": 4,
+          "value": 18
+        },
+        {
+          "stat_id": "stat-strength",
+          "level": 5,
+          "value": 20
+        },
+        {
+          "stat_id": "stat-constitution",
+          "level": 1,
+          "value": 15
+        },
+        {
+          "stat_id": "stat-constitution",
+          "level": 2,
+          "value": 18
+        },
+        {
+          "stat_id": "stat-constitution",
+          "level": 3,
+          "value": 21
+        },
+        {
+          "stat_id": "stat-constitution",
+          "level": 4,
+          "value": 24
+        },
+        {
+          "stat_id": "stat-constitution",
+          "level": 5,
+          "value": 27
+        },
+        {
+          "stat_id": "stat-constitution",
+          "level": 6,
+          "value": 30
+        },
+        {
+          "stat_id": "stat-constitution",
+          "level": 7,
+          "value": 33
+        },
+        {
+          "stat_id": "stat-constitution",
+          "level": 8,
+          "value": 36
+        },
+        {
+          "stat_id": "stat-constitution",
+          "level": 9,
+          "value": 39
+        },
+        {
+          "stat_id": "stat-constitution",
+          "level": 10,
+          "value": 42
+        },
+        {
+          "stat_id": "stat-constitution",
+          "level": 11,
+          "value": 45
+        },
+        {
+          "stat_id": "stat-constitution",
+          "level": 12,
+          "value": 48
+        },
+        {
+          "stat_id": "stat-constitution",
+          "level": 13,
+          "value": 51
+        },
+        {
+          "stat_id": "stat-constitution",
+          "level": 14,
+          "value": 54
+        },
+        {
+          "stat_id": "stat-constitution",
+          "level": 15,
+          "value": 57
+        },
+        {
+          "stat_id": "stat-constitution",
+          "level": 16,
+          "value": 60
+        },
+        {
+          "stat_id": "stat-constitution",
+          "level": 17,
+          "value": 63
+        },
+        {
+          "stat_id": "stat-constitution",
+          "level": 18,
+          "value": 66
+        },
+        {
+          "stat_id": "stat-constitution",
+          "level": 19,
+          "value": 69
+        },
+        {
+          "stat_id": "stat-constitution",
+          "level": 20,
+          "value": 72
+        }
+      ],
+      "abilities": [
+        {
+          "ability_export_key": "slash",
+          "sort_order": 0
+        }
+      ],
+      "derived_stat_overrides": [
+        {
+          "derived_stat_export_key": "derived-stat-max-hp",
+          "formula": "constitution * 12"
+        }
+      ],
+      "metadata": {
+        "base_speed": 4
+      }
+    }
+  ],
+  "abilities": [
+    {
+      "id": "4e5b5a67-ba0b-43b2-bdfa-3bd426f83c7e",
+      "display_name": "Fireball",
+      "export_key": "fireball",
+      "description": "Hurls a ball of fire.\nBurns.",
+      "ability_type": "active",
+      "resource_type": "mana",
+      "resource_cost": 12,
+      "cooldown": 3,
+      "stat_modifiers": {
+        "intelligence": 3,
+        "wisdom": 1
+      }
+    },
+    {
+      "id": "a41d8d54-0a88-49c8-b53a-0cb21ef14f6a",
+      "display_name": "Slash",
+      "export_key": "slash",
+      "description": "A basic melee strike, \"quick\" & cheap.",
+      "ability_type": "active",
+      "resource_type": "stamina",
+      "resource_cost": 5,
+      "cooldown": 1,
+      "stat_modifiers": {
+        "strength": 2
+      }
+    }
+  ],
+  "items": [
+    {
+      "id": "a4b66c54-05d2-4007-bed7-8f13bee1f087",
+      "display_name": "Healing Potion",
+      "export_key": "healing_potion",
+      "description": "Restores 50 HP",
+      "custom_fields": {},
+      "item_category_export_key": "consumable",
+      "rarity_export_key": "common"
+    },
+    {
+      "id": "11a74879-0851-4af7-8ff1-7be63edae9f2",
+      "display_name": "Iron Ingot",
+      "export_key": "iron_ingot",
+      "description": "Smelted iron.",
+      "custom_fields": {},
+      "item_category_export_key": "crafting_resource",
+      "rarity_export_key": "common"
+    },
+    {
+      "id": "6069c26a-d758-4981-b29b-eed2c95fe6f3",
+      "display_name": "Iron Sword",
+      "export_key": "iron_sword",
+      "description": "A sturdy, reliable blade",
+      "custom_fields": {
+        "damage": "14",
+        "handedness": "one-handed"
+      },
+      "item_category_export_key": "weapon",
+      "rarity_export_key": "uncommon"
+    },
+    {
+      "id": "990f8604-827f-4890-b130-122bf252788a",
+      "display_name": "Leather Strip",
+      "export_key": "leather_strip",
+      "description": "",
+      "custom_fields": {},
+      "item_category_export_key": "crafting_resource",
+      "rarity_export_key": "common"
+    },
+    {
+      "id": "65e565f0-6126-4927-b3f7-cccc4c3ed0f3",
+      "display_name": "Moonpetal Herb",
+      "export_key": "moonpetal_herb",
+      "description": "",
+      "custom_fields": {},
+      "item_category_export_key": "crafting_resource",
+      "rarity_export_key": "rare"
+    }
+  ],
+  "recipes": [
+    {
+      "id": "2f3bcc27-2306-43c3-99ee-87b9319fd960",
+      "display_name": "Brew Healing Potion",
+      "export_key": "brew_healing_potion",
+      "description": "",
+      "output_quantity": 3,
+      "ingredients": [
+        {
+          "item_export_key": "moonpetal_herb",
+          "quantity": 2
+        }
+      ],
+      "output_item_export_key": "healing_potion",
+      "crafting_station_export_key": "alchemy_table",
+      "crafting_specialization_export_key": null
+    },
+    {
+      "id": "a7a5c929-8193-457c-bedd-eea367abf255",
+      "display_name": "Forge Iron Sword",
+      "export_key": "forge_iron_sword",
+      "description": "Two ingots and a strip.",
+      "output_quantity": 1,
+      "ingredients": [
+        {
+          "item_export_key": "iron_ingot",
+          "quantity": 2
+        },
+        {
+          "item_export_key": "leather_strip",
+          "quantity": 1
+        }
+      ],
+      "output_item_export_key": "iron_sword",
+      "crafting_station_export_key": "forge",
+      "crafting_specialization_export_key": "blacksmithing"
+    }
+  ],
+  "npcs": [
+    {
+      "id": "9516c484-83f0-488a-a9d5-a7ce0f006d7f",
+      "display_name": "Goblin Raider",
+      "export_key": "goblin_raider",
+      "description": "Small, mean, numerous",
+      "combat_stats": {
+        "hp": 35,
+        "armor": 2
+      },
+      "class_assignments": [
+        {
+          "class_export_key": "warrior",
+          "level": 3
+        }
+      ],
+      "ability_assignments": [
+        {
+          "ability_export_key": "slash"
+        }
+      ],
+      "custom_fields": {
+        "aggression": "hostile"
+      },
+      "npc_type_export_key": "enemy",
+      "loot_table_export_key": "goblin_drops"
+    },
+    {
+      "id": "1fdfd4c3-bf59-405d-9a77-f4ad056d82b4",
+      "display_name": "Marla the Merchant",
+      "export_key": "marla_merchant",
+      "description": "",
+      "combat_stats": {
+        "hp": 20
+      },
+      "class_assignments": [
+        {
+          "class_export_key": "mage",
+          "level": 2
+        },
+        {
+          "class_export_key": "warrior",
+          "level": 1
+        }
+      ],
+      "ability_assignments": [],
+      "custom_fields": {},
+      "npc_type_export_key": "merchant",
+      "loot_table_export_key": null
+    }
+  ],
+  "loot_tables": [
+    {
+      "id": "1e11b296-71a9-4976-887b-d0f32e25becb",
+      "display_name": "Goblin Drops",
+      "export_key": "goblin_drops",
+      "description": "What goblins carry",
+      "entries": [
+        {
+          "item_export_key": "iron_ingot",
+          "weight": 60,
+          "quantity_min": 1,
+          "quantity_max": 3
+        },
+        {
+          "item_export_key": "healing_potion",
+          "weight": 30,
+          "quantity_min": 1,
+          "quantity_max": 1
+        },
+        {
+          "item_export_key": "iron_sword",
+          "weight": 10,
+          "quantity_min": 1,
+          "quantity_max": 1
+        }
+      ]
+    }
+  ]
+}

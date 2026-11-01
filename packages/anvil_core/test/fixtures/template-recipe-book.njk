@@ -1,0 +1,14 @@
+{% set title = project.game_title %}
+RECIPE BOOK: {{ title }} (schema {{ project.schema_version }}, max level {{ project.max_level }})
+{% for recipe in recipes %}
+= {{ recipe.display_name }} [{{ recipe.export_key }}] x{{ recipe.output_quantity }} -> {{ recipe.output_item_id | export_key }}
+{% if recipe.crafting_station_id %}  station: {{ recipe.crafting_station_id | export_key }}{% endif %}
+{% for ing in recipe.ingredients %}  - {{ ing.quantity }} x {{ ing.item_id | export_key }}
+{% endfor %}{% endfor %}
+NPC DROPS
+{% for npc in npcs %}{% if npc.loot_table_id %}{{ npc.export_key }} drops {{ npc.loot_table_id | export_key }}
+{% endif %}{% endfor %}
+CLASS JSON
+{{ classes | json }}
+COMPACT
+{{ meta.rarities | json(0) }}

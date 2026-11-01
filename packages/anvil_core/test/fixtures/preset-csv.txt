@@ -1,0 +1,32 @@
+--- classes.csv ---
+export_key,display_name,description,resource_multiplier
+mage,Mage,"Glass cannon, comma, ""quoted""",0.8
+warrior,Warrior,Front-line fighter,1.25
+
+--- abilities.csv ---
+export_key,display_name,description,ability_type,resource_type,resource_cost,cooldown
+fireball,Fireball,"Hurls a ball of fire.
+Burns.",active,mana,12,3
+slash,Slash,"A basic melee strike, ""quick"" & cheap.",active,stamina,5,1
+
+--- items.csv ---
+export_key,display_name,description,item_category,rarity
+healing_potion,Healing Potion,Restores 50 HP,consumable,common
+iron_ingot,Iron Ingot,Smelted iron.,crafting_resource,common
+iron_sword,Iron Sword,"A sturdy, reliable blade",weapon,uncommon
+leather_strip,Leather Strip,,crafting_resource,common
+moonpetal_herb,Moonpetal Herb,,crafting_resource,rare
+
+--- recipes.csv ---
+export_key,display_name,description,output_item,output_quantity,crafting_station,crafting_specialization
+brew_healing_potion,Brew Healing Potion,,healing_potion,3,alchemy_table,
+forge_iron_sword,Forge Iron Sword,Two ingots and a strip.,iron_sword,1,forge,blacksmithing
+
+--- npcs.csv ---
+export_key,display_name,description,npc_type,loot_table
+goblin_raider,Goblin Raider,"Small, mean, numerous",enemy,goblin_drops
+marla_merchant,Marla the Merchant,,merchant,
+
+--- loot_tables.csv ---
+export_key,display_name,description
+goblin_drops,Goblin Drops,What goblins carry

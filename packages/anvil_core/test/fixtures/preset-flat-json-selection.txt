@@ -1,0 +1,25 @@
+{
+  "items": [
+    {
+      "id": "a4b66c54-05d2-4007-bed7-8f13bee1f087",
+      "display_name": "Healing Potion",
+      "export_key": "healing_potion",
+      "description": "Restores 50 HP",
+      "custom_fields": {},
+      "item_category_export_key": "consumable",
+      "rarity_export_key": "common"
+    },
+    {
+      "id": "6069c26a-d758-4981-b29b-eed2c95fe6f3",
+      "display_name": "Iron Sword",
+      "export_key": "iron_sword",
+      "description": "A sturdy, reliable blade",
+      "custom_fields": {
+        "damage": "14",
+        "handedness": "one-handed"
+      },
+      "item_category_export_key": "weapon",
+      "rarity_export_key": "uncommon"
+    }
+  ]
+}

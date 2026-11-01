@@ -1,0 +1,282 @@
+{
+  "project": {
+    "name": "Spike Fixture",
+    "game_title": "Forge & Fable",
+    "schema_version": 7,
+    "max_level": 20
+  },
+  "meta": {
+    "stats": [
+      {
+        "id": "stat-strength",
+        "display_name": "Strength",
+        "export_key": "str",
+        "sort_order": 10
+      },
+      {
+        "id": "stat-constitution",
+        "display_name": "Constitution",
+        "export_key": "con",
+        "sort_order": 20
+      },
+      {
+        "id": "stat-dexterity",
+        "display_name": "Dexterity",
+        "export_key": "dex",
+        "sort_order": 30
+      },
+      {
+        "id": "stat-intelligence",
+        "display_name": "Intelligence",
+        "export_key": "int",
+        "sort_order": 40
+      },
+      {
+        "id": "stat-wisdom",
+        "display_name": "Wisdom",
+        "export_key": "wis",
+        "sort_order": 50
+      },
+      {
+        "id": "stat-resilience",
+        "display_name": "Resilience",
+        "export_key": "res",
+        "sort_order": 60
+      },
+      {
+        "id": "stat-charisma",
+        "display_name": "Charisma",
+        "export_key": "cha",
+        "sort_order": 70
+      }
+    ],
+    "rarities": [
+      {
+        "id": "rarity-common",
+        "display_name": "Common",
+        "export_key": "common",
+        "color_hex": "#D8DEE9",
+        "sort_order": 10
+      },
+      {
+        "id": "rarity-uncommon",
+        "display_name": "Uncommon",
+        "export_key": "uncommon",
+        "color_hex": "#A3BE8C",
+        "sort_order": 20
+      },
+      {
+        "id": "rarity-rare",
+        "display_name": "Rare",
+        "export_key": "rare",
+        "color_hex": "#5E81AC",
+        "sort_order": 30
+      },
+      {
+        "id": "rarity-epic",
+        "display_name": "Epic",
+        "export_key": "epic",
+        "color_hex": "#B48EAD",
+        "sort_order": 40
+      },
+      {
+        "id": "rarity-legendary",
+        "display_name": "Legendary",
+        "export_key": "legendary",
+        "color_hex": "#EBCB8B",
+        "sort_order": 50
+      }
+    ],
+    "item_categories": [
+      {
+        "id": "item-category-weapon",
+        "display_name": "Weapon",
+        "export_key": "weapon",
+        "description": "",
+        "sort_order": 10
+      },
+      {
+        "id": "item-category-armor",
+        "display_name": "Armor",
+        "export_key": "armor",
+        "description": "",
+        "sort_order": 20
+      },
+      {
+        "id": "item-category-accessory",
+        "display_name": "Accessory",
+        "export_key": "accessory",
+        "description": "",
+        "sort_order": 30
+      },
+      {
+        "id": "item-category-consumable",
+        "display_name": "Consumable",
+        "export_key": "consumable",
+        "description": "",
+        "sort_order": 40
+      },
+      {
+        "id": "item-category-quest-item",
+        "display_name": "Quest Item",
+        "export_key": "quest_item",
+        "description": "",
+        "sort_order": 50
+      },
+      {
+        "id": "item-category-crafting-resource",
+        "display_name": "Crafting Resource",
+        "export_key": "crafting_resource",
+        "description": "",
+        "sort_order": 60
+      },
+      {
+        "id": "item-category-blueprint",
+        "display_name": "Blueprint",
+        "export_key": "blueprint",
+        "description": "",
+        "sort_order": 70
+      }
+    ],
+    "npc_types": [
+      {
+        "id": "npc-type-enemy",
+        "display_name": "Enemy",
+        "export_key": "enemy",
+        "description": "",
+        "sort_order": 10
+      },
+      {
+        "id": "npc-type-merchant",
+        "display_name": "Merchant",
+        "export_key": "merchant",
+        "description": "",
+        "sort_order": 20
+      },
+      {
+        "id": "npc-type-quest-giver",
+        "display_name": "Quest Giver",
+        "export_key": "quest_giver",
+        "description": "",
+        "sort_order": 30
+      }
+    ],
+    "crafting_stations": [
+      {
+        "id": "crafting-station-forge",
+        "display_name": "Forge",
+        "export_key": "forge",
+        "description": "",
+        "sort_order": 10
+      },
+      {
+        "id": "crafting-station-workbench",
+        "display_name": "Workbench",
+        "export_key": "workbench",
+        "description": "",
+        "sort_order": 20
+      },
+      {
+        "id": "crafting-station-alchemy-table",
+        "display_name": "Alchemy Table",
+        "export_key": "alchemy_table",
+        "description": "",
+        "sort_order": 30
+      },
+      {
+        "id": "crafting-station-enchanting-table",
+        "display_name": "Enchanting Table",
+        "export_key": "enchanting_table",
+        "description": "",
+        "sort_order": 40
+      }
+    ],
+    "crafting_specializations": [
+      {
+        "id": "crafting-specialization-blacksmithing",
+        "display_name": "Blacksmithing",
+        "export_key": "blacksmithing",
+        "description": "",
+        "sort_order": 10
+      },
+      {
+        "id": "crafting-specialization-carpentry",
+        "display_name": "Carpentry",
+        "export_key": "carpentry",
+        "description": "",
+        "sort_order": 20
+      },
+      {
+        "id": "crafting-specialization-alchemy",
+        "display_name": "Alchemy",
+        "export_key": "alchemy",
+        "description": "",
+        "sort_order": 30
+      },
+      {
+        "id": "crafting-specialization-enchanting",
+        "display_name": "Enchanting",
+        "export_key": "enchanting",
+        "description": "",
+        "sort_order": 40
+      }
+    ],
+    "derived_stats": [
+      {
+        "id": "derived-stat-max-hp",
+        "display_name": "Max HP",
+        "export_key": "max_hp",
+        "formula": "con * 10",
+        "output_type": "integer",
+        "rounding_mode": "round",
+        "sort_order": 10
+      },
+      {
+        "id": "derived-stat-attack-power",
+        "display_name": "Attack Power",
+        "export_key": "attack_power",
+        "formula": "str * 2",
+        "output_type": "integer",
+        "rounding_mode": "round",
+        "sort_order": 20
+      },
+      {
+        "id": "derived-stat-magic-power",
+        "display_name": "Magic Power",
+        "export_key": "magic_power",
+        "formula": "int * 2",
+        "output_type": "integer",
+        "rounding_mode": "round",
+        "sort_order": 30
+      }
+    ]
+  },
+  "classes": [],
+  "abilities": [],
+  "items": [
+    {
+      "id": "a4b66c54-05d2-4007-bed7-8f13bee1f087",
+      "display_name": "Healing Potion",
+      "export_key": "healing_potion",
+      "description": "Restores 50 HP",
+      "item_category_id": "item-category-consumable",
+      "rarity_id": "rarity-common",
+      "custom_fields": {}
+    },
+    {
+      "id": "6069c26a-d758-4981-b29b-eed2c95fe6f3",
+      "display_name": "Iron Sword",
+      "export_key": "iron_sword",
+      "description": "A sturdy, reliable blade",
+      "item_category_id": "item-category-weapon",
+      "rarity_id": "rarity-uncommon",
+      "custom_fields": {
+        "damage": "14",
+        "handedness": "one-handed"
+      }
+    }
+  ],
+  "recipes": [],
+  "npcs": [],
+  "loot_tables": []
+}

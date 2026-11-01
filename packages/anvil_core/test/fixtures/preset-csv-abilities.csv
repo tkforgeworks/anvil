@@ -1,0 +1,4 @@
+export_key,display_name,description,ability_type,resource_type,resource_cost,cooldown
+fireball,Fireball,"Hurls a ball of fire.
+Burns.",active,mana,12,3
+slash,Slash,"A basic melee strike, ""quick"" & cheap.",active,stamina,5,1
