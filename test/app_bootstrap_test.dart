@@ -75,6 +75,14 @@ void main() {
     return harness;
   }
 
+  /// Opens Application Settings from the welcome page on Appearance.
+  Future<void> openAppearance(WidgetTester tester) async {
+    await tester.tap(find.byTooltip('Application Settings'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(Tab, 'Appearance'));
+    await tester.pumpAndSettle();
+  }
+
   Brightness appBrightness(WidgetTester tester) =>
       tester.widget<MaterialApp>(find.byType(MaterialApp)).theme!.brightness;
 
@@ -88,7 +96,8 @@ void main() {
       expect(find.byType(WelcomePage), findsOneWidget);
       expect(find.byType(ThemeGalleryPage), findsNothing);
 
-      await tester.tap(find.text('Dark'));
+      await openAppearance(tester);
+      await tester.tap(find.byKey(const ValueKey('settings-theme-dark')));
       await tester.pumpAndSettle();
 
       expect(appBrightness(tester), Brightness.dark);
@@ -101,15 +110,18 @@ void main() {
     variant: TargetPlatformVariant.only(TargetPlatform.linux),
   );
 
-  testWidgets('no settings file means dark, and Custom is unavailable', (
-    tester,
-  ) async {
-    await pumpApp(tester);
+  testWidgets('no settings file means dark, and Custom without a theme '
+      'file stays dark', (tester) async {
+    final harness = await pumpApp(tester);
     expect(appBrightness(tester), Brightness.dark);
-    final custom = tester.widget<SegmentedButton<AppThemeMode>>(
-      find.byType(SegmentedButton<AppThemeMode>),
-    );
-    expect(custom.segments.last.enabled, isFalse);
+
+    await openAppearance(tester);
+    await tester.tap(find.byKey(const ValueKey('settings-theme-custom')));
+    await tester.pumpAndSettle();
+
+    expect(harness.settingsFile['theme'], 'custom');
+    expect(appBrightness(tester), Brightness.dark);
+    expect(find.text('Select Theme File'), findsOneWidget);
   }, variant: TargetPlatformVariant.only(TargetPlatform.linux));
 
   testWidgets('an exit request is allowed and logs the shutdown line once', (

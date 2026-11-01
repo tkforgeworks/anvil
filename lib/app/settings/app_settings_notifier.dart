@@ -62,6 +62,26 @@ class AppSettingsNotifier extends Notifier<AppSettings> {
         : s.copyWith(defaultSaveLocation: path),
   );
 
+  /// Overrides the binding of the registry entry [id] with [binding], or
+  /// removes the override when [binding] is null. A map left empty is
+  /// stored as null, as 0.1.6 did.
+  void setCustomShortcut(String id, String? binding) =>
+      _change('shortcut $id', (s) {
+        final next = {...?s.customShortcuts};
+        if (binding == null) {
+          next.remove(id);
+        } else {
+          next[id] = binding;
+        }
+        return next.isEmpty
+            ? s.copyWith(clearCustomShortcuts: true)
+            : s.copyWith(customShortcuts: next);
+      });
+
+  /// Removes every shortcut override (0.1.6's Reset All).
+  void clearCustomShortcuts() =>
+      _change('shortcuts reset', (s) => s.copyWith(clearCustomShortcuts: true));
+
   void _change(String what, AppSettings Function(AppSettings) change) {
     state = _store.update(change);
     _logger.info('App settings updated: $what');

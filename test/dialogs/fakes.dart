@@ -33,6 +33,7 @@ String copyFixture({String name = 'sample'}) {
 class FakeFileDialogs implements FileDialogs {
   String? directory;
   String? anvilFile;
+  String? themeFile;
   final requests = <String>[];
 
   @override
@@ -45,6 +46,12 @@ class FakeFileDialogs implements FileDialogs {
   Future<String?> pickAnvilFile({String? initialDirectory}) async {
     requests.add('anvil file from $initialDirectory');
     return anvilFile;
+  }
+
+  @override
+  Future<String?> pickThemeFile({String? initialDirectory}) async {
+    requests.add('theme file from $initialDirectory');
+    return themeFile;
   }
 }
 

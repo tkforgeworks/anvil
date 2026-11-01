@@ -14,6 +14,10 @@ abstract interface class FileDialogs {
 
   /// One `.anvil` project file, as 0.1.6's "Open Anvil Project" dialog.
   Future<String?> pickAnvilFile({String? initialDirectory});
+
+  /// One `.json` custom theme file, as 0.1.6's "Select Custom Theme JSON"
+  /// dialog.
+  Future<String?> pickThemeFile({String? initialDirectory});
 }
 
 /// [FileDialogs] over the Flutter team's `file_selector` plugin.
@@ -23,6 +27,11 @@ final class FileSelectorDialogs implements FileDialogs {
   static const _anvilFiles = fs.XTypeGroup(
     label: 'Anvil Projects',
     extensions: ['anvil'],
+  );
+
+  static const _jsonFiles = fs.XTypeGroup(
+    label: 'JSON Files',
+    extensions: ['json'],
   );
 
   @override
@@ -36,6 +45,15 @@ final class FileSelectorDialogs implements FileDialogs {
   Future<String?> pickAnvilFile({String? initialDirectory}) async {
     final file = await fs.openFile(
       acceptedTypeGroups: const [_anvilFiles],
+      initialDirectory: initialDirectory,
+    );
+    return file?.path;
+  }
+
+  @override
+  Future<String?> pickThemeFile({String? initialDirectory}) async {
+    final file = await fs.openFile(
+      acceptedTypeGroups: const [_jsonFiles],
       initialDirectory: initialDirectory,
     );
     return file?.path;

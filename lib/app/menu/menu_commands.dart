@@ -15,6 +15,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../editor/editor_shortcuts.dart';
 import '../project/project_lifecycle.dart';
 import '../providers.dart';
+import '../settings/app_settings_dialog.dart';
+import '../settings/project/project_settings_dialog.dart';
 import '../shell/app_router.dart';
 import '../shell/shell_domain.dart';
 import '../shell/shell_providers.dart';
@@ -132,14 +134,6 @@ const navDomains = {
   MenuCommand.navLootTables: ShellDomain.lootTables,
 };
 
-/// Commands whose dialog belongs to a later ticket: they open a placeholder
-/// naming it, so the rows exist.
-const _placeholderTickets = {
-  MenuCommand.appSettings: ('Application Settings', 'ANVL-189'),
-  MenuCommand.projectSettings: ('Project Settings', 'ANVL-190'),
-  MenuCommand.customFieldSchemas: ('Custom Field Schemas', 'ANVL-190'),
-};
-
 /// Asks where to save a copy of the project, starting at [suggestedPath];
 /// null when cancelled.
 typedef SaveLocationPicker = Future<String?> Function({
@@ -236,17 +230,27 @@ Future<void> dispatchCommand(
     router.go(location);
     return;
   }
-  if (_placeholderTickets[command] case (final title, final ticket)) {
-    if (dialogContext != null) {
-      await showPlaceholderDialog(dialogContext, title, ticket);
-    }
-    return;
-  }
   switch (command) {
     case MenuCommand.save || MenuCommand.undo || MenuCommand.redo:
       final target = _editorContext(focus);
       if (target != null) {
         Actions.maybeInvoke(target, editorIntentFor(command)!);
+      }
+    case MenuCommand.appSettings:
+      if (dialogContext != null) {
+        await showAppSettingsDialog(dialogContext, ref);
+      }
+    case MenuCommand.projectSettings:
+      if (dialogContext != null) {
+        await showProjectSettingsDialog(dialogContext, ref);
+      }
+    case MenuCommand.customFieldSchemas:
+      if (dialogContext != null) {
+        await showProjectSettingsDialog(
+          dialogContext,
+          ref,
+          initialTab: ProjectSettingsTab.customFields,
+        );
       }
     case MenuCommand.newProject:
       if (dialogContext != null) await showCreateProjectDialog(dialogContext);
@@ -315,22 +319,3 @@ Future<void> _saveAs(WidgetRef ref, BuildContext? dialogContext) async {
         ?.showSnackBar(SnackBar(content: Text(failure)));
   }
 }
-
-/// A dialog standing in for one a later ticket builds.
-Future<void> showPlaceholderDialog(
-  BuildContext context,
-  String title,
-  String ticket,
-) => showDialog<void>(
-  context: context,
-  builder: (context) => AlertDialog(
-    title: Text(title),
-    content: Text('Coming in $ticket'),
-    actions: [
-      TextButton(
-        onPressed: () => Navigator.of(context).pop(),
-        child: const Text('Close'),
-      ),
-    ],
-  ),
-);
