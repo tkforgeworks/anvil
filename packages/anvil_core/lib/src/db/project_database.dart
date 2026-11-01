@@ -2,6 +2,7 @@ import 'package:meta/meta.dart';
 import 'package:sqlite3/sqlite3.dart';
 
 import 'errors.dart';
+import 'save_history.dart' show saveHistoryLimit;
 
 /// `PRAGMA wal_checkpoint` modes.
 enum CheckpointMode { passive, full, restart, truncate }
@@ -57,6 +58,7 @@ final class ProjectDatabase {
 
   final Database _db;
   bool _open = true;
+  bool _inTransaction = false;
 
   /// The file this handle was opened on.
   final String path;
@@ -116,18 +118,89 @@ final class ProjectDatabase {
   /// [body] throws. The [ReadScope] is only valid inside [body].
   T read<T>(T Function(ReadScope tx) body) {
     final db = handle;
-    db.execute('BEGIN');
-    final scope = ReadScope._(db);
+    if (_inTransaction) {
+      throw StateError('read called inside another transaction');
+    }
+    _inTransaction = true;
     try {
-      final result = body(scope);
-      db.execute('COMMIT');
-      return result;
-    } catch (_) {
-      if (!db.autocommit) db.execute('ROLLBACK');
-      rethrow;
+      db.execute('BEGIN');
+      final scope = ReadScope._(db);
+      try {
+        final result = body(scope);
+        db.execute('COMMIT');
+        return result;
+      } catch (_) {
+        if (!db.autocommit) db.execute('ROLLBACK');
+        rethrow;
+      } finally {
+        scope._db = null;
+      }
+    } finally {
+      _inTransaction = false;
+    }
+  }
+
+  /// Runs [body] in one `BEGIN IMMEDIATE` transaction and records the change
+  /// as one `save_history` row ([description], `is_auto_save = 0`), trimming
+  /// the history to [saveHistoryLimit] rows as 0.1.6 does. Commits when
+  /// [body] returns; on any throw rolls back and rethrows.
+  ///
+  /// A `SqliteException` from [body] never escapes: a `UNIQUE` failure on
+  /// `export_key` becomes [DuplicateExportKey], anything else [SaveFailed].
+  /// Core exception types pass through unchanged. Synchronous like [read];
+  /// the `Future`s live on the repository interfaces. Nesting (inside
+  /// another [saveTransaction] or [read]) throws [StateError].
+  T saveTransaction<T>(String description, T Function(SaveScope tx) body) {
+    final db = handle;
+    if (_inTransaction) {
+      throw StateError('saveTransaction called inside another transaction');
+    }
+    _inTransaction = true;
+    final scope = SaveScope._(db);
+    try {
+      db.execute('BEGIN IMMEDIATE');
+      try {
+        final result = body(scope);
+        db.execute(
+          'INSERT INTO save_history (saved_at, description, is_auto_save) '
+          "VALUES (datetime('now'), ?, 0)",
+          [description],
+        );
+        _trimSaveHistory(db);
+        db.execute('COMMIT');
+        return result;
+      } catch (e) {
+        if (!db.autocommit) db.execute('ROLLBACK');
+        if (e is SqliteException) throw _mapSaveError(e);
+        rethrow;
+      }
     } finally {
       scope._db = null;
+      _inTransaction = false;
     }
+  }
+
+  static void _trimSaveHistory(Database db) {
+    final count =
+        db.select('SELECT COUNT(*) AS cnt FROM save_history').first['cnt']
+            as int;
+    if (count > saveHistoryLimit) {
+      db.execute(
+        'DELETE FROM save_history WHERE id IN ('
+        'SELECT id FROM save_history ORDER BY saved_at ASC LIMIT ?)',
+        [count - saveHistoryLimit],
+      );
+    }
+  }
+
+  static Exception _mapSaveError(SqliteException e) {
+    final message = e.message;
+    if (message.contains('UNIQUE constraint failed') &&
+        message.contains('export_key')) {
+      // SQLite names the column, never the value, so the key is unknown.
+      return const DuplicateExportKey(null);
+    }
+    return SaveFailed(message, e);
   }
 
   void _checkOpen() {
@@ -148,4 +221,30 @@ final class ReadScope {
     }
     return db.select(sql, parameters);
   }
+}
+
+/// Read and write access inside [ProjectDatabase.saveTransaction]. Domain
+/// code writes `datetime('now')` itself.
+final class SaveScope {
+  SaveScope._(this._db);
+
+  Database? _db;
+
+  Database get _live {
+    final db = _db;
+    if (db == null) {
+      throw StateError('SaveScope used outside its save transaction');
+    }
+    return db;
+  }
+
+  ResultSet select(String sql, [List<Object?> parameters = const []]) =>
+      _live.select(sql, parameters);
+
+  void execute(String sql, [List<Object?> parameters = const []]) =>
+      _live.execute(sql, parameters);
+
+  /// Rows changed by the most recent statement, so a save can require
+  /// exactly one updated row.
+  int get changes => _live.updatedRows;
 }

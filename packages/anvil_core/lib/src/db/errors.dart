@@ -29,3 +29,59 @@ final class IntegrityCheckFailed implements Exception {
   @override
   String toString() => 'IntegrityCheckFailed: $message';
 }
+
+/// No active record with [id] in [domain] (for example `items`).
+final class RecordNotFound implements Exception {
+  const RecordNotFound(this.domain, this.id);
+
+  final String domain;
+  final String id;
+
+  @override
+  String toString() => 'RecordNotFound: $domain $id';
+}
+
+/// A save was refused because the draft breaks save-blocking rules.
+final class SaveBlocked implements Exception {
+  const SaveBlocked(this.blockers);
+
+  final List<String> blockers;
+
+  @override
+  String toString() => 'SaveBlocked: ${blockers.join('; ')}';
+}
+
+/// The `UNIQUE` constraint on `export_key` refused a write. [exportKey] is
+/// null when the key is not known (SQLite names the column, not the value).
+final class DuplicateExportKey implements Exception {
+  const DuplicateExportKey(this.exportKey);
+
+  final String? exportKey;
+
+  @override
+  String toString() => exportKey == null
+      ? 'DuplicateExportKey'
+      : 'DuplicateExportKey: $exportKey';
+}
+
+/// A meta row cannot be deleted because [counts] records still use it.
+final class MetaInUse implements Exception {
+  const MetaInUse(this.kind, this.counts);
+
+  final String kind;
+  final Map<String, int> counts;
+
+  @override
+  String toString() => 'MetaInUse: $kind $counts';
+}
+
+/// A save failed in SQLite for a reason with no more specific type.
+final class SaveFailed implements Exception {
+  const SaveFailed(this.message, this.cause);
+
+  final String message;
+  final Object cause;
+
+  @override
+  String toString() => 'SaveFailed: $message';
+}
