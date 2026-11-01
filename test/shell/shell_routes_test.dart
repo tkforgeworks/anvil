@@ -1,3 +1,5 @@
+import 'package:anvil/app/domains/abilities/abilities_editor_page.dart';
+import 'package:anvil/app/domains/abilities/abilities_list_page.dart';
 import 'package:anvil/app/menu/menu_commands.dart';
 import 'package:anvil/app/shell/app_shell.dart';
 import 'package:anvil/app/shell/placeholders.dart';
@@ -24,6 +26,13 @@ const pages = {
   '/validation': ('Validation', 'ANVL-198'),
   '/recycle-bin': ('Recycle Bin', 'ANVL-199'),
   '/export': ('Export', 'ANVL-200'),
+};
+
+/// The routes whose pages have landed: the widget the shell shows instead
+/// of the placeholder. Each domain ticket adds its two entries here.
+final landedPages = <String, Type>{'/abilities': AbilityListPage};
+final landedEditors = <ShellDomain, Type>{
+  ShellDomain.abilities: AbilityEditorPage,
 };
 
 const editors = {
@@ -97,6 +106,18 @@ void main() {
 
         expect(harness.location, path);
         expect(find.byType(AppShell), findsOneWidget, reason: path);
+        if (landedPages[path] case final type?) {
+          expect(
+            find.descendant(
+              of: find.byType(AppShell),
+              matching: find.byType(type),
+            ),
+            findsOneWidget,
+            reason: path,
+          );
+          expect(find.byType(PagePlaceholder), findsNothing, reason: path);
+          continue;
+        }
         final page = tester.widget<PagePlaceholder>(
           find.descendant(
             of: find.byType(AppShell),
@@ -112,13 +133,22 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(harness.location, path);
-        final editor = tester.widget<EditorPlaceholder>(
-          find.descendant(
+        if (landedEditors[domain] case final type?) {
+          final editor = find.descendant(
             of: find.byType(AppShell),
-            matching: find.byType(EditorPlaceholder),
-          ),
-        );
-        expect((editor.domain, editor.id), (domain, id), reason: path);
+            matching: find.byType(type),
+          );
+          expect(editor, findsOneWidget, reason: path);
+          expect(tester.widget(editor).key, ValueKey(id), reason: path);
+        } else {
+          final editor = tester.widget<EditorPlaceholder>(
+            find.descendant(
+              of: find.byType(AppShell),
+              matching: find.byType(EditorPlaceholder),
+            ),
+          );
+          expect((editor.domain, editor.id), (domain, id), reason: path);
+        }
         // The editor route highlights its list's entry.
         final label = tester.widget<Text>(
           find.descendant(
