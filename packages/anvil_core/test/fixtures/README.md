@@ -34,3 +34,17 @@ Run only this test, into a scratch directory, then copy the seven step files her
 
 Never run the first test (`builds the 0.1.6 fixture ...`) against this directory: it regenerates
 `sample-0.1.6.anvil` and every export fixture with new ids and timestamps and breaks the set.
+
+## Export engine fixtures (`export/`, ANVL-181)
+
+The export tests (`test/export/`) use the context, preset and template fixtures above plus two
+files from the ANVL-151 spike in `export/`: `js-values.json`, what node prints for 3,025 doubles,
+8 `JSON.stringify` cases and 8 `String()` cases (the oracle for `js_compat.dart`), and
+`nunjucks-parity.json`, the 149-case parity corpus (45 `guide.*`, 69 `idiom.*`, 32 `edge.*`,
+3 `host.*`) rendered by Nunjucks 3.2.4 in 0.1.6's exact environment over `context-full.json`.
+`export/tool/` holds the node oracles that wrote them (`js_values_oracle.js`, `nunjucks_oracle.js`
+with the case list `parity_cases.js`), with paths adjusted to this layout; they are documentation of
+how the files were made and are not run by the tests. Until cutover (ANVL-169) the corpus can be
+regenerated after adding a case with
+`NUNJUCKS=<anvil checkout>/node_modules/nunjucks node test/fixtures/export/tool/nunjucks_oracle.js`
+from `packages/anvil_core`; after cutover these JSON files are frozen.
