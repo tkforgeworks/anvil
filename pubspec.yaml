@@ -43,6 +43,9 @@ dependencies:
   # Routing (design §13.2): the shell route with the sidebar and app bar
   # and one route per page. Only lib/app/shell/ imports it.
   go_router: ^18.1.2
+  # External links (design §13.4), https only, as 0.1.6's shell.openExternal
+  # (Flutter team plugin). Only lib/app/menu/external_links.dart imports it.
+  url_launcher: ^6.3.3
 
 dev_dependencies:
   flutter_test:

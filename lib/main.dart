@@ -10,6 +10,8 @@ import 'package:path_provider/path_provider.dart';
 
 import 'app/bootstrap/app_lifecycle.dart';
 import 'app/bootstrap/error_hooks.dart';
+import 'app/menu/global_shortcuts.dart';
+import 'app/menu/ui_scale.dart';
 import 'app/providers.dart';
 import 'app/shell/app_router.dart';
 import 'app/theme/theme_selection.dart';
@@ -80,6 +82,14 @@ class AnvilApp extends ConsumerWidget {
         debugShowCheckedModeBanner: false,
         theme: ref.watch(themeDataProvider),
         routerConfig: ref.watch(routerProvider),
+        // The app-level shortcuts (design §8.7 layer 2) above every route,
+        // and the View menu's zoom over the whole UI (design §13.4).
+        builder: (context, child) => GlobalShortcuts(
+          child: Consumer(
+            builder: (context, ref, _) =>
+                UiScale(scale: ref.watch(uiScaleProvider), child: child!),
+          ),
+        ),
       ),
     );
   }
