@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart' show AppBar;
 import 'package:anvil/app/project/project_lifecycle.dart';
 import 'package:anvil/app/providers.dart';
 import 'package:anvil/app/shell/app_shell.dart';
@@ -172,7 +173,13 @@ void main() {
     await pumpUntil(tester, () => find.byType(AppShell).evaluate().isNotEmpty);
 
     expect(harness.service.calls, contains('upgradeCopy /p/old.anvil'));
-    expect(find.text('Spike Fixture'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(AppBar),
+        matching: find.text('Spike Fixture'),
+      ),
+      findsOneWidget,
+    );
     expect(
       appContainer(tester).read(projectSessionProvider)!.filePath,
       harness.service.upgradeTarget,

@@ -166,7 +166,13 @@ void main() {
     expect(harness.service.calls, ['create New World | Saga | $parent']);
     expect(find.byType(CreateProjectDialog), findsNothing);
     expect(find.byType(AppShell), findsOneWidget);
-    expect(find.text('New World'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(AppBar),
+        matching: find.text('New World'),
+      ),
+      findsOneWidget,
+    );
     final metadata = appContainer(tester)
         .read(projectSessionProvider)!
         .metadata;

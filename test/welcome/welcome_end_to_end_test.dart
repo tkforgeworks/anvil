@@ -48,7 +48,13 @@ void main() {
         () => find.byType(AppShell).evaluate().isNotEmpty,
       );
 
-      expect(find.text('Spike Fixture'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(AppBar),
+          matching: find.text('Spike Fixture'),
+        ),
+        findsOneWidget,
+      );
       final metadata = appContainer(tester)
           .read(projectSessionProvider)!
           .metadata;
