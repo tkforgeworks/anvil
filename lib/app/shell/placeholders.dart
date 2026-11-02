@@ -12,6 +12,7 @@ import '../domains/abilities/abilities_pages.dart';
 import '../domains/classes/classes_pages.dart';
 import '../domains/items/items_pages.dart';
 import '../domains/loot_tables/loot_tables_pages.dart';
+import '../domains/npcs/npcs_pages.dart';
 import '../domains/recipes/recipes_pages.dart';
 import '../theme/anvil_metrics.dart';
 import 'shell_domain.dart';
@@ -50,6 +51,7 @@ final Map<ShellDomain, Widget Function()> listPageBuilders = {
   ShellDomain.abilities: abilitiesListPage,
   ShellDomain.items: itemsListPage,
   ShellDomain.recipes: recipesListPage,
+  ShellDomain.npcs: npcsListPage,
   ShellDomain.lootTables: lootTablesListPage,
 };
 
@@ -62,6 +64,7 @@ final Map<ShellDomain, Widget Function(String id)> editorBuilders = {
   ShellDomain.abilities: abilityEditor,
   ShellDomain.items: itemEditor,
   ShellDomain.recipes: recipeEditor,
+  ShellDomain.npcs: npcEditor,
   ShellDomain.lootTables: lootTableEditor,
 };
 

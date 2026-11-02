@@ -1,6 +1,6 @@
-import 'package:anvil/app/domains/items/item_custom_fields_panel.dart';
 import 'package:anvil/app/domains/items/items_editor_controller.dart';
 import 'package:anvil/app/domains/items/items_editor_page.dart';
+import 'package:anvil/app/editor/widgets/custom_fields_panel.dart';
 import 'package:anvil/app/editor/widgets/dirty_dot.dart';
 import 'package:anvil/app/editor/widgets/validation_banner.dart';
 import 'package:anvil/app/widgets/inspector_rail.dart';
@@ -14,7 +14,7 @@ import 'item_fakes.dart';
 Finder field(Key key) =>
     find.descendant(of: find.byKey(key), matching: find.byType(TextField));
 
-Finder customField(String id) => find.byKey(ItemCustomFieldsPanel.fieldKey(id));
+Finder customField(String id) => find.byKey(CustomFieldsPanel.fieldKey(id));
 
 Future<void> openTab(WidgetTester tester, ItemEditorTab tab) async {
   await tester.tap(find.byKey(tab.key));
@@ -122,9 +122,7 @@ void main() {
     expect(find.text('Damage *'), findsOneWidget);
     expect(
       tester
-          .widget<TextField>(
-            field(ItemCustomFieldsPanel.fieldKey('field-damage')),
-          )
+          .widget<TextField>(field(CustomFieldsPanel.fieldKey('field-damage')))
           .controller!
           .text,
       '12',
@@ -132,7 +130,7 @@ void main() {
     expect(find.text('ice'), findsOneWidget);
 
     await tester.enterText(
-      field(ItemCustomFieldsPanel.fieldKey('field-damage')),
+      field(CustomFieldsPanel.fieldKey('field-damage')),
       '15',
     );
     await tester.pumpAndSettle();
@@ -140,12 +138,12 @@ void main() {
     expect(dot(tester, ItemEditorTab.customFields), isTrue);
     expect(dot(tester, ItemEditorTab.details), isFalse);
 
-    await pick(tester, ItemCustomFieldsPanel.fieldKey('field-element'), 'None');
+    await pick(tester, CustomFieldsPanel.fieldKey('field-element'), 'None');
     expect(draft(swordId).customFieldValues['field-element'], isNull);
 
     // An emptied text is stored as null, and a required one says so.
     await tester.enterText(
-      field(ItemCustomFieldsPanel.fieldKey('field-damage')),
+      field(CustomFieldsPanel.fieldKey('field-damage')),
       '',
     );
     await tester.pumpAndSettle();
@@ -232,7 +230,7 @@ void main() {
     ];
     await openTab(tester, ItemEditorTab.customFields);
     await tester.enterText(
-      field(ItemCustomFieldsPanel.fieldKey('field-damage')),
+      field(CustomFieldsPanel.fieldKey('field-damage')),
       '',
     );
     await tester.enterText(

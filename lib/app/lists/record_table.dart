@@ -87,43 +87,50 @@ class RecordTable<R> extends StatelessWidget {
         ? ids.where(selection.contains).length
         : 0;
 
+    // The table fills the available width and, when its columns need more
+    // (long names or six columns at the 1400 px minimum window), scrolls
+    // sideways instead of overflowing: a `DataTable` cannot shrink its
+    // headers below their text.
     return LayoutBuilder(
-      builder: (context, constraints) => ConstrainedBox(
-        constraints: BoxConstraints(minWidth: constraints.maxWidth),
-        child: DataTable(
-          showCheckboxColumn: false,
-          dataRowMinHeight: rowHeight,
-          dataRowMaxHeight: rowHeight,
-          headingRowHeight: rowHeight,
-          sortColumnIndex: sortColumn == null ? null : sortColumn! + offset,
-          sortAscending: ascending,
-          columns: [
-            if (multiSelect)
-              DataColumn(
-                label: Checkbox(
-                  key: selectAllKey,
-                  tristate: true,
-                  value: selectedCount == 0
-                      ? false
-                      : selectedCount == ids.length
-                      ? true
-                      : null,
-                  onChanged: ids.isEmpty ? null : (_) => onToggleAll?.call(),
+      builder: (context, constraints) => SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minWidth: constraints.maxWidth),
+          child: DataTable(
+            showCheckboxColumn: false,
+            dataRowMinHeight: rowHeight,
+            dataRowMaxHeight: rowHeight,
+            headingRowHeight: rowHeight,
+            sortColumnIndex: sortColumn == null ? null : sortColumn! + offset,
+            sortAscending: ascending,
+            columns: [
+              if (multiSelect)
+                DataColumn(
+                  label: Checkbox(
+                    key: selectAllKey,
+                    tristate: true,
+                    value: selectedCount == 0
+                        ? false
+                        : selectedCount == ids.length
+                        ? true
+                        : null,
+                    onChanged: ids.isEmpty ? null : (_) => onToggleAll?.call(),
+                  ),
                 ),
+              for (final (i, column) in columns.indexed)
+                DataColumn(
+                  label: Text(column.label),
+                  onSort: column.compare == null || onSort == null
+                      ? null
+                      : (_, asc) => onSort!(i, asc),
+                ),
+              const DataColumn(
+                label: Text('Actions'),
+                headingRowAlignment: MainAxisAlignment.end,
               ),
-            for (final (i, column) in columns.indexed)
-              DataColumn(
-                label: Text(column.label),
-                onSort: column.compare == null || onSort == null
-                    ? null
-                    : (_, asc) => onSort!(i, asc),
-              ),
-            const DataColumn(
-              label: Text('Actions'),
-              headingRowAlignment: MainAxisAlignment.end,
-            ),
-          ],
-          rows: [for (final row in rows) _row(context, row, idOf(row))],
+            ],
+            rows: [for (final row in rows) _row(context, row, idOf(row))],
+          ),
         ),
       ),
     );
