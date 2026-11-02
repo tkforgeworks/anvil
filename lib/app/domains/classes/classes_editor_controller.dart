@@ -264,6 +264,13 @@ class ClassEditorController extends RecordEditorController<ClassDraft> {
     );
   }
 
+  /// The `Formula fill:` helper (ANVL-140): writes [values] (level →
+  /// value, computed by the page with `computeFormulaFill`) into the
+  /// manual entries of [statId], one undo step. Does nothing for a stat in
+  /// formula mode or when [values] is empty.
+  void formulaFill(String statId, Map<int, double> values) =>
+      _editManualColumn(statId, values);
+
   void _editManualColumn(String statId, Map<int, double> values) {
     final draft = state.value?.draft;
     if (draft == null ||
