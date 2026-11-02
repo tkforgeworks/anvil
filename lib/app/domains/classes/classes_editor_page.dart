@@ -6,7 +6,7 @@ library;
 import 'dart:async';
 
 import 'package:anvil_core/anvil_core.dart';
-import 'package:flutter/foundation.dart' show listEquals;
+import 'package:flutter/foundation.dart' show listEquals, mapEquals;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forge_ui/forge_ui.dart';
@@ -29,16 +29,15 @@ import '../../theme/anvil_colors.dart';
 import '../../theme/anvil_metrics.dart';
 import '../../widgets/inspector_rail.dart';
 import 'classes_ability_panel.dart';
+import 'classes_derived_stats_tab.dart';
 import 'classes_editor_controller.dart';
+import 'classes_stat_growth_tab.dart';
 import 'classes_providers.dart';
 
 /// The editor of class [id], as a full page and as the editor dialog's
 /// body: [RecordEditorScope] around the [EditHeader], the five tabs with
 /// their [DirtyDot]s, the [ValidationBanner], the tab body beside the
 /// [InspectorRail], and the [SaveBar].
-///
-/// The Stat Growth and Derived Stats tabs are ANVL-196's and show a stub
-/// here; the draft fields they edit are carried through untouched.
 ///
 /// Back leaves the editor the way it was opened: inside an [EditorDialog]
 /// it closes the dialog (through its leave guard), on the editor route it
@@ -63,16 +62,12 @@ class ClassEditorPage extends ConsumerStatefulWidget {
   /// The Used By section's title (0.1.6 `usedBySections` label).
   static const npcsSection = 'NPCs';
 
-  /// The body of the two tabs ANVL-196 fills in.
-  static const stubMessage = 'Coming in ANVL-196';
-
   /// 0.1.6's helper under Resource Multiplier.
   static const resourceMultiplierHelper =
       'Class-level metadata field — usable as a variable in derived stat '
       'formulas';
 
   static const duplicateKey = ValueKey('class-duplicate');
-  static const stubKey = ValueKey('class-tab-stub');
   static const addMetadataKey = ValueKey('class-metadata-add');
 
   /// The Details tab's text and number fields, by draft field name.
@@ -168,6 +163,11 @@ class _ClassEditorPageState extends ConsumerState<ClassEditorPage>
           a.description == b.description &&
           a.resourceMultiplier == b.resourceMultiplier &&
           listEquals(a.metadataFields, b.metadataFields),
+      'statGrowth': (a, b) =>
+          mapEquals(a.statGrowth, b.statGrowth) &&
+          mapEquals(a.statGrowthFormulas, b.statGrowthFormulas),
+      'derivedStats': (a, b) =>
+          mapEquals(a.derivedStatOverrides, b.derivedStatOverrides),
       'abilities': (a, b) => listEquals(a.abilityIds, b.abilityIds),
     });
 
@@ -193,8 +193,18 @@ class _ClassEditorPageState extends ConsumerState<ClassEditorPage>
               Tab(
                 child: _TabLabel(labels[1], dirty: dirty.contains('details')),
               ),
-              Tab(text: labels[2]),
-              Tab(text: labels[3]),
+              Tab(
+                child: _TabLabel(
+                  labels[2],
+                  dirty: dirty.contains('statGrowth'),
+                ),
+              ),
+              Tab(
+                child: _TabLabel(
+                  labels[3],
+                  dirty: dirty.contains('derivedStats'),
+                ),
+              ),
               Tab(
                 child: _TabLabel(labels[4], dirty: dirty.contains('abilities')),
               ),
@@ -238,7 +248,20 @@ class _ClassEditorPageState extends ConsumerState<ClassEditorPage>
         issues: issues,
         controller: controller,
       ),
-      2 || 3 => const _StubTab(),
+      2 => ClassStatGrowthTab(
+        classId: widget.id,
+        draft: state.draft,
+        blockers: state.blockers,
+        issues: issues,
+        controller: controller,
+      ),
+      3 => ClassDerivedStatsTab(
+        classId: widget.id,
+        draft: state.draft,
+        blockers: state.blockers,
+        issues: issues,
+        controller: controller,
+      ),
       _ => ClassAbilityPanel(
         abilityIds: state.draft.abilityIds,
         controller: controller,
@@ -351,25 +374,6 @@ class _OverviewTab extends StatelessWidget {
       ),
     );
   }
-}
-
-/// The Stat Growth and Derived Stats tabs until ANVL-196.
-class _StubTab extends StatelessWidget {
-  const _StubTab();
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: AnvilSpacing.xl),
-    child: Center(
-      child: Text(
-        ClassEditorPage.stubMessage,
-        key: ClassEditorPage.stubKey,
-        style: context.text.bodyLarge?.copyWith(
-          color: context.colors.onSurfaceVariant,
-        ),
-      ),
-    ),
-  );
 }
 
 /// Export key, description and resource multiplier as 0.1.6's Details

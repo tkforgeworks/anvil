@@ -42,6 +42,17 @@ abstract final class AnvilPalette {
   static const lightInfo = Color(0xFF0288D1); // lightBlue[700]
   static const lightSuccess = Color(0xFF2E7D32); // green[800]
 
+  // ---- Chart series (0.1.6 `STAT_COLORS`, one list for both modes) ----
+  static const chartSeries = <Color>[
+    Color(0xFF5E81AC),
+    Color(0xFFA3BE8C),
+    Color(0xFFEBCB8B),
+    Color(0xFFD08770),
+    Color(0xFFBF616A),
+    Color(0xFFB48EAD),
+    Color(0xFF88C0D0),
+  ];
+
   // ---- Neutral anchors the derivations blend toward ----
   static const white = Color(0xFFFFFFFF);
   static const black = Color(0xFF000000);

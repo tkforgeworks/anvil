@@ -1,7 +1,9 @@
 import 'package:anvil/app/domains/abilities/abilities_editor_page.dart';
 import 'package:anvil/app/domains/classes/classes_ability_panel.dart';
+import 'package:anvil/app/domains/classes/classes_derived_stats_tab.dart';
 import 'package:anvil/app/domains/classes/classes_editor_page.dart';
 import 'package:anvil/app/domains/classes/classes_pages.dart';
+import 'package:anvil/app/domains/classes/classes_stat_growth_tab.dart';
 import 'package:anvil/app/domains/npcs/npcs_editor_page.dart';
 import 'package:anvil/app/editor/widgets/dirty_dot.dart';
 import 'package:anvil/app/shell/editor_dialog.dart';
@@ -68,8 +70,8 @@ Future<void> undo(WidgetTester tester) async {
 }
 
 void main() {
-  testWidgets('shows the five tabs, the overview, the ANVL-196 stubs and the '
-      'NPCs rail', (tester) async {
+  testWidgets('shows the five tabs, the overview, the stat growth and '
+      'derived stats tabs and the NPCs rail', (tester) async {
     final h = ClassHarness();
     h.classes.usedByOf[warriorId] = const [UsedByRef('npc-guard', 'Guard')];
     await h.pump(
@@ -95,15 +97,16 @@ void main() {
     expect(find.text(ClassEditorPage.npcsSection), findsOneWidget);
     expect(find.text('Guard'), findsOneWidget);
     expect(find.byKey(const ValueKey('save-bar')), findsNothing);
-    // Only Details and Abilities carry dots.
-    expect(find.byKey(ClassEditorPage.dotKey('Stat Growth')), findsNothing);
-    expect(find.byKey(ClassEditorPage.dotKey('Derived Stats')), findsNothing);
-
-    for (final stub in ['Stat Growth', 'Derived Stats']) {
-      await openTab(tester, stub);
-      expect(find.byKey(ClassEditorPage.stubKey), findsOneWidget);
-      expect(find.text(ClassEditorPage.stubMessage), findsOneWidget);
+    // Every tab but the Overview carries a dot, hidden while clean.
+    for (final tab in ClassEditorPage.tabLabels.skip(1)) {
+      expect(dotVisible(tester, tab), isFalse);
     }
+
+    // The ANVL-196 tabs (their own tests are in stat_growth_*_test.dart).
+    await openTab(tester, 'Stat Growth');
+    expect(find.byKey(ClassStatGrowthTab.tabKey), findsOneWidget);
+    await openTab(tester, 'Derived Stats');
+    expect(find.byKey(ClassDerivedStatsTab.tabKey), findsOneWidget);
 
     // Click-through opens the NPC in the editing mode (modal here).
     await tester.tap(find.byKey(InspectorRail.entryKey('npc-guard')));
