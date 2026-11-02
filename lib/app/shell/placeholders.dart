@@ -14,6 +14,7 @@ import '../domains/items/items_pages.dart';
 import '../domains/loot_tables/loot_tables_pages.dart';
 import '../domains/npcs/npcs_pages.dart';
 import '../domains/recipes/recipes_pages.dart';
+import '../recycle_bin/recycle_bin_page.dart';
 import '../theme/anvil_metrics.dart';
 import 'shell_domain.dart';
 
@@ -36,8 +37,7 @@ Widget validationPage() =>
     const PagePlaceholder('Validation', ticket: 'ANVL-198');
 
 /// The recycle bin at `/recycle-bin`.
-Widget recycleBinPage() =>
-    const PagePlaceholder('Recycle Bin', ticket: 'ANVL-199');
+Widget recycleBinPage() => const RecycleBinPage();
 
 /// The export page at `/export`.
 Widget exportPage() => const PagePlaceholder('Export', ticket: 'ANVL-200');

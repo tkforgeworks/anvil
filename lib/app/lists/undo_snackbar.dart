@@ -1,6 +1,6 @@
 /// The Undo snackbar behind the instant list actions (design §8.8): soft
 /// delete, restore and duplicate apply at once and offer their inverse for
-/// a few seconds. The recycle bin (ANVL-199) shows the same snackbar.
+/// a few seconds. The recycle bin shows the same snackbar.
 library;
 
 import 'dart:async';
