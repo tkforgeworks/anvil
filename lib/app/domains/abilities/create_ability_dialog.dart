@@ -12,6 +12,8 @@ import '../../shell/shell_providers.dart';
 import '../../theme/anvil_colors.dart';
 import '../../theme/anvil_metrics.dart';
 
+import 'package:anvil/app/editor/export_key_slug.dart';
+
 /// Shows `New Ability` and returns the created ability, or null when the
 /// user cancels. The create is a write path, so it bumps the write epoch
 /// once after the repository returns.
@@ -152,11 +154,3 @@ class _CreateAbilityDialogState extends ConsumerState<CreateAbilityDialog> {
     );
   }
 }
-
-/// 0.1.6's `slugify` (`utils/slugify.ts`): lower case, every run of
-/// characters outside `a-z0-9` becomes one `-`, a leading and a trailing
-/// `-` stripped.
-String slugifyExportKey(String value) => value
-    .toLowerCase()
-    .replaceAll(RegExp('[^a-z0-9]+'), '-')
-    .replaceAll(RegExp(r'^-|-$'), '');

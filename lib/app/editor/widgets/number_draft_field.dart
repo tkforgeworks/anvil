@@ -1,7 +1,9 @@
-/// A text field bound to one number of a draft.
+/// The numeric text fields every domain editor shares: [NumberDraftField]
+/// for decimals and [IntDraftField] for integers.
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// A [TextField] whose text follows the number [value], the numeric
 /// counterpart of `DraftTextField`.
@@ -131,4 +133,70 @@ String formatDraftNumber(double? value) {
     return value.toInt().toString();
   }
   return value.toString();
+}
+
+/// A digits-only field bound to an integer of the draft.
+///
+/// Typing goes out through [onChanged] (an empty field as 0, which the
+/// save blockers refuse). A change from the draft (undo, redo, discard,
+/// the read-back) is written into the field only when the field's own
+/// number differs from it, so typing over an empty field is not disturbed.
+class IntDraftField extends StatefulWidget {
+  const IntDraftField({
+    super.key,
+    this.label,
+    required this.value,
+    required this.onChanged,
+    this.errorText,
+    this.dense = false,
+  });
+
+  final String? label;
+  final int value;
+  final ValueChanged<int> onChanged;
+  final String? errorText;
+  final bool dense;
+
+  /// The number [text] stands for: empty is 0.
+  static int parse(String text) => int.tryParse(text) ?? 0;
+
+  @override
+  State<IntDraftField> createState() => _IntDraftFieldState();
+}
+
+class _IntDraftFieldState extends State<IntDraftField> {
+  late final TextEditingController _controller = TextEditingController(
+    text: '${widget.value}',
+  );
+
+  @override
+  void didUpdateWidget(IntDraftField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (IntDraftField.parse(_controller.text) == widget.value) return;
+    final text = '${widget.value}';
+    _controller.value = TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => TextField(
+    controller: _controller,
+    keyboardType: TextInputType.number,
+    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+    decoration: InputDecoration(
+      labelText: widget.label,
+      errorText: widget.errorText,
+      errorMaxLines: 3,
+      isDense: widget.dense,
+    ),
+    onChanged: (text) => widget.onChanged(IntDraftField.parse(text)),
+  );
 }

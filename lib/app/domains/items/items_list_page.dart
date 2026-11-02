@@ -12,8 +12,9 @@ import '../../shell/shell_domain.dart';
 import '../../theme/anvil_metrics.dart';
 import 'item_create_dialog.dart';
 import 'item_meta_providers.dart';
-import 'item_picker.dart';
 import 'items_list_adapter.dart';
+
+import 'package:anvil/app/editor/widgets/draft_picker.dart';
 
 /// The Items page: the scaffold's toolbar with 0.1.6's Category and Rarity
 /// filters (`All Categories` / `All Rarities` first) in its filter slot,
@@ -72,10 +73,10 @@ class _ItemListPageState extends ConsumerState<ItemListPage> {
       children: [
         SizedBox(
           width: ItemListPage.categoryFilterWidth,
-          child: ItemPicker<String?>(
+          child: DraftPicker<String?>(
             key: ItemListPage.categoryFilterKey,
             label: 'Category',
-            isDense: true,
+            dense: true,
             value: categoryId,
             options: [
               (value: null, label: 'All Categories'),
@@ -87,10 +88,10 @@ class _ItemListPageState extends ConsumerState<ItemListPage> {
         const SizedBox(width: AnvilSpacing.md),
         SizedBox(
           width: ItemListPage.rarityFilterWidth,
-          child: ItemPicker<String?>(
+          child: DraftPicker<String?>(
             key: ItemListPage.rarityFilterKey,
             label: 'Rarity',
-            isDense: true,
+            dense: true,
             value: rarityId,
             options: [
               (value: null, label: 'All Rarities'),

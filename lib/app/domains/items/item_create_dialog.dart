@@ -11,15 +11,9 @@ import '../../shell/shell_providers.dart';
 import '../../theme/anvil_colors.dart';
 import '../../theme/anvil_metrics.dart';
 import 'item_meta_providers.dart';
-import 'item_picker.dart';
 
-/// 0.1.6's renderer `slugify` (`utils/slugify.ts`): lower case, every run
-/// outside `a-z0-9` one `-`, no leading or trailing `-`. The core's copy
-/// is internal to it.
-String slugifyItemKey(String value) => value
-    .toLowerCase()
-    .replaceAll(RegExp('[^a-z0-9]+'), '-')
-    .replaceAll(RegExp(r'^-|-$'), '');
+import 'package:anvil/app/editor/widgets/draft_picker.dart';
+import 'package:anvil/app/editor/export_key_slug.dart';
 
 /// 0.1.6's `maxWidth="sm"` (600 px) less the dialog's 24 px padding on
 /// each side.
@@ -74,7 +68,7 @@ class _CreateItemDialogState extends ConsumerState<CreateItemDialog> {
 
   void _onNameChanged(String value) {
     setState(() {
-      if (!_exportKeyTouched) _exportKey.text = slugifyItemKey(value);
+      if (!_exportKeyTouched) _exportKey.text = slugifyExportKey(value);
     });
   }
 
@@ -98,7 +92,7 @@ class _CreateItemDialogState extends ConsumerState<CreateItemDialog> {
           .create(
             CreateItemInput(
               displayName: name,
-              exportKey: key.isEmpty ? slugifyItemKey(name) : key,
+              exportKey: key.isEmpty ? slugifyExportKey(name) : key,
               description: _description.text.trim(),
               itemCategoryId: _categoryId!,
               rarityId: _rarityId!,
@@ -170,7 +164,7 @@ class _CreateItemDialogState extends ConsumerState<CreateItemDialog> {
               Row(
                 children: [
                   Expanded(
-                    child: ItemPicker<String?>(
+                    child: DraftPicker<String?>(
                       key: CreateItemDialog.categoryKey,
                       label: 'Category',
                       isRequired: true,
@@ -184,7 +178,7 @@ class _CreateItemDialogState extends ConsumerState<CreateItemDialog> {
                   ),
                   const SizedBox(width: AnvilSpacing.md),
                   Expanded(
-                    child: ItemPicker<String?>(
+                    child: DraftPicker<String?>(
                       key: CreateItemDialog.rarityKey,
                       label: 'Rarity',
                       isRequired: true,

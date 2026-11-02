@@ -10,9 +10,10 @@ import '../../lists/record_list_page.dart';
 import '../../shell/open_editor.dart';
 import '../../shell/shell_domain.dart';
 import 'recipes_create_dialog.dart';
-import 'recipes_fields.dart';
 import 'recipes_list_adapter.dart';
 import 'recipes_lookups.dart';
+
+import 'package:anvil/app/editor/widgets/draft_picker.dart';
 
 /// The station and specialization filter value that matches every recipe;
 /// the empty value matches recipes with none, as 0.1.6's `all` and `''`.
@@ -60,7 +61,7 @@ class _RecipeListPageState extends ConsumerState<RecipeListPage> {
       children: [
         SizedBox(
           width: 190,
-          child: RecipePicker(
+          child: DraftPicker<String>(
             key: RecipeListPage.stationFilterKey,
             label: 'Station',
             dense: true,
@@ -77,7 +78,7 @@ class _RecipeListPageState extends ConsumerState<RecipeListPage> {
         const SizedBox(width: 12),
         SizedBox(
           width: 210,
-          child: RecipePicker(
+          child: DraftPicker<String>(
             key: RecipeListPage.specializationFilterKey,
             label: 'Specialization',
             dense: true,

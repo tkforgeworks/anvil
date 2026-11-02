@@ -11,8 +11,11 @@ import '../../editor/editor_state.dart';
 import '../../shell/shell_providers.dart';
 import '../../theme/anvil_metrics.dart';
 import 'recipes_editor_page.dart';
-import 'recipes_fields.dart';
 import 'recipes_lookups.dart';
+
+import 'package:anvil/app/editor/widgets/draft_picker.dart';
+import 'package:anvil/app/editor/widgets/number_draft_field.dart';
+import 'package:anvil/app/editor/export_key_slug.dart';
 
 /// Shows the dialog; completes with the created recipe, or null when it
 /// was cancelled. The create is a write path, so it bumps
@@ -154,7 +157,7 @@ class _CreateRecipeDialogState extends ConsumerState<CreateRecipeDialog> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    child: RecipePicker(
+                    child: DraftPicker<String>(
                       key: CreateRecipeDialog.outputKey,
                       label: 'Output Item *',
                       value: outputItemId,
@@ -178,7 +181,7 @@ class _CreateRecipeDialogState extends ConsumerState<CreateRecipeDialog> {
               Row(
                 children: [
                   Expanded(
-                    child: RecipePicker(
+                    child: DraftPicker<String>(
                       key: CreateRecipeDialog.stationKey,
                       label: 'Crafting Station',
                       value: _stationId ?? '',
@@ -192,7 +195,7 @@ class _CreateRecipeDialogState extends ConsumerState<CreateRecipeDialog> {
                   ),
                   across,
                   Expanded(
-                    child: RecipePicker(
+                    child: DraftPicker<String>(
                       key: CreateRecipeDialog.specializationKey,
                       label: 'Specialization',
                       value: _specializationId ?? '',
