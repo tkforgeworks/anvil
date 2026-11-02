@@ -1,17 +1,17 @@
-/// The Custom Fields tab of the item editor (0.1.6 `CustomFieldsPanel.tsx`
-/// with `scopeType="item_category"`): one control per definition of the
-/// draft's category, bound to the draft's values.
+/// The custom fields panel the item and NPC editors share (0.1.6
+/// `CustomFieldsPanel.tsx`, `scopeType="item_category"` or `"npc_type"`):
+/// one control per definition of the draft's category or type, bound to
+/// the draft's values.
 library;
 
 import 'package:anvil_core/anvil_core.dart';
 import 'package:flutter/material.dart';
 import 'package:forge_ui/forge_ui.dart';
 
-import '../../editor/widgets/draft_text_field.dart';
-import '../../editor/widgets/validation_banner.dart';
 import '../../theme/anvil_metrics.dart';
-
-import 'package:anvil/app/editor/widgets/draft_picker.dart';
+import 'draft_picker.dart';
+import 'draft_text_field.dart';
+import 'validation_banner.dart';
 
 /// 0.1.6's inline message for a required field left empty.
 const requiredFieldMessage = 'This field is required.';
@@ -29,18 +29,24 @@ String customFieldIssueField(CustomFieldDefinition definition) =>
 /// required field is a validation error after save (ANVL-180).
 ///
 /// 0.1.6 saved the panel on its own `Save Custom Fields` button and asked
-/// for the item to be saved first when the details were dirty; here the
+/// for the record to be saved first when the details were dirty; here the
 /// values are part of the draft, saved and undone with the rest.
-class ItemCustomFieldsPanel extends StatelessWidget {
-  const ItemCustomFieldsPanel({
+class CustomFieldsPanel extends StatelessWidget {
+  const CustomFieldsPanel({
     super.key,
+    required this.scope,
     required this.definitions,
     required this.values,
     required this.issues,
     required this.onChanged,
   });
 
-  /// The definitions scoped to the draft's category; null while loading.
+  /// Which kind of scope [definitions] belong to; names it in the empty
+  /// message, as 0.1.6 did.
+  final CustomFieldScope scope;
+
+  /// The definitions scoped to the draft's category or type; null while
+  /// loading.
   final List<CustomFieldDefinition>? definitions;
 
   /// The draft's custom field values by definition id.
@@ -52,7 +58,7 @@ class ItemCustomFieldsPanel extends StatelessWidget {
   onChanged;
 
   static Key fieldKey(String definitionId) =>
-      ValueKey('item-custom-field-$definitionId');
+      ValueKey('custom-field-$definitionId');
 
   @override
   Widget build(BuildContext context) {
@@ -65,7 +71,10 @@ class ItemCustomFieldsPanel extends StatelessWidget {
     }
     if (definitions.isEmpty) {
       return Text(
-        'No custom fields defined for this item category.',
+        'No custom fields defined for this ${switch (scope) {
+          CustomFieldScope.itemCategory => 'item category',
+          CustomFieldScope.npcType => 'NPC type',
+        }}.',
         style: muted,
       );
     }

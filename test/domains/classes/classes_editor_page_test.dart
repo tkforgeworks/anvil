@@ -2,15 +2,22 @@ import 'package:anvil/app/domains/abilities/abilities_editor_page.dart';
 import 'package:anvil/app/domains/classes/classes_ability_panel.dart';
 import 'package:anvil/app/domains/classes/classes_editor_page.dart';
 import 'package:anvil/app/domains/classes/classes_pages.dart';
+import 'package:anvil/app/domains/npcs/npcs_editor_page.dart';
 import 'package:anvil/app/editor/widgets/dirty_dot.dart';
 import 'package:anvil/app/shell/editor_dialog.dart';
-import 'package:anvil/app/shell/placeholders.dart';
 import 'package:anvil/app/shell/shell_domain.dart';
+import 'package:anvil/app/shell/shell_providers.dart';
 import 'package:anvil/app/widgets/inspector_rail.dart';
 import 'package:anvil_core/anvil_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../npcs/npc_fakes.dart'
+    show
+        FakeNpcCustomFieldRepository,
+        FakeNpcItemRepository,
+        FakeNpcLootTableRepository,
+        FakeNpcRepository;
 import 'class_fakes.dart';
 
 const invalidKeyMessage =
@@ -65,7 +72,20 @@ void main() {
       'NPCs rail', (tester) async {
     final h = ClassHarness();
     h.classes.usedByOf[warriorId] = const [UsedByRef('npc-guard', 'Guard')];
-    await h.pump(tester, classEditor(warriorId));
+    await h.pump(
+      tester,
+      classEditor(warriorId),
+      overrides: [
+        npcRepositoryProvider.overrideWithValue(FakeNpcRepository()),
+        lootTableRepositoryProvider.overrideWithValue(
+          FakeNpcLootTableRepository(),
+        ),
+        itemRepositoryProvider.overrideWithValue(FakeNpcItemRepository()),
+        customFieldRepositoryProvider.overrideWithValue(
+          FakeNpcCustomFieldRepository(),
+        ),
+      ],
+    );
 
     for (final label in ClassEditorPage.tabLabels) {
       expect(find.widgetWithText(Tab, label), findsOneWidget);
@@ -88,12 +108,10 @@ void main() {
     // Click-through opens the NPC in the editing mode (modal here).
     await tester.tap(find.byKey(InspectorRail.entryKey('npc-guard')));
     await tester.pumpAndSettle();
-    final placeholder = tester.widget<EditorPlaceholder>(
-      find.byType(EditorPlaceholder),
-    );
+    final page = tester.widget<NpcEditorPage>(find.byType(NpcEditorPage));
     expect(
-      (placeholder.domain, placeholder.id),
-      (ShellDomain.npcs, 'npc-guard'),
+      (find.byType(EditorDialog).evaluate().length, page.id),
+      (1, 'npc-guard'),
     );
   }, variant: linux);
 

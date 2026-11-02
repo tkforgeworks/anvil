@@ -300,6 +300,19 @@ class FakeStatsRepository implements MetaRepository {
   @override
   Future<List<MetaStat>> listStats() async => stats;
 
+  /// No NPC types: an editor opened by click-through from a rail renders
+  /// over this fake too.
+  @override
+  Future<List<MetaNpcType>> listNpcTypes() async => const [];
+
+  @override
+  Future<ProjectSettingsDraft> loadProjectSettings() async =>
+      ProjectSettingsDraft(
+        gameTitle: 'Test',
+        maxLevel: 20,
+        softDeleteReferenceSeverity: SoftDeleteReferenceSeverity.warning,
+      );
+
   @override
   dynamic noSuchMethod(Invocation invocation) =>
       throw UnimplementedError('FakeStatsRepository: ${invocation.memberName}');

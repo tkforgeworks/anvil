@@ -11,6 +11,7 @@ import 'package:forge_ui/forge_ui.dart';
 
 import '../../editor/editor_state.dart';
 import '../../editor/record_editor_scope.dart';
+import '../../editor/widgets/custom_fields_panel.dart';
 import '../../editor/widgets/dirty_dot.dart';
 import '../../editor/widgets/draft_text_field.dart';
 import '../../editor/widgets/edit_header.dart';
@@ -22,7 +23,6 @@ import '../../shell/shell_domain.dart';
 import '../../theme/anvil_colors.dart';
 import '../../theme/anvil_metrics.dart';
 import '../../widgets/inspector_rail.dart';
-import 'item_custom_fields_panel.dart';
 import 'item_meta_providers.dart';
 import 'items_editor_controller.dart';
 
@@ -406,7 +406,8 @@ class _CustomFieldsTab extends ConsumerWidget {
     final definitions = categoryId.isEmpty
         ? const <CustomFieldDefinition>[]
         : ref.watch(itemCustomFieldDefinitionsProvider(categoryId)).value;
-    return ItemCustomFieldsPanel(
+    return CustomFieldsPanel(
+      scope: CustomFieldScope.itemCategory,
       definitions: definitions,
       values: draft.customFieldValues,
       issues: issues,

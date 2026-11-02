@@ -333,11 +333,12 @@ class ClassHarness {
     WidgetTester tester,
     Widget child, {
     EditingMode editingMode = EditingMode.modal,
+    List overrides = const [],
   }) async {
     tester.view.physicalSize = const Size(1180, 800);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
-    build(editingMode: editingMode);
+    build(editingMode: editingMode, overrides: overrides);
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,

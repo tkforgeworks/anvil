@@ -5,6 +5,7 @@ library;
 import 'package:anvil_core/anvil_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../editor/custom_field_scoping.dart';
 import '../../editor/editor_state.dart';
 import '../../editor/record_editor_controller.dart';
 import '../../shell/shell_providers.dart';
@@ -14,34 +15,6 @@ final itemsEditorProvider = AsyncNotifierProvider.autoDispose
     .family<ItemEditorController, EditorState<ItemDraft>, String>(
       ItemEditorController.new,
     );
-
-/// The custom field values of [values] that belong to [definitions], then
-/// each definition's default where the item has no value row at all, as
-/// 0.1.6's `CustomFieldsPanel` seeded `def.defaultValue ?? ''` before
-/// laying the stored rows over it. A stored `NULL` row keeps its null.
-///
-/// With [keepOthers] the values of other definitions stay (first load);
-/// without, they are dropped (a category change).
-Map<String, String?> scopeCustomFieldValues(
-  Map<String, String?> values,
-  List<CustomFieldDefinition> definitions, {
-  required bool keepOthers,
-}) {
-  final ids = {for (final d in definitions) d.id};
-  final next = <String, String?>{
-    for (final MapEntry(:key, :value) in values.entries)
-      if (keepOthers || ids.contains(key)) key: value,
-  };
-  for (final definition in definitions) {
-    final fallback = definition.defaultValue;
-    if (fallback != null &&
-        fallback.isNotEmpty &&
-        !next.containsKey(definition.id)) {
-      next[definition.id] = fallback;
-    }
-  }
-  return next;
-}
 
 /// The item editor: identity, category, rarity, description and the
 /// category's custom field values in one draft, saved in one transaction.
