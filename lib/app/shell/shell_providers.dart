@@ -123,7 +123,7 @@ final trashCountProvider = FutureProvider<int>((ref) async {
 });
 
 /// The project-wide validation issues (design §10.2): the sidebar badge
-/// and, from ANVL-198, the Validation page read the same list.
+/// and the Validation page read the same list.
 final validationIssuesProvider =
     AsyncNotifierProvider<ValidationIssuesNotifier, List<ValidationIssue>>(
       ValidationIssuesNotifier.new,

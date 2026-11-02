@@ -1,3 +1,4 @@
+import 'package:anvil/app/dashboard/dashboard_page.dart';
 import 'package:anvil/app/domains/abilities/abilities_editor_page.dart';
 import 'package:anvil/app/domains/abilities/abilities_list_page.dart';
 import 'package:anvil/app/domains/classes/classes_editor_page.dart';
@@ -16,6 +17,7 @@ import 'package:anvil/app/shell/app_shell.dart';
 import 'package:anvil/app/shell/placeholders.dart';
 import 'package:anvil/app/shell/shell_domain.dart';
 import 'package:anvil/app/shell/sidebar.dart';
+import 'package:anvil/app/validation/validation_page.dart';
 import 'package:anvil/app/welcome/welcome_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -42,6 +44,8 @@ const pages = {
 /// The routes whose pages have landed: the widget the shell shows instead
 /// of the placeholder. Each domain ticket adds its two entries here.
 final landedPages = <String, Type>{
+  '/': DashboardPage,
+  '/validation': ValidationPage,
   '/abilities': AbilityListPage,
   '/classes': ClassListPage,
   '/items': ItemListPage,
@@ -94,10 +98,13 @@ void main() {
       expect(find.byType(Sidebar), findsOneWidget);
       expect(find.byKey(AppShell.menuSlotKey), findsOneWidget);
       expect(find.byKey(AppShell.saveStatusSlotKey), findsOneWidget);
-      final dashboard = tester.widget<PagePlaceholder>(
-        find.byType(PagePlaceholder),
+      expect(
+        find.descendant(
+          of: find.byType(AppShell),
+          matching: find.byType(DashboardPage),
+        ),
+        findsOneWidget,
       );
-      expect(dashboard.title, 'Dashboard');
 
       // The welcome location is not reachable while a project is open.
       tester.element(find.byType(Sidebar)).go('/welcome');

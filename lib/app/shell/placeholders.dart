@@ -8,6 +8,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:forge_ui/forge_ui.dart';
 
+import '../dashboard/dashboard_page.dart';
 import '../domains/abilities/abilities_pages.dart';
 import '../domains/classes/classes_pages.dart';
 import '../domains/items/items_pages.dart';
@@ -16,6 +17,7 @@ import '../domains/npcs/npcs_pages.dart';
 import '../domains/recipes/recipes_pages.dart';
 import '../recycle_bin/recycle_bin_page.dart';
 import '../theme/anvil_metrics.dart';
+import '../validation/validation_page.dart';
 import 'shell_domain.dart';
 
 /// The ticket that builds each domain's list page and editor.
@@ -29,12 +31,10 @@ const _domainTickets = {
 };
 
 /// The dashboard at `/`.
-Widget dashboardPage() =>
-    const PagePlaceholder('Dashboard', ticket: 'ANVL-198');
+Widget dashboardPage() => const DashboardPage();
 
 /// The validation panel at `/validation`.
-Widget validationPage() =>
-    const PagePlaceholder('Validation', ticket: 'ANVL-198');
+Widget validationPage() => const ValidationPage();
 
 /// The recycle bin at `/recycle-bin`.
 Widget recycleBinPage() => const RecycleBinPage();
