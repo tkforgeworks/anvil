@@ -1,11 +1,14 @@
 import 'dart:async';
 
+import 'package:anvil/app/editor/dirty_editors.dart';
+import 'package:anvil/app/editor/editor_state.dart';
 import 'package:anvil/app/lists/bulk_dialogs.dart';
 import 'package:anvil/app/lists/empty_state.dart';
 import 'package:anvil/app/lists/list_columns.dart';
 import 'package:anvil/app/lists/list_toolbar.dart';
 import 'package:anvil/app/lists/record_list_page.dart';
 import 'package:anvil/app/lists/record_table.dart';
+import 'package:anvil/app/lists/undo_snackbar.dart';
 import 'package:anvil/app/shell/shell_providers.dart';
 import 'package:anvil/app/theme/anvil_theme.dart';
 import 'package:anvil_core/anvil_core.dart';
@@ -13,7 +16,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../dialogs/fakes.dart' show copyFixture;
 import 'fake_list_adapter.dart';
+import 'sqlite_recipe_list_adapter.dart';
 
 final linux = TargetPlatformVariant.only(TargetPlatform.linux);
 
@@ -38,6 +43,9 @@ class ListHarness {
   var newPressed = 0;
   late ProviderContainer container;
 
+  /// False takes the page out of the scaffold, which stays.
+  final pageShown = ValueNotifier(true);
+
   int get epoch => container.read(writeEpochProvider);
 
   Future<void> pump(WidgetTester tester, {Widget? filterSlot}) async {
@@ -57,12 +65,17 @@ class ListHarness {
           home: Scaffold(
             body: Padding(
               padding: const EdgeInsets.all(24),
-              child: RecordListPage<RecipeRecord>(
-                adapter: adapter,
-                filterSlot: filterSlot,
-                onNew: () => newPressed++,
-                onOpen: opened.add,
-                onDuplicated: duplicated.add,
+              child: ValueListenableBuilder(
+                valueListenable: pageShown,
+                builder: (_, shown, _) => shown
+                    ? RecordListPage<RecipeRecord>(
+                        adapter: adapter,
+                        filterSlot: filterSlot,
+                        onNew: () => newPressed++,
+                        onOpen: opened.add,
+                        onDuplicated: duplicated.add,
+                      )
+                    : const SizedBox(),
               ),
             ),
           ),
@@ -103,6 +116,24 @@ Future<void> active(WidgetTester tester) async {
   await tester.tap(find.text('Active'));
   await tester.pumpAndSettle();
 }
+
+final undoBar = find.byKey(undoSnackBarKey);
+
+/// The Undo snackbar's message.
+String undoMessage(WidgetTester tester) => tester
+    .widget<Text>(
+      find.descendant(of: undoBar, matching: find.byType(Text)).first,
+    )
+    .data!;
+
+Future<void> tapUndo(WidgetTester tester) async {
+  await tester.tap(find.byKey(undoSnackBarActionKey));
+  await tester.pumpAndSettle();
+}
+
+/// The store calls other than list loads.
+List<String> writes(FakeRecipeListStore store) =>
+    store.calls.where((c) => !c.startsWith('list')).toList();
 
 void main() {
   testWidgets('shows the title, toolbar and active rows', (tester) async {
@@ -537,4 +568,308 @@ void main() {
     expect(find.text('1 selected'), findsOneWidget);
     expect(find.text('Old Recipe'), findsOneWidget);
   }, variant: linux);
+
+  group('Undo snackbar', () {
+    testWidgets('Delete offers Undo, which restores the record', (
+      tester,
+    ) async {
+      final h = ListHarness();
+      await h.pump(tester);
+
+      await tester.tap(find.byKey(RecordTable.actionKey('Delete', 'r-potion')));
+      await tester.pumpAndSettle();
+      expect(undoMessage(tester), 'Deleted "Brew Potion"');
+      expect(h.epoch, 1);
+
+      await tapUndo(tester);
+      expect(writes(h.store), ['softDelete r-potion', 'restore r-potion']);
+      expect(h.epoch, 2);
+      expect(undoBar, findsNothing);
+      expect(shownNames(tester, activeNames), activeNames);
+    }, variant: linux);
+
+    testWidgets('Restore offers Undo, which deletes the record again', (
+      tester,
+    ) async {
+      final h = ListHarness();
+      await h.pump(tester);
+      await archived(tester);
+
+      await tester.tap(find.byKey(RecordTable.actionKey('Restore', 'r-old')));
+      await tester.pumpAndSettle();
+      expect(undoMessage(tester), 'Restored "Old Recipe"');
+      expect(find.text('No archived recipes.'), findsOneWidget);
+
+      await tapUndo(tester);
+      expect(writes(h.store), ['restore r-old', 'softDelete r-old']);
+      expect(h.epoch, 2);
+      expect(shownNames(tester, ['Old Recipe']), ['Old Recipe']);
+    }, variant: linux);
+
+    testWidgets('Duplicate offers Undo, which deletes the copy for good and '
+        'discards a dirty editor on it first', (tester) async {
+      final h = ListHarness();
+      await h.pump(tester);
+
+      await tester.tap(
+        find.byKey(RecordTable.actionKey('Duplicate', 'r-sword')),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        undoMessage(tester),
+        'Duplicated "Forge Iron Sword" as "Forge Iron Sword (Copy)"',
+      );
+      expect(h.duplicated.single.id, 'r-sword-copy1');
+
+      final registry = h.container.read(dirtyEditorsProvider.notifier);
+      final events = <String>[];
+      registry.put(
+        DirtyEditor(
+          domain: SaveDomain.recipes,
+          recordId: 'r-sword-copy1',
+          displayName: 'Forge Iron Sword (Copy)',
+          save: () async => SaveOutcome.saved,
+          discard: () {
+            events.add('discard (store: ${writes(h.store).length} writes)');
+            registry.remove(SaveDomain.recipes, 'r-sword-copy1');
+          },
+        ),
+      );
+
+      await tapUndo(tester);
+      // Discarded before the permanent delete ran.
+      expect(events, ['discard (store: 1 writes)']);
+      expect(h.container.read(dirtyEditorsProvider).isEmpty, isTrue);
+      expect(writes(h.store), [
+        'duplicate r-sword',
+        'hardDelete r-sword-copy1',
+      ]);
+      expect(h.store.rows.map((r) => r.id), isNot(contains('r-sword-copy1')));
+      expect(h.epoch, 2);
+      expect(find.text('Forge Iron Sword (Copy)'), findsNothing);
+    }, variant: linux);
+
+    testWidgets('bulk delete offers Undo, which restores the same ids, not '
+        'the current selection', (tester) async {
+      final h = ListHarness();
+      await h.pump(tester);
+      await tester.tap(find.byKey(RecordTable.selectKey('r-sword')));
+      await tester.tap(find.byKey(RecordTable.selectKey('r-potion')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete Selected'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(BulkDeleteDialog.confirmKey));
+      await tester.pumpAndSettle();
+      expect(undoMessage(tester), 'Deleted 2 recipes');
+      expect(h.epoch, 1);
+
+      await tester.tap(find.byKey(RecordTable.selectKey('r-leather')));
+      await tester.pumpAndSettle();
+      await tapUndo(tester);
+      expect(writes(h.store).last, 'bulkRestore recipes r-sword,r-potion');
+      expect(h.epoch, 2);
+      expect(shownNames(tester, activeNames), activeNames);
+      // The selection made since is kept.
+      expect(find.text('1 selected'), findsOneWidget);
+    }, variant: linux);
+
+    testWidgets('bulk restore offers Undo, which deletes the same ids again; '
+        'one record reads singular', (tester) async {
+      final h = ListHarness();
+      await h.pump(tester);
+      await archived(tester);
+      await tester.tap(find.byKey(RecordTable.selectKey('r-old')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Restore Selected'));
+      await tester.pumpAndSettle();
+      expect(undoMessage(tester), 'Restored 1 recipe');
+
+      await tapUndo(tester);
+      expect(writes(h.store), [
+        'bulkRestore recipes r-old',
+        'bulkSoftDelete recipes r-old',
+      ]);
+      expect(h.epoch, 2);
+      expect(shownNames(tester, ['Old Recipe']), ['Old Recipe']);
+    }, variant: linux);
+
+    testWidgets('closes after five seconds; only the latest action is '
+        'undoable', (tester) async {
+      final h = ListHarness();
+      await h.pump(tester);
+
+      await tester.tap(find.byKey(RecordTable.actionKey('Delete', 'r-potion')));
+      await tester.pumpAndSettle();
+      await tester.pump(undoSnackBarDuration);
+      await tester.pumpAndSettle();
+      expect(undoBar, findsNothing);
+
+      await tester.tap(find.byKey(RecordTable.actionKey('Delete', 'r-sword')));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(RecordTable.actionKey('Delete', 'r-leather')),
+      );
+      await tester.pumpAndSettle();
+      expect(undoBar, findsOneWidget);
+      expect(undoMessage(tester), 'Deleted "Tan Leather"');
+
+      await tapUndo(tester);
+      await tester.pump(const Duration(seconds: 10));
+      await tester.pumpAndSettle();
+      expect(undoBar, findsNothing);
+      expect(writes(h.store).last, 'restore r-leather');
+      expect(writes(h.store), isNot(contains('restore r-sword')));
+      expect(shownNames(tester, activeNames), ['Tan Leather']);
+    }, variant: linux);
+
+    testWidgets('a failed action shows no snackbar; a failed Undo shows the '
+        'error line', (tester) async {
+      final h = ListHarness();
+      await h.pump(tester);
+
+      h.store.failures['softDelete'] = const SaveFailed('disk full', 'cause');
+      await tester.tap(find.byKey(RecordTable.actionKey('Delete', 'r-potion')));
+      await tester.pumpAndSettle();
+      expect(find.text('disk full'), findsOneWidget);
+      expect(undoBar, findsNothing);
+      await tester.tap(find.text('Dismiss'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(RecordTable.actionKey('Delete', 'r-potion')));
+      await tester.pumpAndSettle();
+      expect(h.epoch, 1);
+      h.store.failures['restore'] = const SaveFailed('locked', 'cause');
+      await tapUndo(tester);
+      expect(find.text('locked'), findsOneWidget);
+      expect(undoBar, findsNothing);
+      expect(h.epoch, 1);
+      expect(shownNames(tester, activeNames), [
+        'Forge Iron Sword',
+        'Tan Leather',
+      ]);
+    }, variant: linux);
+
+    testWidgets('permanent deletes have no Undo', (tester) async {
+      final h = ListHarness();
+      h.store.softDelete('r-leather');
+      await h.pump(tester);
+      await archived(tester);
+
+      await tester.tap(
+        find.byKey(RecordTable.actionKey('Permanently Delete', 'r-old')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(permanentDeleteConfirmKey));
+      await tester.pumpAndSettle();
+      expect(h.store.calls, contains('hardDelete r-old'));
+      expect(undoBar, findsNothing);
+
+      await tester.tap(find.byKey(RecordTable.selectKey('r-leather')));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.widgetWithText(OutlinedButton, 'Permanently Delete'),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(permanentDeleteConfirmKey));
+      await tester.pumpAndSettle();
+      expect(h.store.calls, contains('bulkHardDelete recipes r-leather'));
+      expect(undoBar, findsNothing);
+    }, variant: linux);
+
+    testWidgets('the snackbar goes when the page goes', (tester) async {
+      final h = ListHarness();
+      await h.pump(tester);
+      await tester.tap(find.byKey(RecordTable.actionKey('Delete', 'r-potion')));
+      await tester.pumpAndSettle();
+      expect(undoBar, findsOneWidget);
+
+      h.pageShown.value = false;
+      await tester.pumpAndSettle();
+      expect(find.byType(RecordListPage<RecipeRecord>), findsNothing);
+      expect(undoBar, findsNothing);
+      expect(tester.takeException(), isNull);
+    }, variant: linux);
+
+    testWidgets('a Duplicate Undo outlives the page, since full-page mode '
+        'opens the copy at once', (tester) async {
+      final h = ListHarness();
+      await h.pump(tester);
+      await tester.tap(
+        find.byKey(RecordTable.actionKey('Duplicate', 'r-sword')),
+      );
+      await tester.pumpAndSettle();
+
+      h.pageShown.value = false;
+      await tester.pumpAndSettle();
+      expect(find.byType(RecordListPage<RecipeRecord>), findsNothing);
+      expect(undoBar, findsOneWidget);
+
+      await tapUndo(tester);
+      expect(writes(h.store), [
+        'duplicate r-sword',
+        'bulkHardDelete recipes r-sword-copy1',
+      ]);
+      expect(h.store.rows.map((r) => r.id), isNot(contains('r-sword-copy1')));
+      expect(h.epoch, 2);
+      expect(tester.takeException(), isNull);
+    }, variant: linux);
+
+    testWidgets('over the real repository: delete and Undo write two history '
+        'rows and bring the recipe back', (tester) async {
+      tester.view.physicalSize = const Size(1400, 1000);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final db = ProjectDatabase.open(copyFixture());
+      addTearDown(db.close);
+      final repository = SqliteRecipeRepository(db);
+      final history = SqliteSaveHistoryRepository(db);
+      final container = ProviderContainer(
+        overrides: [
+          lifecycleRepositoryProvider.overrideWithValue(
+            SqliteLifecycleRepository(db),
+          ),
+        ],
+        retry: (_, _) => null,
+      );
+      addTearDown(container.dispose);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            theme: anvilTheme(AnvilThemeSpec.dark),
+            home: Scaffold(
+              body: RecordListPage<RecipeRecord>(
+                adapter: SqliteRecipeListAdapter(repository),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final target = (await repository.list()).first;
+      final lastId = (await history.recent()).first.id;
+      await tester.tap(find.byKey(RecordTable.actionKey('Delete', target.id)));
+      await tester.pumpAndSettle();
+      expect(undoMessage(tester), 'Deleted "${target.displayName}"');
+      expect(
+        (await repository.list()).map((r) => r.id),
+        isNot(contains(target.id)),
+      );
+
+      await tapUndo(tester);
+      expect(container.read(writeEpochProvider), 2);
+      final added = [
+        for (final e in await history.recent())
+          if (e.id > lastId) e.description,
+      ];
+      expect(added, hasLength(2));
+      expect(added.toSet(), {
+        recordDeleted(SaveDomain.recipes, target.displayName),
+        recordRestored(SaveDomain.recipes, target.displayName),
+      });
+      expect((await repository.list()).map((r) => r.id), contains(target.id));
+      expect(find.text(target.displayName), findsOneWidget);
+    }, variant: linux);
+  });
 }

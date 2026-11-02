@@ -59,7 +59,9 @@ class RecordListState<R> {
 /// project reloads too. View, search, sort, selection and the error line
 /// live in fields and survive the reload. Every action here is a write
 /// path: it bumps the epoch once after the write returns. Nothing throws to
-/// widgets: a failure becomes [RecordListState.lastError].
+/// widgets: a failure becomes [RecordListState.lastError], and each action's
+/// result says whether it went through, so the page knows when to offer its
+/// Undo (the inverse is another action here, with its own write and bump).
 class RecordListController<R> extends AsyncNotifier<RecordListState<R>> {
   RecordListController(this.adapter);
 
@@ -152,20 +154,20 @@ class RecordListController<R> extends AsyncNotifier<RecordListState<R>> {
     _emit();
   }
 
-  /// Moves [id] to the archive at once, with no confirmation and no Undo.
-  /// ANVL-166 replaces this hook's caller with the instant action and its
-  /// Undo snackbar (design §8.8).
-  Future<void> softDelete(String id) => _run(
+  /// Moves [id] to the archive at once, with no confirmation; the page
+  /// offers the Undo ([restore]). True when the write went through.
+  Future<bool> softDelete(String id) => _run(
     () => adapter.softDelete(id),
     'Failed to delete ${_lowerSingular(adapter)}.',
   );
 
-  /// Restores the archived [id] at once.
-  Future<void> restore(String id) =>
+  /// Restores the archived [id] at once. True when the write went through.
+  Future<bool> restore(String id) =>
       _run(() => adapter.restore(id), 'Restore failed.');
 
-  /// Deletes [id] for good; the page confirms first.
-  Future<void> hardDelete(String id) =>
+  /// Deletes [id] for good: the page confirms first, or it undoes a
+  /// duplicate. True when the write went through.
+  Future<bool> hardDelete(String id) =>
       _run(() => adapter.hardDelete(id), 'Delete failed.');
 
   /// Copies [id] and returns the copy (opening it is the page's call), or
@@ -184,25 +186,34 @@ class RecordListController<R> extends AsyncNotifier<RecordListState<R>> {
       .read(lifecycleRepositoryProvider)
       .computeDeleteImpact(adapter.domain.lifecycleDomain, _selection.toList());
 
-  /// Soft-deletes the selection; the page shows the impact dialog first.
-  Future<void> bulkSoftDelete() => _runBulk(
+  /// Soft-deletes [ids] in one write: a bulk delete of the selection (the
+  /// page shows the impact dialog first) or the Undo of a bulk restore.
+  /// Returns the rows changed, or null when the write failed or did not run.
+  Future<int?> softDeleteIds(List<String> ids) => _runBulk(
+    ids,
     (repo, domain, ids) => repo.bulkSoftDelete(domain, ids),
     'Bulk delete failed.',
   );
 
-  /// Restores the selection at once.
-  Future<void> bulkRestore() => _runBulk(
+  /// Restores [ids] in one write: a bulk restore of the selection or the
+  /// Undo of a bulk delete. Returns the rows changed, or null.
+  Future<int?> restoreIds(List<String> ids) => _runBulk(
+    ids,
     (repo, domain, ids) => repo.bulkRestore(domain, ids),
     'Bulk restore failed.',
   );
 
-  /// Deletes the selection for good; the page confirms first.
-  Future<void> bulkHardDelete() => _runBulk(
+  /// Deletes the selection for good; the page confirms first. Returns the
+  /// rows changed, or null.
+  Future<int?> bulkHardDelete() => _runBulk(
+    _selection.toList(),
     (repo, domain, ids) => repo.bulkHardDelete(domain, ids),
     'Bulk delete failed.',
   );
 
-  Future<void> _runBulk(
+  /// One bulk write over [ids]; on success they leave the selection.
+  Future<int?> _runBulk(
+    List<String> ids,
     Future<int> Function(
       LifecycleRepository repo,
       LifecycleDomain domain,
@@ -210,34 +221,37 @@ class RecordListController<R> extends AsyncNotifier<RecordListState<R>> {
     )
     write,
     String fallback,
-  ) {
-    final ids = _selection.toList();
-    if (ids.isEmpty) return Future.value();
-    return _run(() async {
-      await write(
+  ) async {
+    if (ids.isEmpty) return null;
+    int? changed;
+    final ok = await _run(() async {
+      changed = await write(
         ref.read(lifecycleRepositoryProvider),
         adapter.domain.lifecycleDomain,
         ids,
       );
-      _selection = {};
+      _selection = _selection.difference(ids.toSet());
     }, fallback);
+    return ok ? changed : null;
   }
 
   /// Runs one write: ignored while another is in flight; on success bumps
   /// the epoch once (which reloads this list); on failure sets the error
-  /// line.
-  Future<void> _run(Future<void> Function() write, String fallback) async {
-    if (_busy) return;
+  /// line. True when the write went through.
+  Future<bool> _run(Future<void> Function() write, String fallback) async {
+    if (_busy) return false;
     _busy = true;
     _actionError = null;
     _emit();
     try {
       await write();
-      if (!ref.mounted) return;
+      if (!ref.mounted) return false;
       ref.read(writeEpochProvider.notifier).bump();
+      return true;
     } catch (error) {
-      if (!ref.mounted) return;
+      if (!ref.mounted) return false;
       _actionError = listErrorMessage(error, fallback);
+      return false;
     } finally {
       if (ref.mounted) {
         _busy = false;

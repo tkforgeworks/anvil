@@ -9,50 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../dialogs/fakes.dart' show copyFixture;
-
-/// The recipes list over the real repository, as ANVL-193's adapter will
-/// be (minus its columns).
-class SqliteRecipeListAdapter
-    with ListAdapterDefaults<RecipeRecord>
-    implements ListDomainAdapter<RecipeRecord> {
-  SqliteRecipeListAdapter(this.repository);
-
-  final RecipeRepository repository;
-
-  @override
-  ShellDomain get domain => ShellDomain.recipes;
-
-  @override
-  Future<List<RecipeRecord>> list(RecordListMode mode) =>
-      repository.list(mode: mode);
-
-  @override
-  String idOf(RecipeRecord row) => row.id;
-
-  @override
-  String displayNameOf(RecipeRecord row) => row.displayName;
-
-  @override
-  String exportKeyOf(RecipeRecord row) => row.exportKey;
-
-  @override
-  String? deletedAtOf(RecipeRecord row) => row.deletedAt;
-
-  @override
-  List<ListColumn<RecipeRecord>> get columns => const [];
-
-  @override
-  Future<void> softDelete(String id) => repository.softDelete(id);
-
-  @override
-  Future<void> restore(String id) => repository.restore(id);
-
-  @override
-  Future<void> hardDelete(String id) => repository.hardDelete(id);
-
-  @override
-  Future<RecipeRecord?> duplicate(String id) => repository.duplicate(id);
-}
+import 'sqlite_recipe_list_adapter.dart';
 
 void main() {
   test('softDelete moves a fixture recipe from active to archived and bumps '
