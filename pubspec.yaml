@@ -46,6 +46,7 @@ dependencies:
   # External links (design §13.4), https only, as 0.1.6's shell.openExternal
   # (Flutter team plugin). Only lib/app/menu/external_links.dart imports it.
   url_launcher: ^6.3.3
+  fl_chart: ^1.3.0
 
 dev_dependencies:
   flutter_test:
