@@ -18,6 +18,13 @@ abstract interface class FileDialogs {
   /// One `.json` custom theme file, as 0.1.6's "Select Custom Theme JSON"
   /// dialog.
   Future<String?> pickThemeFile({String? initialDirectory});
+
+  /// Where to save one file, as 0.1.6's save dialog; [suggestedName] is
+  /// the initial file name. Returns the chosen path.
+  Future<String?> pickSaveLocation({
+    String? initialDirectory,
+    String? suggestedName,
+  });
 }
 
 /// [FileDialogs] over the Flutter team's `file_selector` plugin.
@@ -57,6 +64,19 @@ final class FileSelectorDialogs implements FileDialogs {
       initialDirectory: initialDirectory,
     );
     return file?.path;
+  }
+
+  @override
+  Future<String?> pickSaveLocation({
+    String? initialDirectory,
+    String? suggestedName,
+  }) async {
+    final location = await fs.getSaveLocation(
+      initialDirectory: initialDirectory,
+      suggestedName: suggestedName,
+      canCreateDirectories: true,
+    );
+    return location?.path;
   }
 }
 
