@@ -345,6 +345,7 @@ class AbilityHarness {
     WidgetTester tester,
     Widget child, {
     EditingMode editingMode = EditingMode.modal,
+    List overrides = const [],
   }) async {
     tester.view.physicalSize = const Size(1400, 1000);
     tester.view.devicePixelRatio = 1;
@@ -360,6 +361,7 @@ class AbilityHarness {
         recordValidationProvider.overrideWith2(
           (key) => FakeRecordValidation(key, validation),
         ),
+        ...overrides.cast(),
       ],
       retry: (_, _) => null,
     );

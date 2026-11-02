@@ -1,16 +1,18 @@
 import 'package:anvil/app/domains/abilities/abilities_editor_page.dart';
 import 'package:anvil/app/domains/abilities/abilities_pages.dart';
+import 'package:anvil/app/domains/classes/classes_editor_page.dart';
 import 'package:anvil/app/editor/widgets/number_draft_field.dart';
 import 'package:anvil/app/editor/widgets/dirty_dot.dart';
 import 'package:anvil/app/shell/editor_dialog.dart';
-import 'package:anvil/app/shell/placeholders.dart';
 import 'package:anvil/app/shell/shell_domain.dart';
+import 'package:anvil/app/shell/shell_providers.dart';
 import 'package:anvil/app/widgets/inspector_rail.dart';
 import 'package:anvil_core/anvil_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../classes/class_fakes.dart' show FakeClassRepository;
 import 'fakes.dart';
 
 Finder field(String name) => find.descendant(
@@ -47,7 +49,13 @@ void main() {
       classes: const [UsedByRef('class-mage', 'Mage')],
       npcs: const [],
     );
-    await h.pump(tester, abilityEditor(fireballId));
+    await h.pump(
+      tester,
+      abilityEditor(fireballId),
+      overrides: [
+        classRepositoryProvider.overrideWithValue(FakeClassRepository()),
+      ],
+    );
 
     for (final label in AbilityEditorPage.tabLabels) {
       expect(find.widgetWithText(Tab, label), findsOneWidget);
@@ -63,13 +71,8 @@ void main() {
     // Click-through opens the class in the editing mode (modal here).
     await tester.tap(find.byKey(InspectorRail.entryKey('class-mage')));
     await tester.pumpAndSettle();
-    final placeholder = tester.widget<EditorPlaceholder>(
-      find.byType(EditorPlaceholder),
-    );
-    expect(
-      (placeholder.domain, placeholder.id),
-      (ShellDomain.classes, 'class-mage'),
-    );
+    final page = tester.widget<ClassEditorPage>(find.byType(ClassEditorPage));
+    expect(page.id, 'class-mage');
   }, variant: linux);
 
   testWidgets('Details edits mark the tab, undo walks back, and Save writes '
