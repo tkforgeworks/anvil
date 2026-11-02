@@ -4,6 +4,8 @@ import 'package:anvil/app/domains/classes/classes_editor_page.dart';
 import 'package:anvil/app/domains/classes/classes_list_page.dart';
 import 'package:anvil/app/domains/items/items_editor_page.dart';
 import 'package:anvil/app/domains/items/items_list_page.dart';
+import 'package:anvil/app/domains/loot_tables/loot_tables_editor_page.dart';
+import 'package:anvil/app/domains/loot_tables/loot_tables_list_page.dart';
 import 'package:anvil/app/domains/recipes/recipes_editor_page.dart';
 import 'package:anvil/app/domains/recipes/recipes_list_page.dart';
 import 'package:anvil/app/menu/menu_commands.dart';
@@ -41,12 +43,14 @@ final landedPages = <String, Type>{
   '/classes': ClassListPage,
   '/items': ItemListPage,
   '/recipes': RecipeListPage,
+  '/loot-tables': LootTableListPage,
 };
 final landedEditors = <ShellDomain, Type>{
   ShellDomain.abilities: AbilityEditorPage,
   ShellDomain.classes: ClassEditorPage,
   ShellDomain.items: ItemEditorPage,
   ShellDomain.recipes: RecipeEditorPage,
+  ShellDomain.lootTables: LootTableEditorPage,
 };
 
 const editors = {
