@@ -34,6 +34,7 @@ class FakeFileDialogs implements FileDialogs {
   String? directory;
   String? anvilFile;
   String? themeFile;
+  String? saveLocation;
   final requests = <String>[];
 
   @override
@@ -52,6 +53,15 @@ class FakeFileDialogs implements FileDialogs {
   Future<String?> pickThemeFile({String? initialDirectory}) async {
     requests.add('theme file from $initialDirectory');
     return themeFile;
+  }
+
+  @override
+  Future<String?> pickSaveLocation({
+    String? initialDirectory,
+    String? suggestedName,
+  }) async {
+    requests.add('save location from $initialDirectory as $suggestedName');
+    return saveLocation;
   }
 }
 

@@ -15,6 +15,7 @@ import '../domains/items/items_pages.dart';
 import '../domains/loot_tables/loot_tables_pages.dart';
 import '../domains/npcs/npcs_pages.dart';
 import '../domains/recipes/recipes_pages.dart';
+import '../export/export_page.dart';
 import '../recycle_bin/recycle_bin_page.dart';
 import '../theme/anvil_metrics.dart';
 import '../validation/validation_page.dart';
@@ -40,7 +41,7 @@ Widget validationPage() => const ValidationPage();
 Widget recycleBinPage() => const RecycleBinPage();
 
 /// The export page at `/export`.
-Widget exportPage() => const PagePlaceholder('Export', ticket: 'ANVL-200');
+Widget exportPage() => const ExportPage();
 
 /// Each domain's list page, at `ShellDomain.location`.
 final Map<ShellDomain, Widget Function()> listPageBuilders = {

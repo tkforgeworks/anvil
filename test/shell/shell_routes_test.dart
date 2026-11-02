@@ -11,6 +11,7 @@ import 'package:anvil/app/domains/npcs/npcs_editor_page.dart';
 import 'package:anvil/app/domains/npcs/npcs_list_page.dart';
 import 'package:anvil/app/domains/recipes/recipes_editor_page.dart';
 import 'package:anvil/app/domains/recipes/recipes_list_page.dart';
+import 'package:anvil/app/export/export_page.dart';
 import 'package:anvil/app/menu/menu_commands.dart';
 import 'package:anvil/app/recycle_bin/recycle_bin_page.dart';
 import 'package:anvil/app/shell/app_shell.dart';
@@ -53,6 +54,7 @@ final landedPages = <String, Type>{
   '/loot-tables': LootTableListPage,
   '/npcs': NpcListPage,
   '/recycle-bin': RecycleBinPage,
+  '/export': ExportPage,
 };
 final landedEditors = <ShellDomain, Type>{
   ShellDomain.abilities: AbilityEditorPage,

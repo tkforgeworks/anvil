@@ -137,7 +137,9 @@ String _blockedMessage(int errorCount) =>
 /// [ProjectDatabase] is never used: each call sends only [projectPath], the
 /// background isolate opens its own read-only connection, and only plain
 /// values come back. Exports see committed data only.
-final class ExportService {
+///
+/// Not `final`, so the app's tests can fake it by subclassing.
+class ExportService {
   ExportService({
     required this.projectPath,
     this.renderLimits = const RenderLimits(),
