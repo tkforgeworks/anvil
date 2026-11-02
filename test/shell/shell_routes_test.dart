@@ -1,5 +1,7 @@
 import 'package:anvil/app/domains/abilities/abilities_editor_page.dart';
 import 'package:anvil/app/domains/abilities/abilities_list_page.dart';
+import 'package:anvil/app/domains/items/items_editor_page.dart';
+import 'package:anvil/app/domains/items/items_list_page.dart';
 import 'package:anvil/app/domains/recipes/recipes_editor_page.dart';
 import 'package:anvil/app/domains/recipes/recipes_list_page.dart';
 import 'package:anvil/app/menu/menu_commands.dart';
@@ -34,10 +36,12 @@ const pages = {
 /// of the placeholder. Each domain ticket adds its two entries here.
 final landedPages = <String, Type>{
   '/abilities': AbilityListPage,
+  '/items': ItemListPage,
   '/recipes': RecipeListPage,
 };
 final landedEditors = <ShellDomain, Type>{
   ShellDomain.abilities: AbilityEditorPage,
+  ShellDomain.items: ItemEditorPage,
   ShellDomain.recipes: RecipeEditorPage,
 };
 

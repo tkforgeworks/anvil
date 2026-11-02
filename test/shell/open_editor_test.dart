@@ -1,7 +1,7 @@
+import 'package:anvil/app/domains/items/items_editor_page.dart';
 import 'package:anvil/app/providers.dart';
 import 'package:anvil/app/shell/editor_dialog.dart';
 import 'package:anvil/app/shell/open_editor.dart';
-import 'package:anvil/app/shell/placeholders.dart';
 import 'package:anvil/app/shell/shell_domain.dart';
 import 'package:anvil/app/shell/shell_providers.dart';
 import 'package:anvil/app/shell/sidebar.dart';
@@ -44,10 +44,9 @@ void main() {
 
     expect(harness.location, '/items/$id');
     expect(find.byType(EditorDialog), findsNothing);
-    final editor = tester.widget<EditorPlaceholder>(
-      find.byType(EditorPlaceholder),
-    );
-    expect((editor.domain, editor.id), (ShellDomain.items, id));
+    // The registry builds the real item editor since ANVL-192.
+    final editor = tester.widget<ItemEditorPage>(find.byType(ItemEditorPage));
+    expect(editor.id, id);
   }, variant: linux);
 
   testWidgets(
@@ -74,13 +73,13 @@ void main() {
         ),
         findsOneWidget,
       );
-      final editor = tester.widget<EditorPlaceholder>(
+      final editor = tester.widget<ItemEditorPage>(
         find.descendant(
           of: find.byType(EditorDialog),
-          matching: find.byType(EditorPlaceholder),
+          matching: find.byType(ItemEditorPage),
         ),
       );
-      expect((editor.domain, editor.id), (ShellDomain.items, id));
+      expect(editor.id, id);
       // MUI `lg` (1200) wide and 85 % of the 1000 px window high.
       final paper = find
           .descendant(of: find.byType(Dialog), matching: find.byType(Material))
