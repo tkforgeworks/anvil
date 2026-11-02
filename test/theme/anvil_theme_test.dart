@@ -252,6 +252,38 @@ void main() {
       final copy = a.copyWith(textDisabled: b.textDisabled);
       expect(copy.textDisabled, b.textDisabled);
       expect(copy.primaryEmphasis, a.primaryEmphasis);
+      expect(copy.chartSeries, a.chartSeries);
+    });
+
+    test('chart series are 0.1.6\'s STAT_COLORS in both modes, cycled', () {
+      const statColors = [
+        Color(0xFF5E81AC),
+        Color(0xFFA3BE8C),
+        Color(0xFFEBCB8B),
+        Color(0xFFD08770),
+        Color(0xFFBF616A),
+        Color(0xFFB48EAD),
+        Color(0xFF88C0D0),
+      ];
+      expect(a.chartSeries, statColors);
+      expect(b.chartSeries, statColors);
+      expect(a.seriesColor(0), statColors[0]);
+      expect(a.seriesColor(8), statColors[1]);
+    });
+
+    test('chart series lerp element-wise and take part in equality', () {
+      final other = a.copyWith(
+        chartSeries: [for (final _ in a.chartSeries) const Color(0xFF000000)],
+      );
+      final mid = a.lerp(other, 0.5);
+      expect(mid.chartSeries.length, a.chartSeries.length);
+      expect(
+        mid.chartSeries.first,
+        Color.lerp(a.chartSeries.first, const Color(0xFF000000), 0.5),
+      );
+      expect(other == a, isFalse);
+      expect(a.copyWith() == a, isTrue);
+      expect(a.copyWith().hashCode, a.hashCode);
     });
   });
 }

@@ -243,6 +243,7 @@ ThemeData anvilTheme(AnvilThemeSpec spec) {
   final anvil = AnvilColors(
     primaryEmphasis: spec.primaryEmphasis,
     textDisabled: spec.textDisabled,
+    chartSeries: AnvilPalette.chartSeries,
   );
 
   return forgeTheme(

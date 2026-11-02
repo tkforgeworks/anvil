@@ -4,6 +4,7 @@
 /// abilities tests' own.
 library;
 
+import 'package:anvil/app/editor/clock.dart';
 import 'package:anvil/app/editor/widgets/record_validation.dart';
 import 'package:anvil/app/providers.dart';
 import 'package:anvil/app/shell/shell_providers.dart';
@@ -14,6 +15,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../abilities/fakes.dart';
+import 'growth_fakes.dart';
 
 export '../abilities/fakes.dart'
     show
@@ -298,7 +300,7 @@ class FakeClassLifecycle implements LifecycleRepository {
 class ClassHarness {
   final classes = FakeClassRepository();
   final abilities = FakeAbilityRepository();
-  final meta = FakeStatsRepository();
+  final meta = FakeClassMetaRepository();
   final validation = ValidationScript();
   late final lifecycle = FakeClassLifecycle(classes);
   late ProviderContainer container;
@@ -338,7 +340,16 @@ class ClassHarness {
     tester.view.physicalSize = const Size(1180, 800);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
-    build(editingMode: editingMode, overrides: overrides);
+    // The draft history's 500 ms coalescing reads the clock; under a loaded
+    // test runner the real clock can pass that between two keystrokes, so
+    // the page tests follow the tester's fake time.
+    build(
+      editingMode: editingMode,
+      overrides: [
+        clockProvider.overrideWithValue(tester.binding.clock.now),
+        ...overrides,
+      ],
+    );
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
