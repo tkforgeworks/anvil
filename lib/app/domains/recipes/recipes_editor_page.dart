@@ -21,8 +21,11 @@ import '../../shell/shell_domain.dart';
 import '../../theme/anvil_colors.dart';
 import '../../theme/anvil_metrics.dart';
 import 'recipes_editor_controller.dart';
-import 'recipes_fields.dart';
 import 'recipes_lookups.dart';
+
+import 'package:anvil/app/editor/widgets/draft_picker.dart';
+import 'package:anvil/app/editor/widgets/number_draft_field.dart';
+import 'package:anvil/app/editor/widgets/field_messages.dart';
 
 /// The editor of recipe [id]: the header with the name, undo, redo and
 /// Save; the Overview, Details and Ingredients tabs as 0.1.6 had them, with
@@ -244,7 +247,10 @@ class _TabLabel extends StatelessWidget {
 /// The options of an item picker: the active items, plus [current] when it
 /// is a soft-deleted item (`<name> (deleted)`, 0.1.6's `itemLabel`) or an
 /// unknown id, so the picker can still show it.
-List<PickerOption> itemPickerOptions(RecipeLookups lookups, String current) {
+List<PickerOption<String>> itemPickerOptions(
+  RecipeLookups lookups,
+  String current,
+) {
   final options = [
     for (final item in lookups.activeItems)
       (value: item.id, label: item.displayName),
@@ -261,11 +267,11 @@ List<PickerOption> itemPickerOptions(RecipeLookups lookups, String current) {
 
 /// `None` (the empty value) and [entries], plus [current] when it is an
 /// id [entries] do not hold.
-List<PickerOption> nullablePickerOptions(
+List<PickerOption<String>> nullablePickerOptions(
   Iterable<({String id, String displayName})> entries,
   String? current,
 ) {
-  final options = <PickerOption>[
+  final options = <PickerOption<String>>[
     (value: '', label: 'None'),
     for (final e in entries) (value: e.id, label: e.displayName),
   ];
@@ -387,7 +393,7 @@ class _DetailsTab extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child: RecipePicker(
+                  child: DraftPicker<String>(
                     key: const ValueKey('recipe-output-item'),
                     label: 'Output Item *',
                     value: draft.outputItemId,
@@ -423,7 +429,7 @@ class _DetailsTab extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child: RecipePicker(
+                  child: DraftPicker<String>(
                     key: const ValueKey('recipe-station'),
                     label: 'Crafting Station',
                     value: draft.craftingStationId ?? '',
@@ -440,7 +446,7 @@ class _DetailsTab extends StatelessWidget {
                 ),
                 across,
                 Expanded(
-                  child: RecipePicker(
+                  child: DraftPicker<String>(
                     key: const ValueKey('recipe-specialization'),
                     label: 'Specialization',
                     value: draft.craftingSpecializationId ?? '',
@@ -617,7 +623,7 @@ class _IngredientRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
-            child: RecipePicker(
+            child: DraftPicker<String>(
               key: ValueKey('recipe-ingredient-$i-item'),
               label: 'Ingredient Item',
               dense: true,

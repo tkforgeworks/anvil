@@ -1,6 +1,6 @@
 import 'package:anvil/app/domains/abilities/abilities_editor_page.dart';
 import 'package:anvil/app/domains/abilities/abilities_pages.dart';
-import 'package:anvil/app/domains/abilities/number_draft_field.dart';
+import 'package:anvil/app/editor/widgets/number_draft_field.dart';
 import 'package:anvil/app/editor/widgets/dirty_dot.dart';
 import 'package:anvil/app/shell/editor_dialog.dart';
 import 'package:anvil/app/shell/placeholders.dart';

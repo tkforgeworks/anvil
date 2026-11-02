@@ -24,8 +24,9 @@ import '../../theme/anvil_metrics.dart';
 import '../../widgets/inspector_rail.dart';
 import 'item_custom_fields_panel.dart';
 import 'item_meta_providers.dart';
-import 'item_picker.dart';
 import 'items_editor_controller.dart';
+
+import 'package:anvil/app/editor/widgets/draft_picker.dart';
 
 /// The editor tabs, 0.1.6's three.
 enum ItemEditorTab {
@@ -338,7 +339,7 @@ class _DetailsPanel extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              child: ItemPicker<String?>(
+              child: DraftPicker<String?>(
                 key: categoryKey,
                 label: 'Category',
                 isRequired: true,
@@ -357,7 +358,7 @@ class _DetailsPanel extends ConsumerWidget {
             ),
             const SizedBox(width: AnvilSpacing.md),
             Expanded(
-              child: ItemPicker<String?>(
+              child: DraftPicker<String?>(
                 key: rarityKey,
                 label: 'Rarity',
                 isRequired: true,

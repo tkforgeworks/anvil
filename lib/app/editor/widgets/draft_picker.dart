@@ -1,5 +1,5 @@
-/// The labelled single-choice picker the items pages use for categories,
-/// rarities, enum custom fields and the list filters.
+/// The labelled single-choice picker every domain editor and list filter
+/// shares.
 ///
 /// A [DropdownButton] in an [InputDecorator], never a `DropdownMenu`,
 /// whose text field would take Ctrl+Z (design §8.7). `MetaPicker` in the
@@ -8,12 +8,13 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:forge_ui/forge_ui.dart';
 
 /// One option: the stored value and its label.
 typedef PickerOption<T> = ({T value, String label});
 
-class ItemPicker<T> extends StatelessWidget {
-  const ItemPicker({
+class DraftPicker<T> extends StatelessWidget {
+  const DraftPicker({
     super.key,
     required this.label,
     required this.value,
@@ -22,8 +23,9 @@ class ItemPicker<T> extends StatelessWidget {
     this.isRequired = false,
     this.errorText,
     this.helperText,
+    this.helperIsWarning = false,
     this.unknownLabel,
-    this.isDense = false,
+    this.dense = false,
   });
 
   final String label;
@@ -39,8 +41,11 @@ class ItemPicker<T> extends StatelessWidget {
   final bool isRequired;
   final String? errorText;
   final String? helperText;
+
+  /// Shows [helperText] in the warning colour (a validation warning).
+  final bool helperIsWarning;
   final String Function(T value)? unknownLabel;
-  final bool isDense;
+  final bool dense;
 
   @override
   Widget build(BuildContext context) {
@@ -55,8 +60,11 @@ class ItemPicker<T> extends StatelessWidget {
       decoration: InputDecoration(
         labelText: isRequired ? '$label *' : label,
         errorText: errorText,
-        helperText: helperText,
-        isDense: isDense,
+        helperText: errorText == null ? helperText : null,
+        helperStyle: helperIsWarning
+            ? context.text.bodySmall?.copyWith(color: context.forge.warning)
+            : null,
+        isDense: dense,
         enabled: onChanged != null,
       ),
       child: DropdownButtonHideUnderline(

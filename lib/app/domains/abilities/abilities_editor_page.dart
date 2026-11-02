@@ -29,7 +29,8 @@ import '../../theme/anvil_metrics.dart';
 import '../../widgets/inspector_rail.dart';
 import 'abilities_editor_controller.dart';
 import 'abilities_providers.dart';
-import 'number_draft_field.dart';
+
+import 'package:anvil/app/editor/widgets/number_draft_field.dart';
 
 /// The editor of ability [id], as a full page and as the editor dialog's
 /// body: [RecordEditorScope] around the [EditHeader], the tabs with their

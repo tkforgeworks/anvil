@@ -10,7 +10,8 @@ import 'package:forge_ui/forge_ui.dart';
 import '../../editor/widgets/draft_text_field.dart';
 import '../../editor/widgets/validation_banner.dart';
 import '../../theme/anvil_metrics.dart';
-import 'item_picker.dart';
+
+import 'package:anvil/app/editor/widgets/draft_picker.dart';
 
 /// 0.1.6's inline message for a required field left empty.
 const requiredFieldMessage = 'This field is required.';
@@ -131,7 +132,7 @@ class ItemCustomFieldsPanel extends StatelessWidget {
           ],
         );
       case CustomFieldType.enumeration:
-        return ItemPicker<String?>(
+        return DraftPicker<String?>(
           key: fieldKey(id),
           label: definition.fieldName,
           isRequired: definition.isRequired,

@@ -78,12 +78,3 @@ final recipeLookupsProvider = FutureProvider.autoDispose<RecipeLookups>((
     specializations: await specializations,
   );
 });
-
-/// 0.1.6's `slugify` (`src/renderer/src/utils/slugify.ts`), which its
-/// create dialogs filled the export key with: lower case, every run of
-/// characters outside `a-z0-9` one `-`, no leading or trailing `-`. The
-/// core's copy is `@internal`.
-String slugifyExportKey(String value) => value
-    .toLowerCase()
-    .replaceAll(RegExp('[^a-z0-9]+'), '-')
-    .replaceAll(RegExp(r'^-|-$'), '');
