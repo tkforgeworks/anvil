@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:forge_ui/forge_ui.dart';
 
 import '../domains/abilities/abilities_pages.dart';
+import '../domains/recipes/recipes_pages.dart';
 import '../theme/anvil_metrics.dart';
 import 'shell_domain.dart';
 
@@ -43,6 +44,7 @@ final Map<ShellDomain, Widget Function()> listPageBuilders = {
     domain: () =>
         PagePlaceholder(domain.label, ticket: _domainTickets[domain]!),
   ShellDomain.abilities: abilitiesListPage,
+  ShellDomain.recipes: recipesListPage,
 };
 
 /// Each domain's editor for one record id: the page at
@@ -51,6 +53,7 @@ final Map<ShellDomain, Widget Function(String id)> editorBuilders = {
   for (final domain in ShellDomain.values)
     domain: (id) => EditorPlaceholder(domain, id),
   ShellDomain.abilities: abilityEditor,
+  ShellDomain.recipes: recipeEditor,
 };
 
 /// A page that is not built yet: its title, centred, and the ticket that
