@@ -1,7 +1,8 @@
 /// The class editor's Stat Growth tab (0.1.6 `StatGrowthEditor.tsx`): the
 /// formula fields of the stats in formula mode, the Fill column and
-/// Interpolate helpers, the levels × stats grid with a manual / formula
-/// switch per stat, and the chart.
+/// Interpolate helpers, the Formula fill helper (ANVL-140, not in 0.1.6),
+/// the levels × stats grid with a manual / formula switch per stat, and
+/// the chart.
 library;
 
 import 'dart:async';
@@ -21,6 +22,7 @@ import '../../theme/anvil_colors.dart';
 import '../../theme/anvil_metrics.dart';
 import 'classes_editor_controller.dart';
 import 'classes_growth_chart.dart';
+import 'classes_growth_fill.dart';
 import 'classes_growth_math.dart';
 import 'classes_growth_providers.dart';
 
@@ -69,6 +71,22 @@ class ClassStatGrowthTab extends ConsumerWidget {
   static const interpToLevelKey = ValueKey('class-growth-interp-to-level');
   static const interpToValueKey = ValueKey('class-growth-interp-to-value');
   static const interpApplyKey = ValueKey('class-growth-interp-apply');
+  static const ffillStatKey = ValueKey('class-growth-ffill-stat');
+  static const ffillFromKey = ValueKey('class-growth-ffill-from');
+  static const ffillToKey = ValueKey('class-growth-ffill-to');
+  static const ffillStartKey = ValueKey('class-growth-ffill-start');
+  static const ffillShapeKey = ValueKey('class-growth-ffill-shape');
+  static const ffillIncrementKey = ValueKey('class-growth-ffill-increment');
+  static const ffillFactorKey = ValueKey('class-growth-ffill-factor');
+  static const ffillCapKey = ValueKey('class-growth-ffill-cap');
+  static const ffillLimitKey = ValueKey('class-growth-ffill-limit');
+  static const ffillRateKey = ValueKey('class-growth-ffill-rate');
+  static const ffillExpressionKey = ValueKey('class-growth-ffill-expression');
+  static const ffillPreviewKey = ValueKey('class-growth-ffill-preview');
+  static const ffillApplyKey = ValueKey('class-growth-ffill-apply');
+
+  /// The Formula fill expression field's placeholder.
+  static const ffillExpressionHint = 'e.g. prev * 1.1 + level';
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -148,6 +166,13 @@ class ClassStatGrowthTab extends ConsumerWidget {
                 manualStats: manualStats,
                 maxLevel: maxLevel,
                 onApply: controller.interpolate,
+              ),
+              const Divider(height: AnvilSpacing.lg),
+              _FormulaFillHelper(
+                manualStats: manualStats,
+                maxLevel: maxLevel,
+                valueAt: valueAt,
+                onApply: controller.formulaFill,
               ),
             ],
           ),
@@ -389,6 +414,7 @@ Widget _helperField({
   required TextEditingController controller,
   required double width,
   bool integer = false,
+  String? helperText,
   ValueChanged<String>? onChanged,
 }) => SizedBox(
   width: width,
@@ -404,7 +430,11 @@ Widget _helperField({
           ? FilteringTextInputFormatter.allow(RegExp(r'[0-9\-]'))
           : _numberChars,
     ],
-    decoration: InputDecoration(labelText: label, isDense: true),
+    decoration: InputDecoration(
+      labelText: label,
+      helperText: helperText,
+      isDense: true,
+    ),
     onChanged: onChanged,
   ),
 );
@@ -581,6 +611,271 @@ class _InterpolateHelperState extends State<_InterpolateHelper> {
                 )
               : null,
           child: const Text('Apply'),
+        ),
+      ],
+    );
+  }
+}
+
+/// The growth shapes the Formula fill helper offers, in picker order.
+enum _FillShapeKind {
+  step('Step'),
+  multiply('Multiply with cap'),
+  approach('Approach limit'),
+  expression('Expression');
+
+  const _FillShapeKind(this.label);
+
+  final String label;
+}
+
+/// The Formula fill helper (ANVL-140): fills a level range of a manual
+/// stat from a growth shape ([computeFormulaFill]), previewing the values
+/// before Apply bakes them in as one undo step. A blank Start is seeded
+/// from the grid's value at From lvl (0 when the cell is empty), so a
+/// second range continues from where the first one ended.
+class _FormulaFillHelper extends StatefulWidget {
+  const _FormulaFillHelper({
+    required this.manualStats,
+    required this.maxLevel,
+    required this.valueAt,
+    required this.onApply,
+  });
+
+  final List<MetaStat> manualStats;
+  final int maxLevel;
+  final double? Function(String statId, int level) valueAt;
+  final void Function(String statId, Map<int, double> values) onApply;
+
+  @override
+  State<_FormulaFillHelper> createState() => _FormulaFillHelperState();
+}
+
+class _FormulaFillHelperState extends State<_FormulaFillHelper> {
+  /// The entries the preview lists before it skips to the last one.
+  static const _previewEntries = 12;
+
+  String? _picked;
+  var _shape = _FillShapeKind.step;
+  final _from = TextEditingController(text: '1');
+  late final _to = TextEditingController(text: '${widget.maxLevel}');
+  final _start = TextEditingController();
+  final _increment = TextEditingController();
+  final _factor = TextEditingController();
+  final _cap = TextEditingController();
+  final _limit = TextEditingController();
+  final _rate = TextEditingController();
+  final _expression = TextEditingController();
+
+  @override
+  void dispose() {
+    for (final c in [
+      _from,
+      _to,
+      _start,
+      _increment,
+      _factor,
+      _cap,
+      _limit,
+      _rate,
+      _expression,
+    ]) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  /// The shape the inputs describe, or null while one of them is empty or
+  /// not a number.
+  FillShape? _fillShape() {
+    switch (_shape) {
+      case _FillShapeKind.step:
+        final increment = _number(_increment.text);
+        return increment == null ? null : StepFill(increment);
+      case _FillShapeKind.multiply:
+        final factor = _number(_factor.text);
+        final cap = _number(_cap.text);
+        return factor == null || cap == null ? null : MultiplyFill(factor, cap);
+      case _FillShapeKind.approach:
+        final limit = _number(_limit.text);
+        final rate = _number(_rate.text);
+        return limit == null || rate == null ? null : ApproachFill(limit, rate);
+      case _FillShapeKind.expression:
+        final formula = _expression.text;
+        return formula.trim().isEmpty ? null : ExpressionFill(formula);
+    }
+  }
+
+  /// The fill the inputs give, or null while they are incomplete.
+  FillResult? _result(String? statId) {
+    final from = int.tryParse(_from.text.trim());
+    final to = int.tryParse(_to.text.trim());
+    final shape = _fillShape();
+    if (statId == null || from == null || to == null || shape == null) {
+      return null;
+    }
+    final double start;
+    if (_start.text.trim().isEmpty) {
+      start = widget.valueAt(statId, from.clamp(1, widget.maxLevel)) ?? 0;
+    } else {
+      final typed = _number(_start.text);
+      if (typed == null) return null;
+      start = typed;
+    }
+    return computeFormulaFill(
+      shape: shape,
+      fromLevel: from,
+      toLevel: to,
+      start: start,
+      maxLevel: widget.maxLevel,
+    );
+  }
+
+  String _previewText(Map<int, double> values) {
+    String entry(MapEntry<int, double> e) =>
+        'L${e.key} ${formatDraftNumber(e.value)}';
+    final entries = values.entries.toList();
+    final shown = [for (final e in entries.take(_previewEntries)) entry(e)];
+    if (entries.length > _previewEntries) shown.add('… ${entry(entries.last)}');
+    return shown.join(' · ');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final statId = _effectiveStat(widget.manualStats, _picked);
+    final result = _result(statId);
+    final values = result?.values ?? const <int, double>{};
+    final error = result?.error;
+    void changed(String _) => setState(() {});
+    Widget field(Key key, String label, TextEditingController c) =>
+        _helperField(
+          key: key,
+          label: label,
+          controller: c,
+          width: 90,
+          onChanged: changed,
+        );
+    final shapeFields = switch (_shape) {
+      _FillShapeKind.step => [
+        field(ClassStatGrowthTab.ffillIncrementKey, '+ per level', _increment),
+      ],
+      _FillShapeKind.multiply => [
+        field(ClassStatGrowthTab.ffillFactorKey, '× factor', _factor),
+        field(ClassStatGrowthTab.ffillCapKey, 'Cap', _cap),
+      ],
+      _FillShapeKind.approach => [
+        field(ClassStatGrowthTab.ffillLimitKey, 'Limit', _limit),
+        field(ClassStatGrowthTab.ffillRateKey, 'Rate 0–1', _rate),
+      ],
+      _FillShapeKind.expression => [
+        SizedBox(
+          width: 260,
+          child: TextField(
+            key: ClassStatGrowthTab.ffillExpressionKey,
+            controller: _expression,
+            style: ForgeType.code(size: 13.6),
+            decoration: const InputDecoration(
+              labelText: 'Expression',
+              hintText: ClassStatGrowthTab.ffillExpressionHint,
+              isDense: true,
+            ),
+            onChanged: changed,
+          ),
+        ),
+      ],
+    };
+    final muted = context.text.bodySmall?.copyWith(
+      color: context.colors.onSurfaceVariant,
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Wrap(
+          spacing: AnvilSpacing.sm,
+          runSpacing: AnvilSpacing.sm,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            _helperLabel(context, 'Formula fill:'),
+            _StatPicker(
+              key: ClassStatGrowthTab.ffillStatKey,
+              stats: widget.manualStats,
+              selected: statId,
+              onChanged: (v) => setState(() => _picked = v),
+            ),
+            _helperField(
+              key: ClassStatGrowthTab.ffillFromKey,
+              label: 'From lvl',
+              controller: _from,
+              width: 80,
+              integer: true,
+              onChanged: changed,
+            ),
+            _helperField(
+              key: ClassStatGrowthTab.ffillToKey,
+              label: 'To lvl',
+              controller: _to,
+              width: 80,
+              integer: true,
+              onChanged: changed,
+            ),
+            _helperField(
+              key: ClassStatGrowthTab.ffillStartKey,
+              label: 'Start',
+              controller: _start,
+              width: 130,
+              helperText: 'blank = current value',
+              onChanged: changed,
+            ),
+            SizedBox(
+              width: 180,
+              child: DraftPicker<_FillShapeKind>(
+                key: ClassStatGrowthTab.ffillShapeKey,
+                label: 'Shape',
+                dense: true,
+                value: _shape,
+                options: [
+                  for (final k in _FillShapeKind.values)
+                    (value: k, label: k.label),
+                ],
+                onChanged: (v) => setState(() => _shape = v),
+              ),
+            ),
+            ...shapeFields,
+            OutlinedButton(
+              key: ClassStatGrowthTab.ffillApplyKey,
+              onPressed: statId == null || values.isEmpty
+                  ? null
+                  : () => widget.onApply(statId, values),
+              child: const Text('Apply'),
+            ),
+          ],
+        ),
+        const SizedBox(height: AnvilSpacing.sm),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _helperLabel(context, 'Preview:'),
+            const SizedBox(width: AnvilSpacing.sm),
+            Expanded(
+              child: Text(
+                error ??
+                    (values.isEmpty
+                        ? 'Enter the range and the shape to see the values.'
+                        : _previewText(values)),
+                key: ClassStatGrowthTab.ffillPreviewKey,
+                style: error != null
+                    ? context.text.bodySmall?.copyWith(
+                        color: context.colors.error,
+                      )
+                    : values.isEmpty
+                    ? muted
+                    : AnvilType.numeric(
+                        size: 12,
+                        color: context.colors.onSurface,
+                      ),
+              ),
+            ),
+          ],
         ),
       ],
     );
