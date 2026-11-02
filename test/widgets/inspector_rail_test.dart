@@ -1,5 +1,7 @@
+import 'package:anvil/app/editor/widgets/record_validation.dart';
 import 'package:anvil/app/shell/editor_dialog.dart';
 import 'package:anvil/app/shell/shell_domain.dart';
+import 'package:anvil/app/shell/shell_providers.dart';
 import 'package:anvil/app/theme/anvil_metrics.dart';
 import 'package:anvil/app/theme/theme_selection.dart';
 import 'package:anvil/app/widgets/inspector_rail.dart';
@@ -10,6 +12,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
 import '../app_bootstrap_test.dart' show AppHarness;
+import '../domains/abilities/fakes.dart'
+    show
+        FakeAbilityRepository,
+        FakeRecordValidation,
+        FakeStatsRepository,
+        ValidationScript;
+import '../domains/classes/class_fakes.dart' show FakeClassRepository;
 
 final linux = TargetPlatformVariant.only(TargetPlatform.linux);
 
@@ -26,7 +35,8 @@ const sections = [
 ];
 
 /// The rail on `/` of a router that also has the 0.1.6 class editor route,
-/// under the app's root overrides with [settingsJson].
+/// under the app's root overrides with [settingsJson]. The class editor the
+/// modal mode opens renders over the class test fakes.
 Future<GoRouter> pumpRail(
   WidgetTester tester, {
   required String settingsJson,
@@ -58,7 +68,15 @@ Future<GoRouter> pumpRail(
   addTearDown(router.dispose);
   await tester.pumpWidget(
     ProviderScope(
-      overrides: app.overrides,
+      overrides: [
+        ...app.overrides,
+        classRepositoryProvider.overrideWithValue(FakeClassRepository()),
+        abilityRepositoryProvider.overrideWithValue(FakeAbilityRepository()),
+        metaRepositoryProvider.overrideWithValue(FakeStatsRepository()),
+        recordValidationProvider.overrideWith2(
+          (key) => FakeRecordValidation(key, ValidationScript()),
+        ),
+      ],
       retry: (_, _) => null,
       child: Consumer(
         builder: (context, ref, _) => MaterialApp.router(

@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:forge_ui/forge_ui.dart';
 
 import '../domains/abilities/abilities_pages.dart';
+import '../domains/classes/classes_pages.dart';
 import '../domains/items/items_pages.dart';
 import '../domains/recipes/recipes_pages.dart';
 import '../theme/anvil_metrics.dart';
@@ -44,6 +45,7 @@ final Map<ShellDomain, Widget Function()> listPageBuilders = {
   for (final domain in ShellDomain.values)
     domain: () =>
         PagePlaceholder(domain.label, ticket: _domainTickets[domain]!),
+  ShellDomain.classes: classesListPage,
   ShellDomain.abilities: abilitiesListPage,
   ShellDomain.items: itemsListPage,
   ShellDomain.recipes: recipesListPage,
@@ -54,6 +56,7 @@ final Map<ShellDomain, Widget Function()> listPageBuilders = {
 final Map<ShellDomain, Widget Function(String id)> editorBuilders = {
   for (final domain in ShellDomain.values)
     domain: (id) => EditorPlaceholder(domain, id),
+  ShellDomain.classes: classEditor,
   ShellDomain.abilities: abilityEditor,
   ShellDomain.items: itemEditor,
   ShellDomain.recipes: recipeEditor,
