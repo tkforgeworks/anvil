@@ -12,6 +12,8 @@ Anvil is game-agnostic — it ships with sensible RPG defaults but allows full s
 
 The Flutter desktop app (Windows + Linux) lives alongside the Electron source while it is being ported. It opens the same `.anvil` SQLite project files. The architecture of the rewrite is `design_notes/Anvil_Implementation_Design_v2_0.md` (ANVL-155).
 
+**Upgrading from 0.1.x.** [`docs/upgrade-0.2.md`](docs/upgrade-0.2.md) is the user-facing note on what changes for 0.1.x users: per-record saving, settings and recent projects starting fresh in a new folder, custom templates outside the supported subset, and the 0.1.x template security fix. It heads each 0.2.0 release's notes.
+
 ### Repository layout
 
 | Path | What it is |
