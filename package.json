@@ -19,14 +19,7 @@
     "make": "electron-vite build && electron-builder --publish never",
     "typecheck": "tsc --noEmit -p tsconfig.main.json && tsc --noEmit -p tsconfig.renderer.json",
     "rebuild": "electron-rebuild -f -w better-sqlite3",
-    "test": "node scripts/test.js",
-    "release:patch": "node scripts/release-tag.js patch",
-    "release:minor": "node scripts/release-tag.js minor",
-    "release:major": "node scripts/release-tag.js major",
-    "rc:patch": "node scripts/rc-tag.js patch",
-    "rc:minor": "node scripts/rc-tag.js minor",
-    "rc:major": "node scripts/rc-tag.js major",
-    "release:final": "node scripts/release-tag.js final"
+    "test": "node scripts/test.js"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

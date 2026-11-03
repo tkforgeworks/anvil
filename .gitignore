@@ -36,5 +36,5 @@ migrate_working_dir/
 app.*.symbols
 app.*.map.json
 
-# Release artifacts: electron-builder today, scripts/release/* after ANVL-167
+# Release artifacts: scripts/release/build-windows.ps1 writes the installer and zip here
 /release/

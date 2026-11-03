@@ -1,124 +1,54 @@
+# Consumes the org standard tagless Flutter release pipeline
+# (tkforgeworks/.github release-flutter.yml). Windows only for now: the
+# installer comes from scripts/release/build-windows.ps1 (Inno Setup,
+# windows/installer/anvil.iss); there is no Android build.
+#
+# How a release happens (docs/branching-and-release.md in the org repo):
+#   scripts/release/bump-version.sh rc     on vX.Y.Z/main → prerelease vX.Y.Z-rc.N
+#   scripts/release/bump-version.sh final  on vX.Y.Z/main → release PR; merging
+#                                          into main cuts the stable vX.Y.Z
+# The bump is an ordinary commit to pubspec.yaml; release-flutter.yml
+# self-gates on whether the version's tag exists (a stable version on a
+# release branch and an RC version on main are both skipped) and creates the
+# tag when it publishes the GitHub release. Never hand-edit the version or
+# push tags.
+#
+# Release notes are the org release-notes.yml output (commit subjects since
+# the previous tag, ANVL keys linked through the JIRA_BASE_URL variable).
+# release-flutter.yml takes no extra notes file or prefix, so upgrade notes
+# (ANVL-201) cannot be injected here without an org workflow change.
+#
+# The release gate is ci-flutter.yml at the repo root only, so it runs the
+# app's test/ but not packages/anvil_core's tests; ci.yml's `core / ci`
+# check on the release PR covers those.
+#
+# Keep flutter-version identical to ci.yml and .fvmrc (ANVL-167).
 name: Release
 
-# Tagless release pipeline (shared TK ForgeWorks standard, mirrored in
-# claude-observability-gui): version bumps are ordinary commits, this workflow
-# triggers on branch pushes and self-gates on whether the version's tag already
-# exists, and the tag is created server-side when the GitHub release is
-# published. RC prereleases are cut from v*/main version branches as they are
-# pushed; the stable release is cut only when the version branch merges to
-# main.
 on:
   push:
     branches: [main, 'v*/main']
+
+permissions:
+  contents: write
 
 concurrency:
   group: release
   cancel-in-progress: false
 
 jobs:
-  check-release:
-    runs-on: ubuntu-latest
-    outputs:
-      should-release: ${{ steps.check.outputs.should-release }}
-      version: ${{ steps.check.outputs.version }}
-      is-prerelease: ${{ steps.check.outputs.is-prerelease }}
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-      - id: check
-        run: |
-          VERSION=$(node -p "require('./package.json').version")
-          TAG="v${VERSION}"
-          BRANCH="${{ github.ref_name }}"
-          IS_RC=false
-          if echo "$VERSION" | grep -qE '(rc|alpha|beta)'; then
-            IS_RC=true
-          fi
-          if git rev-parse "$TAG" >/dev/null 2>&1; then
-            echo "Tag $TAG already exists — skipping release"
-            echo "should-release=false" >> $GITHUB_OUTPUT
-          elif [ "$BRANCH" = "main" ] && [ "$IS_RC" = "true" ]; then
-            # An RC version should never merge to main — run release:final on
-            # the version branch first.
-            echo "RC version $VERSION on main — skipping release"
-            echo "should-release=false" >> $GITHUB_OUTPUT
-          elif [ "$BRANCH" != "main" ] && [ "$IS_RC" = "false" ]; then
-            # The release:final bump pushes a stable version to the version
-            # branch before its PR merges; the stable release is cut on main.
-            echo "Stable version $VERSION on $BRANCH — releasing on merge to main, skipping"
-            echo "should-release=false" >> $GITHUB_OUTPUT
-          else
-            echo "Tag $TAG does not exist — will release"
-            echo "should-release=true" >> $GITHUB_OUTPUT
-            echo "version=$VERSION" >> $GITHUB_OUTPUT
-            echo "is-prerelease=$IS_RC" >> $GITHUB_OUTPUT
-          fi
-
-  # TK ForgeWorks standard release-notes generation — canonical script and
-  # workflow live in tkforgeworks/.github. release-version is passed
-  # explicitly because this workflow runs before the tag is created.
-  release-notes:
-    if: needs.check-release.outputs.should-release == 'true'
-    needs: check-release
-    uses: tkforgeworks/.github/.github/workflows/release-notes.yml@main
+  release:
+    uses: tkforgeworks/.github/.github/workflows/release-flutter.yml@main
     with:
       ticket-prefix: ANVL
-      release-version: v${{ needs.check-release.outputs.version }}
+      flutter-version: '3.47.5'
+      build-windows: true
+      build-android: false
+    secrets: inherit
 
-  build:
-    if: needs.check-release.outputs.should-release == 'true'
-    needs: check-release
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [windows-latest, ubuntu-latest]
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 22
-          cache: npm
-      - name: Install Linux build dependencies
-        if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y libfuse2 rpm
-      - run: npm ci
-      - run: npm run make
-        env:
-          VITE_TELEMETRY_ENABLED: ${{ needs.check-release.outputs.is-prerelease }}
-      - uses: actions/upload-artifact@v7
-        with:
-          name: dist-${{ matrix.os }}
-          path: |
-            release/*.exe
-            release/*.AppImage
-            release/*.deb
-            release/*.rpm
-
-  publish:
-    if: needs.check-release.outputs.should-release == 'true'
-    needs: [check-release, release-notes, build]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/download-artifact@v8
-        with:
-          path: dist
-          merge-multiple: true
-      # Immutable releases lock assets at publish time, so the release is
-      # created as a draft with assets attached, then flipped to published.
-      # Publishing creates the v{version} tag at the triggering commit.
-      - uses: softprops/action-gh-release@v3
-        id: draft
-        with:
-          tag_name: v${{ needs.check-release.outputs.version }}
-          target_commitish: ${{ github.sha }}
-          files: dist/**/*
-          body: ${{ needs.release-notes.outputs.body }}
-          draft: true
-          prerelease: ${{ needs.check-release.outputs.is-prerelease }}
-      - name: Publish release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh api -X PATCH repos/${{ github.repository }}/releases/${{ steps.draft.outputs.id }} -F draft=false
+  # Linux packaging (ANVL-168) goes here as its own job, per the org rule that
+  # a new pipeline capability is its own reusable workflow rather than more
+  # inputs on release-flutter.yml. Note for that ticket: release-flutter.yml
+  # publishes the release itself, and once immutable releases are turned on
+  # (off for this repo as of 2026-11-03) assets are locked at publish time,
+  # so a job running after `release` could no longer upload to it.

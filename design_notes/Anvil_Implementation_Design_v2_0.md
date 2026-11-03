@@ -734,12 +734,12 @@ The file logger moves to `anvil_core/lib/src/logging/` as a port of `app-logger.
 
 | Target | Workflow | Output and requirements |
 | :---- | :---- | :---- |
-| Windows x64 | Org `release-flutter.yml` with `build-windows: true` | An installer built from an Inno Setup or NSIS script in the repo (the choice belongs to ANVL-167). Requirements, matching 0.1.6's assisted NSIS installer: a wizard with a per-user or all-users choice and an install directory, Start Menu and desktop shortcuts, an uninstaller, and optionally an `.anvil` file association. The SQLite library bundled by the `sqlite3` build hooks ships with the executable. |
+| Windows x64 | Org `release-flutter.yml` with `build-windows: true` | An installer built from the Inno Setup 6 script `windows/installer/anvil.iss` (chosen by ANVL-167, following lazy-sleeper-app). Requirements, matching 0.1.6's assisted NSIS installer: a wizard with a per-user or all-users choice and an install directory, Start Menu and desktop shortcuts, an uninstaller, and optionally an `.anvil` file association. The SQLite library bundled by the `sqlite3` build hooks ships with the executable. |
 | Linux x64 | A separate org reusable workflow (ANVL-168), added as its own job, following the org rule that a new pipeline capability gets its own reusable workflow rather than more inputs on `release-flutter.yml` | AppImage, deb and rpm as in 0.1.6, or at minimum a tarball of the release bundle. The bundle includes `lib/libsqlite3.so`. |
 
 ### 15.2 Versioning and notes
 
-The version lives in `pubspec.yaml` as `0.2.0[-rc.N]+BUILD`. `scripts/release/bump-version.sh` and `.ps1` are vendored from the org for `rc` and `final` bumps and replace the npm `rc-tag.js` and `release-tag.js` at cutover. The release flow keeps its tagless self-gating (skip when the tag exists; release candidates only from the version branch; stable on merge to `main`) but reads the version from `pubspec.yaml`. Release notes still come from commit subjects through the org `release-notes.yml` with `ANVL-N:` keys and `Fix` subjects under Bug Fixes; that contract does not change. Install scripts (ANVL-143) and project templates (ANVL-156) are separate tickets under ANVL-150.
+The version lives in `pubspec.yaml` as `0.2.0[-rc.N]+BUILD`. `scripts/release/bump-version.sh` and `.ps1` are vendored from the org for `rc` and `final` bumps and replaced the npm `rc-tag.js` and `release-tag.js` in ANVL-167. The release flow keeps its tagless self-gating (skip when the tag exists; release candidates only from the version branch; stable on merge to `main`) but reads the version from `pubspec.yaml`. Release notes still come from commit subjects through the org `release-notes.yml` with `ANVL-N:` keys and `Fix` subjects under Bug Fixes; that contract does not change. Install scripts (ANVL-143) and project templates (ANVL-156) are separate tickets under ANVL-150.
 
 ### 15.3 Cutover (ANVL-169)
 
