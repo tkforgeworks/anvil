@@ -19,6 +19,16 @@ const _fixtureCounts = RecordCounts(
   lootTables: 1,
 );
 
+/// [_fixtureCounts] after one more item.
+const _countsWithStick = RecordCounts(
+  classes: 2,
+  abilities: 2,
+  items: 6,
+  recipes: 2,
+  npcs: 2,
+  lootTables: 1,
+);
+
 void main() {
   final fixture = FixtureCopy.setUpEach();
   late ProjectService service;
@@ -380,6 +390,82 @@ void main() {
             .single['n'],
         1,
       );
+    });
+  });
+
+  group('refreshMetadata', () {
+    Future<void> retitle(ProjectSession session, String title) async {
+      final draft = await session.meta.loadProjectSettings();
+      await session.meta.saveProjectSettings(draft.copyWith(gameTitle: title));
+    }
+
+    Future<void> addItem(ProjectSession session) => session.items.create(
+      const CreateItemInput(
+        displayName: 'Stick',
+        exportKey: 'stick',
+        itemCategoryId: 'item-category-weapon',
+        rarityId: 'rarity-common',
+      ),
+    );
+
+    test('returns and stores the game title saved since open', () async {
+      final session = await openOk(fixture().copyFixture());
+      final before = session.metadata;
+
+      await retitle(session, 'Retitled Saga');
+      expect(session.metadata, same(before));
+
+      final refreshed = service.refreshMetadata(session);
+      expect(refreshed.gameTitle, 'Retitled Saga');
+      expect(refreshed.projectName, before.projectName);
+      expect(session.metadata, same(refreshed));
+      await service.close(session);
+    });
+
+    test('counts a record added since open', () async {
+      final session = await openOk(fixture().copyFixture());
+      expect(session.metadata.recordCounts, _fixtureCounts);
+
+      await addItem(session);
+      expect(service.refreshMetadata(session).recordCounts, _countsWithStick);
+      await service.close(session);
+    });
+
+    test('a closed session throws StateError', () async {
+      final session = await openOk(fixture().copyFixture());
+      await service.close(session);
+      expect(() => service.refreshMetadata(session), throwsStateError);
+    });
+
+    test('a file gone from disk keeps the previous metadata', () async {
+      final session = await openOk(fixture().copyFixture());
+      final before = session.metadata;
+      File(session.filePath).renameSync('${session.filePath}.moved');
+
+      expect(service.refreshMetadata(session), same(before));
+      expect(session.metadata, same(before));
+      File('${session.filePath}.moved').renameSync(session.filePath);
+      await service.close(session);
+    });
+
+    test('close writes the current title and counts to the recent '
+        'entry', () async {
+      final path = fixture().copyFixture();
+      final session = await openOk(path);
+      await retitle(session, 'Retitled Saga');
+      await addItem(session);
+      expect(
+        service.recentProjects().single.project.gameTitle,
+        isNot('Retitled Saga'),
+      );
+
+      await service.close(session);
+      final entry = ProjectService(supportDirectory: support)
+          .recentProjects()
+          .single;
+      expect(entry.filePath, path);
+      expect(entry.project.gameTitle, 'Retitled Saga');
+      expect(entry.project.recordCounts, _countsWithStick);
     });
   });
 
