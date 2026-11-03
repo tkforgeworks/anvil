@@ -63,3 +63,9 @@
 - A worker's ff onto a tip whose changes are in a disjoint directory can lean on CI as the full-suite gate; the local re-run rule is for overlapping files (shared tables, placeholders, shell tests).
 - `gh pr create` fails with "you must first push the current branch" when the preceding `git push` silently failed over SSH (the tail showed only "and the repository exists."); check `git status -sb` for `[ahead N]` before assuming the push landed.
 - The CLAUDE.md anchor chain works across parallel worktrees only if the second PR's entry is added after its ff onto the first PR's merge; add the entry last, not with the worker's diff.
+
+## 2026-11-03, wave 1 (ANVL-117/156/165/167/201-204)
+- herdr workers: `herdr pane split --pane <id> --direction down --cwd <worktree> --no-focus`, then `herdr agent start anvil-<N> --kind claude --pane <id> -- --agent orchestration:worker-heavy --permission-mode auto`, prompt with the brief path, and a background `herdr agent wait anvil-<N> --timeout 7200000`. Close each pane after the merge.
+- The subagent guard refuses to run the real bump scripts, even against a scratch clone. When a brief needs a release-script test, the orchestrator runs it itself.
+- Check a ticket's premise in the source before briefing. ANVL-204 said the dashboard showed a stale game title; no screen shows the title while a project is open. The fault was the recent-projects entry after close, and the ACs were amended before dispatch.
+- With four parallel PRs, add each CLAUDE.md status entry only after that worktree has been fast-forwarded onto the previous merge (the T-044 lesson). Two worktrees still conflicted on `menu_commands.dart` (202 and 203); stash, ff, pop and keep both sides' removals.
