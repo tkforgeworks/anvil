@@ -7,12 +7,14 @@
 /// (`custom_fields_controller.dart`).
 library;
 
+import 'dart:async';
 import 'dart:math';
 
 import 'package:anvil_core/anvil_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../editor/editor_state.dart' show saveErrorMessage;
+import '../../editor/dirty_editors.dart';
+import '../../editor/editor_state.dart' show SaveOutcome, saveErrorMessage;
 import '../../shell/shell_providers.dart';
 import 'meta_buffer.dart';
 
@@ -214,8 +216,11 @@ final class ProjectSettingsState {
   };
 }
 
-/// The dialog's controller; disposed when the dialog closes, so Cancel
-/// discards by dropping it, as 0.1.6's modal did on Discard.
+/// The dialog's registry key in `dirtyEditorsProvider`.
+const projectSettingsDirtyId = 'project-settings';
+
+/// The dialog's controller; disposed when the dialog closes, which drops
+/// any edit the leave prompt let the user discard.
 final projectSettingsProvider =
     AsyncNotifierProvider.autoDispose<
       ProjectSettingsController,
@@ -227,9 +232,25 @@ final projectSettingsProvider =
 /// Intents are ignored before the load completes and while a save is in
 /// flight. Row edits return null on success or 0.1.6's refusal message
 /// (an export key another row of the list uses), and change nothing then.
+///
+/// While the draft is dirty the controller keeps a [DirtyEditor.other]
+/// entry (`Project Settings (settings)`) in `dirtyEditorsProvider`, so the
+/// dialog's own leave prompt and the app exit / project close prompts
+/// offer to save or discard it (ANVL-165); the entry goes when the draft
+/// is clean again and when the controller is disposed.
 class ProjectSettingsController extends AsyncNotifier<ProjectSettingsState> {
+  late DirtyEditorsNotifier _registry;
+
   @override
   Future<ProjectSettingsState> build() async {
+    final registry = _registry = ref.read(dirtyEditorsProvider.notifier);
+    // Riverpod forbids provider writes inside life-cycle callbacks, so the
+    // removal runs in a microtask just after the dispose.
+    ref.onDispose(
+      () => scheduleMicrotask(
+        () => registry.remove(null, projectSettingsDirtyId),
+      ),
+    );
     final repository = ref.watch(metaRepositoryProvider);
     return ProjectSettingsState.loaded(await repository.loadProjectSettings());
   }
@@ -242,7 +263,37 @@ class ProjectSettingsController extends AsyncNotifier<ProjectSettingsState> {
     return s == null || s.saving ? null : s;
   }
 
-  void _set(ProjectSettingsState next) => state = AsyncData(next);
+  void _set(ProjectSettingsState next) {
+    state = AsyncData(next);
+    if (next.isDirty) {
+      _registry.put(
+        DirtyEditor.other(
+          recordId: projectSettingsDirtyId,
+          displayName: 'Project Settings',
+          kindLabel: 'settings',
+          save: saveOutcome,
+          discard: discard,
+          blockers: [
+            for (final message in next.blockers) SaveBlocker('', message),
+          ],
+          saving: next.saving,
+          saveError: next.error,
+        ),
+      );
+    } else {
+      _registry.remove(null, projectSettingsDirtyId);
+    }
+  }
+
+  /// [save] as the leave prompts call it: blocked, nothing to save, busy,
+  /// saved or failed.
+  Future<SaveOutcome> saveOutcome() async {
+    final s = state.value;
+    if (s == null || s.saving) return SaveOutcome.busy;
+    if (!s.isDirty) return SaveOutcome.nothingToSave;
+    if (s.blockers.isNotEmpty) return SaveOutcome.blocked;
+    return await save() ? SaveOutcome.saved : SaveOutcome.failed;
+  }
 
   void setGameTitle(String value) {
     if (_idle case final s?) _set(s.copyWith(gameTitle: value));

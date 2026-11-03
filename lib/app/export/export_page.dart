@@ -76,7 +76,13 @@ class _ExportPageState extends ConsumerState<ExportPage> {
       }
     });
     final state = ref.watch(exportPageProvider).value;
-    final dirty = ref.watch(dirtyEditorsProvider).length;
+    // Record editors only: a dirty settings or template dialog does not
+    // change what is exported.
+    final dirty = ref
+        .watch(dirtyEditorsProvider)
+        .entries
+        .where((e) => e.domain != null)
+        .length;
 
     return SingleChildScrollView(
       child: Column(

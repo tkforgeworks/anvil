@@ -216,8 +216,8 @@ void main() {
     expect(meta.calls, contains('checkInUse stat stat-str'));
   }, variant: linux);
 
-  testWidgets('Cancel after edits writes nothing, and reopening shows the '
-      'stored values', (tester) async {
+  testWidgets('Cancel after edits, then Discard in the prompt, writes '
+      'nothing, and reopening shows the stored values', (tester) async {
     await open(tester);
     await tester.enterText(key('settings-game-title'), 'Changed');
     await tapVisible(tester, find.text('Error'));
@@ -225,6 +225,8 @@ void main() {
     expect(saveEnabled(tester), isTrue);
 
     await tester.tap(key('project-settings-cancel'));
+    await tester.pumpAndSettle();
+    await tester.tap(key('leave-editor-discard'));
     await tester.pumpAndSettle();
     expect(dialog, findsNothing);
     expect(meta.saved, isEmpty);
@@ -464,6 +466,8 @@ void main() {
           matching: find.byTooltip('Delete'),
         ),
       );
+      await tester.pumpAndSettle();
+      await tester.tap(key('delete-field-confirm'));
       await tester.pumpAndSettle();
       expect(find.text(message), findsOneWidget);
       expect(find.text('damage'), findsOneWidget);

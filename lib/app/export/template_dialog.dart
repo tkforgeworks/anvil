@@ -3,8 +3,12 @@
 /// with the 0.2 writing guide behind a toggle and the renderer's own check
 /// shown under the source as a warning.
 ///
-/// The fields are plain `TextEditingController`s; the draft and undo layer
-/// for this dialog is ANVL-165's.
+/// The four fields form a value-equal [TemplateDraft] held against a
+/// baseline (the stored template, or empty for a new one), with no undo
+/// stack (ANVL-165). Save is enabled only while the draft differs from the
+/// baseline and has a name; dismissing a dirty dialog asks Save / Discard /
+/// Cancel first, and the dirty draft is listed by the app exit and project
+/// close prompts as `<name> (template)`.
 library;
 
 import 'dart:async';
@@ -14,6 +18,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forge_ui/forge_ui.dart';
 
+import '../editor/dirty_editors.dart';
+import '../editor/editor_state.dart' show SaveOutcome;
+import '../editor/exit_prompt.dart';
 import '../editor/widgets/draft_picker.dart';
 import '../lists/record_list_controller.dart' show listErrorMessage;
 import '../theme/anvil_metrics.dart';
@@ -46,6 +53,31 @@ const templateCheckDelay = Duration(milliseconds: 300);
 /// The 0.1.6 dialog width (`maxWidth="md"`).
 const _dialogWidth = 900.0;
 
+/// What the dialog edits: the name and description trimmed as Save stores
+/// them, the format and the source as typed. Records compare by value.
+typedef TemplateDraft = ({
+  String name,
+  String description,
+  String format,
+  String source,
+});
+
+/// The draft of [existing], or the empty draft of a new template.
+TemplateDraft templateBaseline(CustomTemplate? existing) => (
+  name: existing?.name.trim() ?? '',
+  description: existing?.description.trim() ?? '',
+  format: existing?.format ?? 'text',
+  source: existing?.templateSource ?? '',
+);
+
+/// The template dialog's registry id in `dirtyEditorsProvider`, for
+/// [existing] or for a new template.
+String templateDirtyId(CustomTemplate? existing) =>
+    'template:${existing?.id ?? 'new'}';
+
+/// The message of the one rule that blocks a template save.
+const templateNameRequiredMessage = 'Template name is required.';
+
 /// Opens the dialog for a new template, or for [existing]; [caretAt]
 /// (1-based line and column) puts the caret there in the source field.
 /// Saving goes through `exportPageProvider`, which bumps the write epoch.
@@ -73,6 +105,12 @@ class TemplateDialog extends ConsumerStatefulWidget {
 }
 
 class _TemplateDialogState extends ConsumerState<TemplateDialog> {
+  late TemplateDraft _baseline = templateBaseline(widget.existing);
+  late final DirtyEditorsNotifier _registry;
+  late final String _dirtyId = templateDirtyId(widget.existing);
+
+  /// A save from this dialog landed, so closing it reports true.
+  var _saved = false;
   late final _name = TextEditingController(text: widget.existing?.name ?? '');
   late final _description = TextEditingController(
     text: widget.existing?.description ?? '',
@@ -95,11 +133,18 @@ class _TemplateDialogState extends ConsumerState<TemplateDialog> {
       );
     }
     _check = _runCheck(_source.text);
-    _name.addListener(_rebuild);
+    _registry = ref.read(dirtyEditorsProvider.notifier);
+    _name.addListener(_changed);
+    _description.addListener(_changed);
+    _source.addListener(_changed);
   }
 
   @override
   void dispose() {
+    final registry = _registry;
+    final id = _dirtyId;
+    // Provider writes are not allowed while the tree unmounts.
+    scheduleMicrotask(() => registry.remove(null, id));
     _checkTimer?.cancel();
     _name.dispose();
     _description.dispose();
@@ -107,7 +152,61 @@ class _TemplateDialogState extends ConsumerState<TemplateDialog> {
     super.dispose();
   }
 
-  void _rebuild() => setState(() {});
+  TemplateDraft get _draft => (
+    name: _name.text.trim(),
+    description: _description.text.trim(),
+    format: _format,
+    source: _source.text,
+  );
+
+  bool get _dirty => _draft != _baseline;
+
+  List<SaveBlocker> get _blockers => _draft.name.isEmpty
+      ? const [SaveBlocker('name', templateNameRequiredMessage)]
+      : const [];
+
+  /// Rebuilds and keeps the registry entry current.
+  void _changed() {
+    if (!mounted) return;
+    setState(() {});
+    _sync();
+  }
+
+  void _sync() {
+    if (!_dirty) {
+      _registry.remove(null, _dirtyId);
+      return;
+    }
+    final existing = widget.existing;
+    final name = _draft.name;
+    _registry.put(
+      DirtyEditor.other(
+        recordId: _dirtyId,
+        displayName: existing == null
+            ? 'New template'
+            : name.isEmpty
+            ? existing.name
+            : name,
+        kindLabel: 'template',
+        save: _saveDraft,
+        discard: _discard,
+        blockers: _blockers,
+        saving: _saving,
+        saveError: _saveError,
+      ),
+    );
+  }
+
+  /// Back to the baseline; the leave prompts' Discard.
+  void _discard() {
+    final b = _baseline;
+    _format = b.format;
+    _name.text = b.name;
+    _description.text = b.description;
+    _source.text = b.source;
+    _saveError = null;
+    _changed();
+  }
 
   static TemplateCheck? _runCheck(String source) => checkTemplate(source);
 
@@ -119,17 +218,31 @@ class _TemplateDialogState extends ConsumerState<TemplateDialog> {
     });
   }
 
-  bool get _canSave => _name.text.trim().isNotEmpty && !_saving;
+  bool get _canSave => _dirty && _blockers.isEmpty && !_saving;
 
+  /// The Save button: saves and closes on success.
   Future<void> _save() async {
-    if (!_canSave) return;
+    if (await _saveDraft() == SaveOutcome.saved && mounted) {
+      Navigator.of(context).pop(true);
+    }
+  }
+
+  /// Writes the draft through the export controller (one history row) and
+  /// makes it the baseline; the dialog stays open. A failure keeps the
+  /// draft and shows its message.
+  Future<SaveOutcome> _saveDraft() async {
+    if (!mounted || _saving) return SaveOutcome.busy;
+    if (!_dirty) return SaveOutcome.nothingToSave;
+    if (_blockers.isNotEmpty) return SaveOutcome.blocked;
+    final draft = _draft;
     setState(() {
       _saving = true;
       _saveError = null;
     });
+    _sync();
     final controller = ref.read(exportPageProvider.notifier);
-    final name = _name.text.trim();
-    final description = _description.text.trim();
+    final name = draft.name;
+    final description = draft.description;
     try {
       if (widget.existing case final existing?) {
         await controller.updateTemplate(
@@ -137,8 +250,8 @@ class _TemplateDialogState extends ConsumerState<TemplateDialog> {
           UpdateTemplateInput(
             name: name,
             description: description,
-            templateSource: _source.text,
-            format: _format,
+            templateSource: draft.source,
+            format: draft.format,
           ),
         );
       } else {
@@ -146,18 +259,25 @@ class _TemplateDialogState extends ConsumerState<TemplateDialog> {
           CreateTemplateInput(
             name: name,
             description: description,
-            templateSource: _source.text,
-            format: _format,
+            templateSource: draft.source,
+            format: draft.format,
           ),
         );
       }
-      if (mounted) Navigator.of(context).pop(true);
+      _saved = true;
+      if (mounted) {
+        _saving = false;
+        _baseline = draft;
+        _changed();
+      }
+      return SaveOutcome.saved;
     } catch (error) {
-      if (!mounted) return;
-      setState(() {
+      if (mounted) {
         _saving = false;
         _saveError = listErrorMessage(error, 'Failed to save template.');
-      });
+        _changed();
+      }
+      return error is SaveBlocked ? SaveOutcome.blocked : SaveOutcome.failed;
     }
   }
 
@@ -166,7 +286,7 @@ class _TemplateDialogState extends ConsumerState<TemplateDialog> {
     final editing = widget.existing != null;
     final check = _check;
     final warning = context.forge.warning;
-    return AlertDialog(
+    final dialog = AlertDialog(
       title: Text(editing ? 'Edit Template' : 'New Custom Template'),
       content: SizedBox(
         width: _dialogWidth,
@@ -194,7 +314,10 @@ class _TemplateDialogState extends ConsumerState<TemplateDialog> {
                 label: 'Format',
                 value: _format,
                 options: templateFormats,
-                onChanged: (v) => setState(() => _format = v),
+                onChanged: (v) {
+                  _format = v;
+                  _changed();
+                },
               ),
               const SizedBox(height: AnvilSpacing.md),
               Text(
@@ -271,7 +394,9 @@ class _TemplateDialogState extends ConsumerState<TemplateDialog> {
       actions: [
         TextButton(
           key: templateCancelKey,
-          onPressed: _saving ? null : () => Navigator.of(context).pop(false),
+          onPressed: _saving
+              ? null
+              : () => Navigator.of(context).maybePop(false),
           child: const Text('Cancel'),
         ),
         FilledButton(
@@ -280,6 +405,22 @@ class _TemplateDialogState extends ConsumerState<TemplateDialog> {
           child: Text(editing ? 'Save Changes' : 'Create Template'),
         ),
       ],
+    );
+    // Cancel, Escape and a click outside close a clean dialog at once and
+    // ask Save / Discard / Cancel first while it is dirty.
+    return PopScope<Object?>(
+      canPop: !_saving && !_dirty,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop || _saving) return;
+        final navigator = Navigator.of(context);
+        final entry = findDirtyEditor(
+          ref.read(dirtyEditorsProvider),
+          null,
+          _dirtyId,
+        );
+        if (await confirmLeaveEditor(context, entry)) navigator.pop(_saved);
+      },
+      child: dialog,
     );
   }
 }
