@@ -180,6 +180,31 @@ void main() {
     );
   });
 
+  test('create passes the template through to the core', () async {
+    final parent = harness.app.directory.path;
+    final ok = await lifecycle().create(
+      'Station',
+      'Void',
+      parent,
+      template: ProjectTemplate.sciFiRpg,
+    );
+
+    expect(ok, isTrue);
+    expect(harness.service.calls, [
+      'create Station | Void | $parent | sci-fi-rpg',
+    ]);
+    final created = session()!;
+    expect(
+      (await created.meta.listStats()).map((s) => s.exportKey),
+      ProjectTemplate.sciFiRpg.content.stats.map((s) => s.exportKey),
+    );
+    expect(
+      (await created.meta.loadProjectSettings()).maxLevel,
+      ProjectTemplate.sciFiRpg.content.maxLevel,
+    );
+    expect(await created.saveHistory.recent(), isEmpty);
+  });
+
   test('a failed create reports the core message', () async {
     final parent = harness.app.directory.path;
     Directory('$parent/Taken').createSync();

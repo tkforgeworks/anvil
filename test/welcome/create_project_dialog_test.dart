@@ -139,7 +139,7 @@ void main() {
     await tester.tap(find.text('Create'));
     await tester.pumpAndSettle();
 
-    expect(harness.service.calls, ['create World | Saga | /games']);
+    expect(harness.service.calls, ['create World | Saga | /games | blank']);
     expect(find.byType(CreateProjectDialog), findsOneWidget);
     expect(find.text('Folder already exists: /games/World'), findsWidgets);
 
@@ -163,7 +163,9 @@ void main() {
     await tester.tap(find.text('Create'));
     await tester.pumpAndSettle();
 
-    expect(harness.service.calls, ['create New World | Saga | $parent']);
+    expect(harness.service.calls, [
+      'create New World | Saga | $parent | blank',
+    ]);
     expect(find.byType(CreateProjectDialog), findsNothing);
     expect(find.byType(AppShell), findsOneWidget);
     expect(
@@ -190,5 +192,50 @@ void main() {
     // The page re-read the list: the new project is on it.
     expect(find.text('New World'), findsOneWidget);
     expect(File('$file.lock').existsSync(), isFalse);
+  }, variant: linux);
+
+  testWidgets('the Template picker starts at Blank and creates from the '
+      'chosen template', (tester) async {
+    final harness = await openDialog(tester);
+    final parent = harness.app.directory.path;
+    harness.dialogs.directory = parent;
+    final picker = find.byKey(const ValueKey('create-project-template'));
+    expect(picker, findsOneWidget);
+    expect(
+      find.descendant(of: picker, matching: find.text('Blank')),
+      findsOneWidget,
+    );
+    expect(find.text(ProjectTemplate.blank.description), findsOneWidget);
+
+    await tester.tap(picker);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Fantasy RPG').last);
+    await tester.pumpAndSettle();
+    expect(find.text(ProjectTemplate.fantasyRpg.description), findsOneWidget);
+    expect(find.text(ProjectTemplate.blank.description), findsNothing);
+
+    await tester.enterText(nameField, 'Realm');
+    await tester.enterText(titleField, 'Saga');
+    await tester.tap(find.text('Choose Folder…'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Create'));
+    await tester.pumpAndSettle();
+
+    expect(harness.service.calls, [
+      'create Realm | Saga | $parent | fantasy-rpg',
+    ]);
+    expect(find.byType(CreateProjectDialog), findsNothing);
+    final session = appContainer(tester).read(projectSessionProvider)!;
+    final stats = await tester.runAsync(() => session.meta.listStats());
+    expect(
+      stats!.map((s) => s.displayName),
+      ProjectTemplate.fantasyRpg.content.stats.map((s) => s.displayName),
+    );
+
+    await openSection(tester, 'File');
+    await tester.tap(
+      find.byKey(ValueKey('menu-${MenuCommand.closeProject.id}')),
+    );
+    await tester.pumpAndSettle();
   }, variant: linux);
 }

@@ -28,6 +28,7 @@ void main() {
     expect(find.byType(WelcomePage), findsOneWidget);
     expect(find.text('Pick a project, or start a new world.'), findsOneWidget);
     expect(find.text('New project'), findsOneWidget);
+    expect(find.text('Blank or from template'), findsOneWidget);
     expect(find.text('Open file...'), findsOneWidget);
     expect(find.text(RecentProjectsList.emptyMessage), findsOneWidget);
     expect(find.text('Clear Recents'), findsNothing);

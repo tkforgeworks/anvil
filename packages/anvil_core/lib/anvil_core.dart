@@ -25,6 +25,8 @@ export 'src/project/project_metadata.dart' hide jsIsoString;
 export 'src/project/project_service.dart';
 export 'src/project/project_session.dart';
 export 'src/project/recent_projects.dart';
+export 'src/project/templates/project_template.dart';
+export 'src/project/templates/project_template_content.dart';
 export 'src/repositories/repositories.dart';
 export 'src/settings/app_settings.dart';
 export 'src/settings/app_settings_store.dart';
