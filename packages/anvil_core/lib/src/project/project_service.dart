@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:isolate';
 
+import 'package:meta/meta.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqlite3/sqlite3.dart';
 
@@ -15,6 +16,9 @@ import 'project_lock.dart';
 import 'project_metadata.dart';
 import 'project_session.dart';
 import 'recent_projects.dart';
+import 'templates/apply_project_template.dart';
+import 'templates/project_template.dart';
+import 'templates/project_template_content.dart';
 
 /// What [ProjectService.create] returns: the new project's open session.
 typedef CreateResult = ProjectSession;
@@ -96,16 +100,22 @@ class ProjectService {
   // ---------------------------------------------------------------- create
 
   /// Creates `{parentFolder}/{sanitized name}/` with its four folders and
-  /// `database/{sanitized name}.anvil`, migrates it, checks it, writes
-  /// `project_info` and adds it to the recent list (`createProject`).
+  /// `database/{sanitized name}.anvil`, migrates it, applies [template]'s
+  /// meta layer, checks it, writes `project_info` and adds it to the recent
+  /// list (`createProject`; 0.1.6 accepted a template id and ignored it).
+  ///
+  /// The template is applied exactly once, here, in one plain transaction
+  /// that writes no `save_history` row; [ProjectTemplate.blank] keeps what
+  /// the migrations seeded.
   ///
   /// Throws [ProjectCreateFailed]. When the failure comes after the folder
-  /// was made, the whole tree is removed; an existing folder is never
-  /// touched.
+  /// was made (a failing template included), the whole tree is removed and
+  /// the lock released; an existing folder is never touched.
   Future<CreateResult> create({
     required String projectName,
     required String gameTitle,
     required String parentFolder,
+    ProjectTemplate template = ProjectTemplate.blank,
   }) async {
     final name = projectName.trim();
     final title = gameTitle.trim();
@@ -135,6 +145,7 @@ class ProjectService {
       lock = ProjectLock.acquire(filePath, now: _clock());
       db = ProjectDatabase.open(filePath);
       runMigrations(db);
+      applyProjectTemplate(db.handle, templateContentFor(template));
       db.integrityCheck();
       db.handle.execute(_upsertProjectInfo, [
         name,
@@ -154,6 +165,14 @@ class ProjectService {
       throw ProjectCreateFailed(describeProjectError(e), e);
     }
   }
+
+  /// The meta layer [create] applies for [template]: its
+  /// [ProjectTemplate.content]. A seam for tests that need a template whose
+  /// rows fail to insert.
+  @visibleForTesting
+  @protected
+  ProjectTemplateContent templateContentFor(ProjectTemplate template) =>
+      template.content;
 
   // ------------------------------------------------------------------ open
 

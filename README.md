@@ -27,6 +27,8 @@ The Flutter desktop app (Windows + Linux) lives alongside the Electron source wh
 
 **Core/UI boundary.** `packages/anvil_core` must never depend on `package:flutter`. The boundary is enforced by its `pubspec.yaml`, which has no Flutter dependency, so any Flutter import fails `flutter analyze`; everything in the core runs under plain `dart test`. The app depends on the core, never the other way round.
 
+**Project templates.** New Project offers three templates: Blank (the starter meta layer every 0.1.x project had), Fantasy RPG and Sci-Fi RPG. Fantasy and Sci-Fi each seed their own stats, rarity tiers and colours, item categories, NPC types, crafting stations and specializations, derived stats and max level, once, when the project is created (`packages/anvil_core/lib/src/project/templates/`).
+
 ### Working on it
 
 ```bash

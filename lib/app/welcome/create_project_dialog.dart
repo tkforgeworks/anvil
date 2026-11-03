@@ -7,6 +7,7 @@ import 'package:forge_ui/forge_ui.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../dialogs/file_dialogs.dart';
+import '../editor/widgets/draft_picker.dart';
 import '../project/project_lifecycle.dart';
 import '../providers.dart';
 import '../theme/anvil_metrics.dart';
@@ -46,8 +47,10 @@ String? projectFilePreview(String parentDirectory, String projectName) {
 /// "Create New Project" (0.1.6 `CreateProjectModal.tsx`): project name and
 /// game title are required (trimmed) and, new in 0.2.0, the parent folder is
 /// chosen in the dialog with a preview of the resulting file. Create stays
-/// disabled until all three are set. A failed create shows the core's
-/// message here and keeps the dialog open.
+/// disabled until all three are set. The Template picker (Blank preselected,
+/// the template's description as helper text) is 0.1.5's selector, which
+/// ANVL-142 hid because 0.1.x never applied it. A failed create shows the
+/// core's message here and keeps the dialog open.
 class CreateProjectDialog extends ConsumerStatefulWidget {
   const CreateProjectDialog({super.key});
 
@@ -60,6 +63,7 @@ class _CreateProjectDialogState extends ConsumerState<CreateProjectDialog> {
   final _name = TextEditingController();
   final _title = TextEditingController();
   String? _folder;
+  var _template = ProjectTemplate.blank;
   var _attempted = false;
 
   @override
@@ -95,7 +99,12 @@ class _CreateProjectDialogState extends ConsumerState<CreateProjectDialog> {
     setState(() => _attempted = true);
     final created = await ref
         .read(projectLifecycleProvider.notifier)
-        .create(_name.text.trim(), _title.text.trim(), folder);
+        .create(
+          _name.text.trim(),
+          _title.text.trim(),
+          folder,
+          template: _template,
+        );
     if (created && mounted) Navigator.of(context).pop();
   }
 
@@ -159,6 +168,18 @@ class _CreateProjectDialogState extends ConsumerState<CreateProjectDialog> {
                 controller: _title,
                 enabled: !busy,
                 decoration: const InputDecoration(labelText: 'Game Title *'),
+              ),
+              const SizedBox(height: AnvilSpacing.md),
+              DraftPicker<ProjectTemplate>(
+                key: const ValueKey('create-project-template'),
+                label: 'Template',
+                value: _template,
+                options: [
+                  for (final t in ProjectTemplate.values)
+                    (value: t, label: t.displayName),
+                ],
+                helperText: _template.description,
+                onChanged: busy ? null : (t) => setState(() => _template = t),
               ),
               const SizedBox(height: AnvilSpacing.md),
               const ForgeMonoLabel('Folder'),

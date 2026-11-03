@@ -164,7 +164,7 @@ class _WelcomeContent extends ConsumerWidget {
                 brand: true,
                 icon: Icons.add,
                 title: 'New project',
-                subtitle: 'Start a blank project',
+                subtitle: 'Blank or from template',
                 onPressed: busy ? null : () => showCreateProjectDialog(context),
               ),
             ),

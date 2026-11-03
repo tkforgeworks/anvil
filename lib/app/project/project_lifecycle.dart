@@ -198,12 +198,14 @@ class ProjectLifecycleNotifier extends Notifier<ProjectLifecycleState> {
   /// the current project first as 0.1.6 did. Returns whether it succeeded;
   /// on failure the state is [LifecycleFailed] with the core's message (the
   /// core has already removed anything it created). When the leave guard
-  /// answers to stay it returns false with the state unchanged.
+  /// answers to stay it returns false with the state unchanged. The new
+  /// project's meta layer comes from [template].
   Future<bool> create(
     String projectName,
     String gameTitle,
-    String parentDirectory,
-  ) async {
+    String parentDirectory, {
+    ProjectTemplate template = ProjectTemplate.blank,
+  }) async {
     if (_busy || !await _mayLeave()) return false;
     state = const ProjectLifecycleState.busy('Creating project');
     await _closeCurrent();
@@ -212,6 +214,7 @@ class ProjectLifecycleNotifier extends Notifier<ProjectLifecycleState> {
         projectName: projectName,
         gameTitle: gameTitle,
         parentFolder: parentDirectory,
+        template: template,
       );
       _activate(session, 'Project created');
       return true;

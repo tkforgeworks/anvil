@@ -91,13 +91,17 @@ class FakeProjectService extends ProjectService {
     required String projectName,
     required String gameTitle,
     required String parentFolder,
+    ProjectTemplate template = ProjectTemplate.blank,
   }) async {
-    calls.add('create $projectName | $gameTitle | $parentFolder');
+    calls.add(
+      'create $projectName | $gameTitle | $parentFolder | ${template.id}',
+    );
     if (createError case final error?) throw error;
     return super.create(
       projectName: projectName,
       gameTitle: gameTitle,
       parentFolder: parentFolder,
+      template: template,
     );
   }
 
