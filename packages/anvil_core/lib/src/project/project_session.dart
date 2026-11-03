@@ -35,8 +35,9 @@ import 'project_metadata.dart';
 /// releases the lock. The repositories are only usable while [isOpen].
 final class ProjectSession {
   @internal
-  ProjectSession(this.metadata, this.database, this.lock)
-    : classes = SqliteClassRepository(database),
+  ProjectSession(ProjectMetadata metadata, this.database, this.lock)
+    : _metadata = metadata,
+      classes = SqliteClassRepository(database),
       abilities = SqliteAbilityRepository(database),
       items = SqliteItemRepository(database),
       recipes = SqliteRecipeRepository(database),
@@ -48,8 +49,16 @@ final class ProjectSession {
       saveHistory = SqliteSaveHistoryRepository(database),
       lifecycle = SqliteLifecycleRepository(database);
 
-  /// The metadata as read when the session was opened.
-  final ProjectMetadata metadata;
+  ProjectMetadata _metadata;
+
+  /// The metadata as last read: at open, then after every
+  /// `ProjectService.refreshMetadata` (which `ProjectService.close` also
+  /// runs before closing the handle).
+  ProjectMetadata get metadata => _metadata;
+
+  /// Replaces [metadata]; only `ProjectService.refreshMetadata` calls it.
+  @internal
+  set metadata(ProjectMetadata value) => _metadata = value;
 
   /// The project's read-write connection on the UI isolate.
   final ProjectDatabase database;

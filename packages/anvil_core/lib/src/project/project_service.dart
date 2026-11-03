@@ -286,16 +286,58 @@ class ProjectService {
     _pendingUpgrades.remove(path.trim().toLowerCase())?.release();
   }
 
+  // -------------------------------------------------------------- metadata
+
+  /// Re-reads [session]'s metadata from its database and file (game title,
+  /// schema version, file size and modification time, active record
+  /// counts), stores it as [ProjectSession.metadata] and returns it.
+  ///
+  /// 0.1.6 rebuilt the metadata on every project Save; 0.2.0 has no project
+  /// Save, so the UI calls this after its writes instead. The recent list is
+  /// not touched here; [close] writes the refreshed entry to it.
+  ///
+  /// The file size and modification time are the main file's, which in WAL
+  /// mode change only when a checkpoint moves pages into it.
+  ///
+  /// When the database or the file cannot be read (a disk error, the file
+  /// moved away while open) the refresh is best effort: the previous
+  /// metadata stays and is returned, so no `SqliteException` or
+  /// [FileSystemException] escapes.
+  ///
+  /// Throws [StateError] if the session is closed.
+  ProjectMetadata refreshMetadata(ProjectSession session) {
+    if (!session.isOpen) {
+      throw StateError('The project session is closed.');
+    }
+    try {
+      return session.metadata = _buildMetadata(
+        session.database,
+        session.filePath,
+      );
+    } catch (_) {
+      // TODO(ANVL-173): log the failed metadata refresh.
+      return session.metadata;
+    }
+  }
+
   // ----------------------------------------------------------------- close
 
+  /// Writes the session's refreshed metadata to the recent list, then
   /// `TRUNCATE` checkpoint, close the handle, release the lock
   /// (`closeActiveProject`). The dirty-editor guard is the UI's.
+  ///
+  /// The recent entry is what the Welcome page shows after the close, so it
+  /// carries the game title and record counts as they are now (0.1.6
+  /// rewrote it on every project Save). A failed refresh writes the
+  /// metadata last read, and neither it nor a failed recent-list write
+  /// fails the close.
   ///
   /// The handle is closed and the lock released even when the checkpoint
   /// fails, which then throws [ProjectCloseFailed].
   Future<void> close(ProjectSession session) async {
     Object? failure;
     if (session.isOpen) {
+      _addRecent(refreshMetadata(session));
       try {
         session.database.checkpoint(CheckpointMode.truncate);
       } catch (e) {
@@ -532,6 +574,10 @@ ProjectMetadata _buildMetadata(ProjectDatabase db, String filePath) {
 
   final fallback = p.basenameWithoutExtension(filePath);
   final stat = File(filePath).statSync();
+  if (stat.type == FileSystemEntityType.notFound) {
+    // `statSync` reports a missing file as a size of -1 instead of throwing.
+    throw FileSystemException('The project file is missing', filePath);
+  }
   return ProjectMetadata(
     projectName: name.isEmpty ? fallback : name,
     gameTitle: title.isEmpty ? fallback : title,

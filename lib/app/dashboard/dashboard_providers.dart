@@ -13,13 +13,18 @@ import '../shell/shell_providers.dart';
 /// `projectApi.getSaveHistory(5)`.
 const dashboardSaveHistoryLimit = 5;
 
-/// The open project's metadata, or null with no project open. It is fixed
-/// for the session: `ProjectSession` has no refresh, so the file size is
-/// the one read at open where 0.1.6 re-read it from disk on every dashboard
-/// refresh.
-final dashboardProjectProvider = Provider.autoDispose<ProjectMetadata?>(
-  (ref) => ref.watch(projectSessionProvider)?.metadata,
-);
+/// The open project's metadata, or null with no project open, re-read from
+/// the database and the file after every write through
+/// `ProjectService.refreshMetadata` (which also stores it on the session),
+/// as 0.1.6 re-read it on every dashboard refresh. The file size and
+/// modification time are the main file's, so in WAL mode they move when a
+/// checkpoint runs (the quiet checkpoint follows writes by a few seconds).
+final dashboardProjectProvider = Provider.autoDispose<ProjectMetadata?>((ref) {
+  ref.watch(writeEpochProvider);
+  final session = ref.watch(projectSessionProvider);
+  if (session == null || !session.isOpen) return session?.metadata;
+  return ref.read(projectServiceProvider).refreshMetadata(session);
+});
 
 /// Per domain: records created in the last 7 days still active, minus
 /// records soft-deleted in the last 7 days; re-read after every write.
