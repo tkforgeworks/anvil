@@ -46,3 +46,20 @@
 - A brief's behavioural assertion can be wrong about the model: T-024 said "the draft history has NOT stepped" after a field undo, but `DraftHistory` counts an edit landing on the previous snapshot as an undo by design. Worker caught it and matched the spike. Write such assertions as "verify against the spike test and match it" instead of stating the expected state.
 - Two heavy workers in parallel on disjoint directories (`lib/app/shell/` vs `lib/app/editor/`) merged cleanly; the second one's worktree was fast-forwarded with its uncommitted changes via `git merge --ff-only` before the commit, which works when the incoming commits touch none of its files.
 - `sed -i 's#...#...#'` breaks when the replacement contains `#` (PR numbers). Use python for ledger edits.
+
+## 2026-11-01 — T-033..T-037 (domain editors, Undo snackbar, shared widgets)
+- Widget tests of a list or editor page must pump at the app's minimum (1400×800 with the 220 px sidebar taken, or through `test/shell/shell_harness.dart`). T-035's own tests ran at 2000 px and hid a 148 px `ListToolbar` overflow that the shell tests caught at merge. Every list/editor brief carries the rule and treats any `RenderFlex overflowed` as a failure to fix.
+- The domain list adapters are built with the list page's `WidgetRef`, which Riverpod 3.4 makes throw after the page unmounts. Anything that must outlive the page (the ANVL-166 Duplicate Undo) goes through `ProviderScope.containerOf` and a repository provider instead of the adapter. Follow-up candidate: adapters read repositories through the controller's own `Ref`.
+- Workers copying the landed `go_router` navigation imported `package:go_router` directly in a domain editor (T-034). Briefs now state the rule (`go_router` only under `lib/app/shell/`; navigate through `ref.read(routerProvider).go(...)`) and the done-check greps for it.
+- Three heavy workers on disjoint `lib/app/domains/<d>/` directories merged with no conflicts; the only shared edits (registry in `placeholders.dart`, `shell_routes_test.dart`, CLAUDE.md entry) are the orchestrator's after each merge. Cutting the three worktrees from the open PR's head commit (not the merged tip) was fine: the merge commit's first parent is that head.
+
+## 2026-11-01, ANVL-196/198/199 reviews
+- Widget tests render with the Ahem test font: every glyph is 1 em wide, so a 22-character timestamp is ~310 px and tables are far wider than in the app. A `RecordTable` row's actions can therefore sit off-screen even at 1400 px; tests over long rows call `tester.ensureVisible(action)` before tapping (the user would scroll). The earlier "RenderFlex overflowed by 7 px" on the NPC list was the same artefact; the horizontal scroll stays as a safety net.
+- A worker's "all tests passed" holds for its base only: the full suite must be re-run after fast-forwarding a worktree onto newer commits (the 199 SQLite test went red only once 197's horizontal-scroll table arrived under it).
+- `DraftHistory`'s 500 ms coalescing reads `clockProvider`, which defaults to the real clock; page tests that type then undo are flaky under a loaded `-j 4` run unless the harness overrides it with `tester.binding.clock.now` (done in `ClassHarness.pump`). Put the override in every domain harness from now on.
+- Riverpod in widget tests refreshes providers on a zero-length timer: `tester.pump()` alone never runs it, tests need `pump(Duration)` (worker note, ANVL-196).
+
+## 2026-11-01, ANVL-140/200 reviews
+- A worker's ff onto a tip whose changes are in a disjoint directory can lean on CI as the full-suite gate; the local re-run rule is for overlapping files (shared tables, placeholders, shell tests).
+- `gh pr create` fails with "you must first push the current branch" when the preceding `git push` silently failed over SSH (the tail showed only "and the repository exists."); check `git status -sb` for `[ahead N]` before assuming the push landed.
+- The CLAUDE.md anchor chain works across parallel worktrees only if the second PR's entry is added after its ff onto the first PR's merge; add the entry last, not with the worker's diff.
