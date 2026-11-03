@@ -22,6 +22,7 @@ import '../shell/app_router.dart';
 import '../shell/shell_domain.dart';
 import '../shell/shell_providers.dart';
 import '../welcome/create_project_dialog.dart';
+import 'about_dialog.dart';
 import 'external_links.dart';
 import 'shortcuts_dialog.dart';
 import 'ui_scale.dart';
@@ -208,7 +209,6 @@ bool editorCommandEnabled(MenuCommand command, {FocusNode? focus}) {
 String? disabledTooltip(WidgetRef ref, MenuCommand command) =>
     switch (command) {
       MenuCommand.importData => 'Coming soon',
-      MenuCommand.about => 'Not yet in 0.2.0',
       _ => null,
     };
 
@@ -223,7 +223,7 @@ bool commandEnabled(WidgetRef ref, MenuCommand command, {FocusNode? focus}) {
     return false;
   }
   return switch (command) {
-    MenuCommand.importData || MenuCommand.about => false,
+    MenuCommand.importData => false,
     MenuCommand.themeCustom =>
       ref.read(appSettingsProvider).customThemePath != null,
     _ => true,
@@ -312,6 +312,8 @@ Future<void> dispatchCommand(
       );
     case MenuCommand.reportBug:
       await openExternal(reportBugUrl, launch: ref.read(urlLauncherProvider));
+    case MenuCommand.about:
+      if (dialogContext != null) await showAnvilAboutDialog(dialogContext, ref);
     case _:
       break;
   }
