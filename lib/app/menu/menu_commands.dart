@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../dialogs/file_dialogs.dart';
 import '../editor/editor_shortcuts.dart';
 import '../project/project_lifecycle.dart';
 import '../providers.dart';
@@ -140,10 +141,32 @@ typedef SaveLocationPicker = Future<String?> Function({
   required String suggestedPath,
 });
 
-/// The Save As dialog. `FileDialogs` has no save dialog yet, so this is
-/// null and Save As is disabled until one is wired here (tests override
-/// it).
-final saveLocationPickerProvider = Provider<SaveLocationPicker?>((ref) => null);
+/// The save dialog Save As and the dashboard's Backup ask through:
+/// `FileDialogs.pickSaveLocation` starting in the folder of `suggestedPath`
+/// with its file name filled in. Tests override it or `fileDialogsProvider`.
+final saveLocationPickerProvider = Provider<SaveLocationPicker>((ref) {
+  final dialogs = ref.watch(fileDialogsProvider);
+  return ({required suggestedPath}) {
+    final (:folder, :name) = splitFilePath(suggestedPath);
+    return dialogs.pickSaveLocation(
+      initialDirectory: folder,
+      suggestedName: name,
+    );
+  };
+});
+
+/// [path] split at its last `/` or `\` into the folder (null when there is
+/// none; a root such as `/` or `C:\` keeps its separator) and the file
+/// name. The app has no `package:path`.
+({String? folder, String name}) splitFilePath(String path) {
+  final cut = path.lastIndexOf(RegExp(r'[/\\]'));
+  if (cut < 0) return (folder: null, name: path);
+  final root = cut == 0 || path[cut - 1] == ':';
+  return (
+    folder: path.substring(0, root ? cut + 1 : cut),
+    name: path.substring(cut + 1),
+  );
+}
 
 /// Asks the platform to quit through the exit request the runners forward
 /// to `AppLifecycleListener.onExitRequested` (design §8.8), as 0.1.6's
@@ -186,8 +209,6 @@ String? disabledTooltip(WidgetRef ref, MenuCommand command) =>
     switch (command) {
       MenuCommand.importData => 'Coming soon',
       MenuCommand.about => 'Not yet in 0.2.0',
-      MenuCommand.saveAs when ref.read(saveLocationPickerProvider) == null =>
-        'Needs a save dialog',
       _ => null,
     };
 
@@ -203,7 +224,6 @@ bool commandEnabled(WidgetRef ref, MenuCommand command, {FocusNode? focus}) {
   }
   return switch (command) {
     MenuCommand.importData || MenuCommand.about => false,
-    MenuCommand.saveAs => ref.read(saveLocationPickerProvider) != null,
     MenuCommand.themeCustom =>
       ref.read(appSettingsProvider).customThemePath != null,
     _ => true,
@@ -306,10 +326,11 @@ void clearRecentProjects(WidgetRef ref) =>
     ref.read(projectLifecycleProvider.notifier).clearRecents();
 
 Future<void> _saveAs(WidgetRef ref, BuildContext? dialogContext) async {
-  final picker = ref.read(saveLocationPickerProvider);
   final session = ref.read(projectSessionProvider);
-  if (picker == null || session == null) return;
-  final path = await picker(suggestedPath: session.filePath);
+  if (session == null) return;
+  final path = await ref.read(saveLocationPickerProvider)(
+    suggestedPath: session.filePath,
+  );
   if (path == null) return;
   final failure = await ref
       .read(projectLifecycleProvider.notifier)

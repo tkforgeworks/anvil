@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:anvil/app/dialogs/file_dialogs.dart';
 import 'package:anvil/app/menu/menu_commands.dart';
 import 'package:anvil/app/menu/ui_scale.dart';
 import 'package:anvil/app/providers.dart';
@@ -113,15 +114,8 @@ void main() {
           .having((a) => a.trigger, 'trigger', LogicalKeyboardKey.keyN)
           .having((a) => a.control, 'control', isTrue),
     );
-    // No save dialog is wired yet.
-    expect(rowWidget(tester, MenuCommand.saveAs).onPressed, isNull);
-    expect(
-      find.ancestor(
-        of: row(MenuCommand.saveAs),
-        matching: find.byType(Tooltip),
-      ),
-      findsOneWidget,
-    );
+    // Save As has its save dialog, so it is enabled with a project open.
+    expect(rowWidget(tester, MenuCommand.saveAs).onPressed, isNotNull);
 
     await showSection(tester, 'Project');
     expect(
@@ -298,36 +292,96 @@ void main() {
     );
   }, variant: linux);
 
-  testWidgets('Save As writes a copy through the save dialog and opens it', (
-    tester,
-  ) async {
-    final target = Directory.systemTemp.createTempSync('anvil-save-as');
-    addTearDown(() => target.deleteSync(recursive: true));
-    String? suggested;
-    final harness = await MenuHarness.pump(
+  test('splitFilePath splits at the last separator and keeps roots', () {
+    expect(splitFilePath('/a/b/c.anvil'), (folder: '/a/b', name: 'c.anvil'));
+    expect(splitFilePath('/c.anvil'), (folder: '/', name: 'c.anvil'));
+    expect(splitFilePath(r'C:\x\c.anvil'), (folder: r'C:\x', name: 'c.anvil'));
+    expect(splitFilePath(r'C:\c.anvil'), (folder: r'C:\', name: 'c.anvil'));
+    expect(splitFilePath('c.anvil'), (folder: null, name: 'c.anvil'));
+  });
+
+  group('Save As through the save dialog', () {
+    Future<(MenuHarness, FakeFileDialogs, String)> pumpWith(
+      WidgetTester tester,
+      String? answer,
+    ) async {
+      final dialogs = FakeFileDialogs()..saveLocation = answer;
+      final harness = await MenuHarness.pump(
+        tester,
+        overrides: [fileDialogsProvider.overrideWithValue(dialogs)],
+      );
+      final original = harness.container!
+          .read(projectSessionProvider)!
+          .filePath;
+      return (harness, dialogs, original);
+    }
+
+    String folderOf(String path) => File(path).parent.path;
+
+    testWidgets('the dialog starts at the open file; cancel writes nothing', (
       tester,
-      overrides: [
-        saveLocationPickerProvider.overrideWithValue(({
-          required suggestedPath,
-        }) async {
-          suggested = suggestedPath;
-          return '${target.path}/copy';
-        }),
-      ],
-    );
-    final original = harness.container!.read(projectSessionProvider)!.filePath;
-    await openSection(tester, 'File');
-    await tester.tap(row(MenuCommand.saveAs));
-    await pumpUntil(
+    ) async {
+      final (harness, dialogs, original) = await pumpWith(tester, null);
+      final session = harness.container!.read(projectSessionProvider);
+      final before = Directory(folderOf(original)).listSync().length;
+
+      await openSection(tester, 'File');
+      await tester.tap(row(MenuCommand.saveAs));
+      await tester.pumpAndSettle();
+
+      expect(dialogs.requests, [
+        'save location from ${folderOf(original)} as sample.anvil',
+      ]);
+      expect(harness.container!.read(projectSessionProvider), same(session));
+      expect(Directory(folderOf(original)).listSync().length, before);
+      expect(find.byType(SnackBar), findsNothing);
+    }, variant: linux);
+
+    testWidgets('a chosen path becomes the open project', (tester) async {
+      final target = Directory.systemTemp.createTempSync('anvil-save-as');
+      addTearDown(() => target.deleteSync(recursive: true));
+      final (harness, _, original) = await pumpWith(
+        tester,
+        '${target.path}/copy',
+      );
+
+      await openSection(tester, 'File');
+      await tester.tap(row(MenuCommand.saveAs));
+      await pumpUntil(
+        tester,
+        () =>
+            harness.container!.read(projectSessionProvider)?.filePath !=
+            original,
+      );
+      final copy = harness.container!.read(projectSessionProvider)!;
+      expect(copy.filePath, '${target.path}/copy.anvil');
+      expect(File(copy.filePath).existsSync(), isTrue);
+    }, variant: linux);
+
+    testWidgets('a failure keeps the project and shows the message', (
       tester,
-      () =>
-          harness.container!.read(projectSessionProvider)?.filePath != original,
-    );
-    expect(suggested, original);
-    final copy = harness.container!.read(projectSessionProvider)!;
-    expect(copy.filePath, '${target.path}/copy.anvil');
-    expect(File(copy.filePath).existsSync(), isTrue);
-  }, variant: linux);
+    ) async {
+      final target = Directory.systemTemp.createTempSync('anvil-save-as');
+      addTearDown(() => target.deleteSync(recursive: true));
+      final taken = File('${target.path}/taken.anvil')..writeAsStringSync('x');
+      final (harness, _, _) = await pumpWith(tester, taken.path);
+      final session = harness.container!.read(projectSessionProvider);
+
+      await openSection(tester, 'File');
+      await tester.tap(row(MenuCommand.saveAs));
+      await pumpUntil(
+        tester,
+        () => find.byType(SnackBar).evaluate().isNotEmpty,
+      );
+
+      expect(
+        find.text('A project file already exists at that path.'),
+        findsOneWidget,
+      );
+      expect(harness.container!.read(projectSessionProvider), same(session));
+      expect(taken.readAsStringSync(), 'x');
+    }, variant: linux);
+  });
 
   testWidgets('the settings rows open the real dialogs; Help links', (
     tester,
