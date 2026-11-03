@@ -1,0 +1,116 @@
+# deb and rpm for the Flutter Linux bundle (ANVL-168), built by
+# scripts/release/build-linux.sh, which runs nfpm from the repo root (so the
+# src paths below are relative to it) and sets:
+#   ANVIL_PKG_VERSION  X.Y.Z, or X.Y.Z~rc.N for a release candidate, so that
+#                      0.2.0~rc.1 sorts below 0.2.0 in dpkg and rpm
+#   ANVIL_GLIBC_MIN    the newest GLIBC_x.y symbol version the bundle uses
+#
+# Name `anvil`, the bundle under /opt/Anvil/ and the 0.1.x icon directory are
+# kept from the Electron 0.1.x packages so dnf and apt treat 0.2.0 as an
+# upgrade of them. The 0.1.x anvil.desktop and anvil.png go away with the old
+# package; the desktop file is named after the GTK application id
+# (APPLICATION_ID in linux/CMakeLists.txt) so the window matches its launcher.
+
+name: anvil
+arch: amd64
+platform: linux
+version: ${ANVIL_PKG_VERSION}
+version_schema: none
+release: "1"
+section: utils
+priority: optional
+maintainer: TK ForgeWorks <tim.klimpel@gmail.com>
+vendor: TK ForgeWorks
+homepage: https://github.com/tkforgeworks/anvil
+license: Apache-2.0
+description: |-
+  Desktop RPG data manager
+  Anvil keeps classes, abilities, items, crafting recipes, NPCs and loot
+  tables in one .anvil project file and exports them as JSON, CSV or custom
+  templates. A TK ForgeWorks product.
+
+contents:
+  - src: ./build/linux/x64/release/bundle
+    dst: /opt/Anvil
+    type: tree
+  - src: /opt/Anvil/anvil
+    dst: /usr/bin/anvil
+    type: symlink
+  - src: ./linux/packaging/com.tkforgeworks.anvil.desktop
+    dst: /usr/share/applications/com.tkforgeworks.anvil.desktop
+    file_info:
+      mode: 0644
+  - src: ./resources/icon.png
+    dst: /usr/share/icons/hicolor/512x512/apps/com.tkforgeworks.anvil.png
+    file_info:
+      mode: 0644
+  - src: ./LICENSE
+    dst: /usr/share/doc/anvil/LICENSE
+    file_info:
+      mode: 0644
+  - src: ./NOTICE
+    dst: /usr/share/doc/anvil/NOTICE
+    file_info:
+      mode: 0644
+
+# Libraries the system must provide: the NEEDED entries of the binary and of
+# lib/*.so that the bundle does not carry itself (SQLite is bundled as
+# lib/libsqlite3.so by the sqlite3 build hooks), plus libEGL.so.1 and
+# libGLESv2.so.2, which libepoxy opens with dlopen for the Flutter engine, so
+# they appear in no NEEDED list; without them the app aborts with "Couldn't
+# open libEGL.so.1" on a Debian that has GTK but no Mesa.
+# lib/libdartjni.so needs libjvm.so, but it is only opened by Dart FFI on
+# Android and nothing loads it on Linux, so no JVM is declared.
+# The GLib floor follows the build host (CI builds on ubuntu-22.04, GLib 2.72);
+# a bundle built on a newer distro needs that distro's GLib.
+overrides:
+  deb:
+    depends:
+      - libc6 (>= ${ANVIL_GLIBC_MIN})
+      - libgcc-s1
+      - libstdc++6
+      - zlib1g
+      - libgtk-3-0t64 | libgtk-3-0
+      - libglib2.0-0t64 | libglib2.0-0
+      - libatk1.0-0t64 | libatk1.0-0
+      - libpango-1.0-0
+      - libcairo2
+      - libcairo-gobject2
+      - libgdk-pixbuf-2.0-0
+      - libharfbuzz0b
+      - libepoxy0
+      - libfontconfig1
+      - libegl1
+      - libgles2
+    scripts:
+      postinstall: ./linux/packaging/postinstall.sh
+  rpm:
+    # rpm resolves sonames itself, so the requirements are the libraries,
+    # whichever package provides them on a given distro.
+    depends:
+      - libc.so.6(GLIBC_${ANVIL_GLIBC_MIN})(64bit)
+      - libgcc_s.so.1()(64bit)
+      - libstdc++.so.6()(64bit)
+      - libz.so.1()(64bit)
+      - libgtk-3.so.0()(64bit)
+      - libgdk-3.so.0()(64bit)
+      - libglib-2.0.so.0()(64bit)
+      - libgio-2.0.so.0()(64bit)
+      - libgobject-2.0.so.0()(64bit)
+      - libatk-1.0.so.0()(64bit)
+      - libpango-1.0.so.0()(64bit)
+      - libpangocairo-1.0.so.0()(64bit)
+      - libcairo.so.2()(64bit)
+      - libcairo-gobject.so.2()(64bit)
+      - libgdk_pixbuf-2.0.so.0()(64bit)
+      - libharfbuzz.so.0()(64bit)
+      - libepoxy.so.0()(64bit)
+      - libfontconfig.so.1()(64bit)
+      - libEGL.so.1()(64bit)
+      - libGLESv2.so.2()(64bit)
+
+rpm:
+  summary: Desktop RPG data manager
+  group: Applications/Productivity
+  scripts:
+    posttrans: ./linux/packaging/postinstall.sh

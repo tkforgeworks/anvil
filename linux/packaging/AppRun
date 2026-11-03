@@ -1,0 +1,8 @@
+#!/bin/sh
+# AppImage entry point (ANVL-168). scripts/release/build-linux.sh copies the
+# Flutter release bundle to $APPDIR/opt/anvil/; the binary finds its lib/ and
+# data/ next to itself, so nothing else needs setting up. GTK 3 comes from the
+# host, as on every desktop distro.
+set -e
+APPDIR="${APPDIR:-$(dirname "$(readlink -f "$0")")}"
+exec "$APPDIR/opt/anvil/anvil" "$@"

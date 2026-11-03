@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Anvil
+GenericName=RPG Data Manager
+Comment=RPG data management tool
+Exec=anvil %U
+Icon=com.tkforgeworks.anvil
+Terminal=false
+Categories=Utility;
+StartupWMClass=com.tkforgeworks.anvil

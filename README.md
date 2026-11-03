@@ -42,6 +42,8 @@ fvm flutter test test packages/anvil_core/test   # app + core tests (bare `flutt
 fvm flutter build linux        # or: fvm flutter build windows
 ```
 
+Release packages are built by CI, not by hand: `scripts/release/build-windows.ps1` (Inno Setup installer and zip) and `scripts/release/build-linux.sh` (AppImage, deb and rpm from `linux/packaging/`), both run by the org `release-flutter.yml` workflow when an RC or release is cut.
+
 The Electron toolchain (`npm …`) keeps working from the same checkout; the two do not share any paths. Flutter build output goes to `build/`, which is ignored.
 
 ---
