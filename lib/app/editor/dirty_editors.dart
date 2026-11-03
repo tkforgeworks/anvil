@@ -10,9 +10,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'editor_state.dart';
 
 /// One open editor whose draft differs from its baseline.
+///
+/// A record editor names its [domain]; a draft that is not a record (the
+/// Project Settings dialog, the export template dialog) registers through
+/// [DirtyEditor.other] with no domain and a [kindLabel] instead, so the
+/// prompts and the save status count it too (ANVL-165).
 final class DirtyEditor {
   const DirtyEditor({
-    required this.domain,
+    required SaveDomain this.domain,
     required this.recordId,
     required this.displayName,
     required this.save,
@@ -20,10 +25,34 @@ final class DirtyEditor {
     this.blockers = const [],
     this.saving = false,
     this.saveError,
+    this.kindLabel,
   });
 
-  final SaveDomain domain;
+  /// A draft outside the six record domains, keyed by [recordId] alone
+  /// (for example `project-settings`) and listed as
+  /// `<displayName> (<kindLabel>)`.
+  const DirtyEditor.other({
+    required this.recordId,
+    required this.displayName,
+    required String this.kindLabel,
+    required this.save,
+    required this.discard,
+    this.blockers = const [],
+    this.saving = false,
+    this.saveError,
+  }) : domain = null;
+
+  /// The record domain; null for a [DirtyEditor.other] entry.
+  final SaveDomain? domain;
   final String recordId;
+
+  /// What the prompts call the entry's kind in place of the domain's
+  /// singular, when set.
+  final String? kindLabel;
+
+  /// The kind the prompts show in brackets after [displayName]:
+  /// [kindLabel] when set, else the domain's singular.
+  String get kind => kindLabel ?? domain?.singular ?? '';
 
   /// The draft's display name, as the prompts list it.
   final String displayName;
@@ -53,6 +82,7 @@ final class DirtyEditor {
       other is DirtyEditor &&
       other.domain == domain &&
       other.recordId == recordId &&
+      other.kindLabel == kindLabel &&
       other.displayName == displayName &&
       other.save == save &&
       other.discard == discard &&
@@ -64,6 +94,7 @@ final class DirtyEditor {
   int get hashCode => Object.hash(
     domain,
     recordId,
+    kindLabel,
     displayName,
     save,
     discard,
@@ -74,7 +105,7 @@ final class DirtyEditor {
 
   @override
   String toString() =>
-      'DirtyEditor(${domain.name} $recordId $displayName'
+      'DirtyEditor(${domain?.name ?? kindLabel} $recordId $displayName'
       '${blockers.isEmpty ? '' : ', ${blockers.length} blocked'}'
       '${saving ? ', saving' : ''}'
       '${saveError == null ? '' : ', error: $saveError'})';
@@ -124,10 +155,11 @@ class DirtyEditorsNotifier extends Notifier<DirtyEditors> {
     state = DirtyEditors(entries);
   }
 
-  /// Removes the entry for [domain] and [recordId], if any. A no-op once
-  /// the registry itself is disposed (the container went away before an
-  /// editor's scheduled removal ran).
-  void remove(SaveDomain domain, String recordId) {
+  /// Removes the entry for [domain] and [recordId], if any; a null
+  /// [domain] names a [DirtyEditor.other] entry. A no-op once the registry
+  /// itself is disposed (the container went away before an editor's
+  /// scheduled removal ran).
+  void remove(SaveDomain? domain, String recordId) {
     if (!ref.mounted) return;
     final entries = state.entries;
     if (!entries.any((e) => e.domain == domain && e.recordId == recordId)) {

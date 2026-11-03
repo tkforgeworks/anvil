@@ -9,6 +9,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forge_ui/forge_ui.dart';
 
+import '../../editor/dirty_editors.dart';
+import '../../editor/exit_prompt.dart';
 import '../../editor/widgets/draft_text_field.dart';
 import '../../providers.dart';
 import '../../theme/anvil_metrics.dart';
@@ -37,11 +39,15 @@ Future<void> showProjectSettingsDialog(
   );
 }
 
-/// The dialog. Cancel, the close button, Escape and a click outside all
-/// discard the buffered edits without a prompt; the controller is
-/// auto-disposed with the dialog. Save is enabled while the buffer is
-/// dirty and breaks no rule, and closes the dialog once the save landed; a
-/// failed save shows its message and keeps the dialog and the edits.
+/// The dialog. Cancel, the close button, Escape and a click outside close
+/// it at once while the buffer is clean; while it is dirty they ask Save /
+/// Discard / Cancel first (`confirmLeaveEditor` over the controller's
+/// registry entry, ANVL-165) and close only when the answer is to leave.
+/// The controller is auto-disposed with the dialog. Save is enabled while
+/// the buffer is dirty and breaks no rule, and closes the dialog once the
+/// save landed; a failed save shows its message and keeps the dialog and
+/// the edits. The Custom Fields tab writes at once and is not part of the
+/// buffer.
 class ProjectSettingsDialog extends ConsumerWidget {
   const ProjectSettingsDialog({
     super.key,
@@ -82,8 +88,19 @@ class ProjectSettingsDialog extends ConsumerWidget {
       );
     }
 
-    return PopScope(
-      canPop: !saving,
+    final dirty = s?.isDirty ?? false;
+    return PopScope<Object?>(
+      canPop: !saving && !dirty,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop || saving) return;
+        final navigator = Navigator.of(context);
+        final entry = findDirtyEditor(
+          ref.read(dirtyEditorsProvider),
+          null,
+          projectSettingsDirtyId,
+        );
+        if (await confirmLeaveEditor(context, entry)) navigator.pop();
+      },
       child: Dialog(
         insetPadding: const EdgeInsets.all(AnvilSpacing.xl),
         constraints: const BoxConstraints(
@@ -119,7 +136,7 @@ class ProjectSettingsDialog extends ConsumerWidget {
                         icon: const Icon(Icons.close, size: 20),
                         onPressed: saving
                             ? null
-                            : () => Navigator.of(context).pop(),
+                            : () => Navigator.of(context).maybePop(),
                       ),
                     ],
                   ),
@@ -228,7 +245,9 @@ class _Footer extends ConsumerWidget {
               ),
               TextButton(
                 key: const ValueKey('project-settings-cancel'),
-                onPressed: saving ? null : () => Navigator.of(context).pop(),
+                onPressed: saving
+                    ? null
+                    : () => Navigator.of(context).maybePop(),
                 child: const Text('Cancel'),
               ),
               const SizedBox(width: AnvilSpacing.sm),

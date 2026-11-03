@@ -19,7 +19,9 @@ import 'editor_state.dart';
 ///
 /// With no dirty editors in [dirtyEditorsProvider] it returns true without
 /// showing anything. Otherwise it shows a dialog listing each dirty editor
-/// as `<display name> (<domain>)` with three choices:
+/// as `<display name> (<domain>)`, or `<display name> (<kind label>)` for a
+/// [DirtyEditor.other] entry such as the Project Settings dialog, with
+/// three choices:
 ///
 /// - **Save all** saves the editors in order (`saveAll()`) and returns true
 ///   when every one saved. When one fails or is blocked the dialog stays
@@ -60,10 +62,11 @@ final leaveGuardProvider = Provider<Future<bool> Function()>(
 );
 
 /// The registry entry of the editor for [domain] and [recordId], or null
-/// when that editor is clean (or not open).
+/// when that editor is clean (or not open). A null [domain] finds a
+/// [DirtyEditor.other] entry.
 DirtyEditor? findDirtyEditor(
   DirtyEditors editors,
-  SaveDomain domain,
+  SaveDomain? domain,
   String recordId,
 ) {
   for (final entry in editors.entries) {
@@ -82,8 +85,8 @@ DirtyEditor? findDirtyEditor(
 /// - **Discard** throws the draft back to its baseline and returns true.
 /// - **Cancel** (also Escape or a click outside) returns false.
 ///
-/// The full-page editor routes' `onExit` and the editor dialog's
-/// `PopScope` call it. The dialog follows the live entry in
+/// The full-page editor routes' `onExit`, the editor dialog's `PopScope`
+/// and the Project Settings and template dialogs' `PopScope`s call it. The dialog follows the live entry in
 /// [dirtyEditorsProvider], so [entry] only names the editor.
 Future<bool> confirmLeaveEditor(
   BuildContext context,
@@ -142,7 +145,9 @@ class _LeaveAllDialogState extends ConsumerState<LeaveAllDialog> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                entries.length == 1
+                entries.any((e) => e.domain == null)
+                    ? 'There are unsaved changes:'
+                    : entries.length == 1
                     ? 'This record has unsaved changes:'
                     : 'These records have unsaved changes:',
               ),
@@ -150,7 +155,7 @@ class _LeaveAllDialogState extends ConsumerState<LeaveAllDialog> {
               for (final entry in entries)
                 Padding(
                   key: ValueKey(
-                    'leave-all-${entry.domain.name}-'
+                    'leave-all-${entry.domain?.name ?? entry.kindLabel}-'
                     '${entry.recordId}',
                   ),
                   padding: const EdgeInsets.only(top: AnvilSpacing.xs),
@@ -158,7 +163,7 @@ class _LeaveAllDialogState extends ConsumerState<LeaveAllDialog> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '${entry.displayName} (${entry.domain.singular})',
+                        '${entry.displayName} (${entry.kind})',
                         style: context.text.bodyMedium?.copyWith(
                           fontWeight: FontWeight.w600,
                         ),
@@ -211,8 +216,8 @@ String? _problemOf(DirtyEditor entry) =>
     (entry.blockers.isEmpty ? null : entry.blockers.first.message);
 
 /// The Save / Discard / Cancel dialog of [confirmLeaveEditor] for the
-/// editor of [domain] and [recordId]; pops true to leave and false to
-/// stay. It pops true by itself if the editor turns clean while it is
+/// editor of [domain] and [recordId] (a null [domain] for a
+/// [DirtyEditor.other] entry); pops true to leave and false to stay. It pops true by itself if the editor turns clean while it is
 /// open.
 class LeaveEditorDialog extends ConsumerStatefulWidget {
   const LeaveEditorDialog({
@@ -221,7 +226,7 @@ class LeaveEditorDialog extends ConsumerStatefulWidget {
     required this.recordId,
   });
 
-  final SaveDomain domain;
+  final SaveDomain? domain;
   final String recordId;
 
   @override
@@ -286,11 +291,15 @@ class _LeaveEditorDialogState extends ConsumerState<LeaveEditorDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('This record has unsaved changes:'),
+            Text(
+              widget.domain == null
+                  ? 'There are unsaved changes:'
+                  : 'This record has unsaved changes:',
+            ),
             const SizedBox(height: AnvilSpacing.sm),
             if (entry != null)
               Text(
-                '${entry.displayName} (${entry.domain.singular})',
+                '${entry.displayName} (${entry.kind})',
                 style: context.text.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),

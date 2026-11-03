@@ -172,6 +172,10 @@ class _FieldListState extends ConsumerState<FieldList> {
 
   Future<void> _delete(CustomFieldDefinition def) async {
     setState(() => _deleteError = null);
+    if (!await showDeleteFieldDialog(context, fieldName: def.fieldName)) {
+      return;
+    }
+    if (!mounted) return;
     final error = await ref
         .read(customFieldsTabProvider.notifier)
         .deleteField(def.id);
@@ -248,6 +252,48 @@ class _FieldListState extends ConsumerState<FieldList> {
     );
   }
 }
+
+/// The confirm button of [showDeleteFieldDialog].
+const deleteFieldConfirmKey = ValueKey('delete-field-confirm');
+
+/// The cancel button of [showDeleteFieldDialog].
+const deleteFieldCancelKey = ValueKey('delete-field-cancel');
+
+/// Asks before a custom field definition is deleted (ANVL-165): true to
+/// delete, false on Cancel, Escape or a click outside. The repository
+/// still refuses a field any record has a value for, and that refusal
+/// shows above the list as before.
+Future<bool> showDeleteFieldDialog(
+  BuildContext context, {
+  required String fieldName,
+}) async =>
+    await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        final c = context.colors;
+        return AlertDialog(
+          title: Text('Delete field "$fieldName"?'),
+          content: const Text('This cannot be undone.'),
+          actions: [
+            TextButton(
+              key: deleteFieldCancelKey,
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              key: deleteFieldConfirmKey,
+              style: FilledButton.styleFrom(
+                backgroundColor: c.error,
+                foregroundColor: c.onError,
+              ),
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    ) ??
+    false;
 
 /// 0.1.6 `FieldDialog`: add or edit one definition, written on submit. The
 /// field type is fixed once created; the repository's refusals (an enum
