@@ -17,6 +17,7 @@ import '../theme/anvil_metrics.dart';
 import '../validation/last_checked.dart';
 import '../welcome/recent_projects_list.dart' show ProjectInitialsMark;
 import '../widgets/formatting.dart';
+import 'backup_button.dart';
 import 'count_tile.dart';
 import 'dashboard_providers.dart';
 import 'quick_add.dart';
@@ -128,7 +129,7 @@ class DashboardPage extends ConsumerWidget {
 
 /// The banner in the primary colour: the initials mark, the project name
 /// with the [StatusTag], `Last saved <relative>`, the folder (or file) and
-/// the file size, and the Quick add button.
+/// the file size, and the Backup and Quick add buttons.
 class _Hero extends StatelessWidget {
   const _Hero({
     required this.project,
@@ -138,6 +139,10 @@ class _Hero extends StatelessWidget {
   });
 
   static const markSize = 56.0;
+
+  /// Below this width the Backup and Quick add buttons sit under the
+  /// project details instead of squeezing them.
+  static const buttonsBesideWidth = 640.0;
 
   final ProjectMetadata project;
   final SaveStatus status;
@@ -159,73 +164,94 @@ class _Hero extends StatelessWidget {
         color: c.primary,
         borderRadius: BorderRadius.circular(AnvilRadii.panel),
       ),
-      child: Row(
-        children: [
-          DecoratedBox(
-            decoration: BoxDecoration(
-              border: Border.all(color: on.withValues(alpha: 0.5)),
-              borderRadius: BorderRadius.circular(AnvilRadii.control),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final details = [
+            DecoratedBox(
+              decoration: BoxDecoration(
+                border: Border.all(color: on.withValues(alpha: 0.5)),
+                borderRadius: BorderRadius.circular(AnvilRadii.control),
+              ),
+              child: ProjectInitialsMark(
+                name: project.projectName,
+                size: markSize,
+              ),
             ),
-            child: ProjectInitialsMark(
-              name: project.projectName,
-              size: markSize,
-            ),
-          ),
-          const SizedBox(width: AnvilSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        project.projectName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: context.text.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: on,
+            const SizedBox(width: AnvilSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          project.projectName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: context.text.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: on,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: AnvilSpacing.sm),
-                    StatusTag(status),
-                  ],
-                ),
-                const SizedBox(height: 2),
-                Text.rich(
-                  TextSpan(
-                    text: 'Last saved ',
-                    children: [
-                      TextSpan(
-                        text: saved == null
-                            ? '—'
-                            : formatRelativeTimestamp(saved, now: now),
-                        style: const TextStyle(fontWeight: FontWeight.w500),
-                      ),
+                      const SizedBox(width: AnvilSpacing.sm),
+                      StatusTag(status),
                     ],
                   ),
-                  style: context.text.bodyMedium?.copyWith(
-                    color: on.withValues(alpha: 0.8),
+                  const SizedBox(height: 2),
+                  Text.rich(
+                    TextSpan(
+                      text: 'Last saved ',
+                      children: [
+                        TextSpan(
+                          text: saved == null
+                              ? '—'
+                              : formatRelativeTimestamp(saved, now: now),
+                          style: const TextStyle(fontWeight: FontWeight.w500),
+                        ),
+                      ],
+                    ),
+                    style: context.text.bodyMedium?.copyWith(
+                      color: on.withValues(alpha: 0.8),
+                    ),
                   ),
-                ),
-                Text(
-                  '${project.projectFolder?.root ?? project.filePath} · '
-                  '${formatFileSize(project.fileSize)}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: ForgeType.code(
-                    size: 12,
-                    color: on.withValues(alpha: 0.6),
+                  Text(
+                    '${project.projectFolder?.root ?? project.filePath} · '
+                    '${formatFileSize(project.fileSize)}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: ForgeType.code(
+                      size: 12,
+                      color: on.withValues(alpha: 0.6),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          const SizedBox(width: AnvilSpacing.md),
-          const QuickAddButton(),
-        ],
+          ];
+          final buttons = [
+            BackupButton(project: project),
+            const SizedBox(width: AnvilSpacing.sm),
+            const QuickAddButton(),
+          ];
+          if (constraints.maxWidth >= buttonsBesideWidth) {
+            return Row(
+              children: [
+                ...details,
+                const SizedBox(width: AnvilSpacing.md),
+                ...buttons,
+              ],
+            );
+          }
+          return Column(
+            children: [
+              Row(children: details),
+              const SizedBox(height: AnvilSpacing.sm),
+              Row(mainAxisAlignment: MainAxisAlignment.end, children: buttons),
+            ],
+          );
+        },
       ),
     );
   }
