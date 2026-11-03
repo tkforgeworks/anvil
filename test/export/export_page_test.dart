@@ -11,6 +11,7 @@ import 'package:anvil/app/shell/app_router.dart';
 import 'package:anvil/app/shell/shell_providers.dart';
 import 'package:anvil_core/anvil_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'fakes.dart';
@@ -694,6 +695,65 @@ void main() {
     expect(caretOffset(text, 9, 1), text.length);
   });
 
+  testWidgets(
+    'a pending export request opens the page in Record Selection on its '
+    'domain with only that record checked, and is consumed: the next visit '
+    'starts in the full project scope',
+    (tester) async {
+      final h = ExportHarness();
+      await h.pump(
+        tester,
+        overrides: [
+          exportRequestProvider.overrideWith(
+            () =>
+                _PendingRequest(const ExportRequest(ExportDomain.items, 'i-2')),
+          ),
+        ],
+      );
+
+      expect(h.state.mode, ExportScopeMode.selection);
+      expect(h.state.domain, ExportDomain.items);
+      expect(h.state.checked, {'i-2'});
+      expect(selectAllLabel(tester), 'Select All (1/2)');
+      expect(h.container.read(exportRequestProvider), isNull);
+      await tapKey(tester, h, ExportPage.previewKey);
+      expect(
+        h.service.renders.last.scope,
+        ExportScope.selection(ExportDomain.items, ['i-2']),
+      );
+
+      h.container.read(routerProvider).go('/validation');
+      await h.settle(tester);
+      expect(find.byType(ExportPage), findsNothing);
+      h.container.read(routerProvider).go('/export');
+      await h.settle(tester);
+
+      expect(h.state.mode, ExportScopeMode.full);
+      expect(h.state.domain, isNull);
+      expect(h.state.checked, isEmpty);
+      expect(find.byKey(RecordSelectionList.selectAllKey), findsNothing);
+    },
+    variant: linux,
+  );
+
+  test('ExportRequest is value-equal; take returns the request once', () {
+    const a = ExportRequest(ExportDomain.npcs, 'n-1');
+    expect(a, const ExportRequest(ExportDomain.npcs, 'n-1'));
+    expect(a.hashCode, const ExportRequest(ExportDomain.npcs, 'n-1').hashCode);
+    expect(a, isNot(const ExportRequest(ExportDomain.items, 'n-1')));
+    expect(a, isNot(const ExportRequest(ExportDomain.npcs, 'n-2')));
+
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    final notifier = container.read(exportRequestProvider.notifier);
+    expect(notifier.take(), isNull);
+    notifier.request(a);
+    expect(container.read(exportRequestProvider), a);
+    expect(notifier.take(), a);
+    expect(notifier.take(), isNull);
+    expect(container.read(exportRequestProvider), isNull);
+  });
+
   test('the notice texts', () {
     expect(
       unsupportedTemplatesNotice(1),
@@ -704,4 +764,14 @@ void main() {
       '2 custom templates need changes before they can export',
     );
   });
+}
+
+/// An [ExportRequestNotifier] that starts with [initial] pending.
+class _PendingRequest extends ExportRequestNotifier {
+  _PendingRequest(this.initial);
+
+  final ExportRequest initial;
+
+  @override
+  ExportRequest? build() => initial;
 }

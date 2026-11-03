@@ -19,7 +19,17 @@ Finder cell(String text) =>
 /// The table's display names, top to bottom.
 List<String> names(WidgetTester tester) => [
   for (final row in tester.widget<DataTable>(find.byType(DataTable)).rows)
-    ((row.cells[1].child as Text).data!),
+    tester
+        .widget<Text>(
+          find
+              .descendant(
+                of: find.byWidget(row.cells[1].child),
+                matching: find.byType(Text),
+                matchRoot: true,
+              )
+              .first,
+        )
+        .data!,
 ];
 
 void main() {

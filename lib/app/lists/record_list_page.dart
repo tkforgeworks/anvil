@@ -6,6 +6,7 @@ import 'package:forge_ui/forge_ui.dart';
 
 import '../editor/dirty_editors.dart';
 import '../editor/exit_prompt.dart';
+import '../export/export_controller.dart';
 import '../shell/app_router.dart';
 import '../shell/open_editor.dart';
 import '../shell/shell_providers.dart';
@@ -237,6 +238,7 @@ class _RecordListPageState<R> extends ConsumerState<RecordListPage<R>> {
         columns: columns,
         idOf: adapter.idOf,
         actionsFor: (row) => _actions(row, state),
+        contextMenuFor: archived ? null : (row) => _contextMenu(row, state),
         onOpen: archived ? null : _open,
         selection: state.selection,
         onToggleSelected: _controller.toggleSelected,
@@ -302,6 +304,48 @@ class _RecordListPageState<R> extends ConsumerState<RecordListPage<R>> {
         ),
       ],
     };
+  }
+
+  /// An active row's context menu (ANVL-117): Edit, Duplicate, Export
+  /// (the Export page scoped to this record) and Move to Recycle Bin, the
+  /// same instant soft delete with the Undo snackbar as the Delete button.
+  List<RecordRowAction> _contextMenu(R row, RecordListState<R> state) {
+    final id = _adapter.idOf(row);
+    void guard(void Function() f) {
+      if (!state.busy) f();
+    }
+
+    return [
+      RecordRowAction(
+        label: 'Edit',
+        icon: Icons.edit,
+        onPressed: () => _open(id),
+      ),
+      RecordRowAction(
+        label: 'Duplicate',
+        icon: Icons.content_copy,
+        onPressed: () => guard(() => unawaited(_duplicate(row))),
+      ),
+      RecordRowAction(
+        label: 'Export',
+        icon: Icons.file_download_outlined,
+        onPressed: () => _export(id),
+      ),
+      RecordRowAction(
+        label: 'Move to Recycle Bin',
+        icon: Icons.delete,
+        destructive: true,
+        onPressed: () => guard(() => unawaited(_softDelete(row))),
+      ),
+    ];
+  }
+
+  /// Opens the Export page in Record Selection with only [id] checked.
+  void _export(String id) {
+    ref
+        .read(exportRequestProvider.notifier)
+        .request(ExportRequest(_adapter.domain.exportDomain, id));
+    ref.read(routerProvider).go('/export');
   }
 
   void _open(String id) {

@@ -111,6 +111,17 @@ extension ShellDomainLifecycle on ShellDomain {
   };
 }
 
+extension ShellDomainExport on ShellDomain {
+  ExportDomain get exportDomain => switch (this) {
+    ShellDomain.classes => ExportDomain.classes,
+    ShellDomain.abilities => ExportDomain.abilities,
+    ShellDomain.items => ExportDomain.items,
+    ShellDomain.recipes => ExportDomain.recipes,
+    ShellDomain.npcs => ExportDomain.npcs,
+    ShellDomain.lootTables => ExportDomain.lootTables,
+  };
+}
+
 /// Case-insensitive text order, 0.1.6's
 /// `localeCompare(b, undefined, { sensitivity: 'base' })` for the names
 /// Anvil holds.

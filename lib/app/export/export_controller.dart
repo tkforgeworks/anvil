@@ -86,6 +86,48 @@ ShellDomain _shellDomain(ExportDomain domain) => switch (domain) {
   ExportDomain.lootTables => ShellDomain.lootTables,
 };
 
+/// A request to open the Export page scoped to one record, set by the list
+/// rows' context menu (ANVL-117) before it navigates to `/export`.
+class ExportRequest {
+  const ExportRequest(this.domain, this.id);
+
+  final ExportDomain domain;
+  final String id;
+
+  @override
+  bool operator ==(Object other) =>
+      other is ExportRequest && other.domain == domain && other.id == id;
+
+  @override
+  int get hashCode => Object.hash(domain, id);
+
+  @override
+  String toString() => 'ExportRequest(${domain.name}, $id)';
+}
+
+/// The pending [ExportRequest], or null. Not auto-disposed, so it is set
+/// before the auto-disposed [exportPageProvider] exists; the page's
+/// controller [ExportRequestNotifier.take]s it when it builds.
+final exportRequestProvider =
+    NotifierProvider<ExportRequestNotifier, ExportRequest?>(
+      ExportRequestNotifier.new,
+      name: 'exportRequest',
+    );
+
+class ExportRequestNotifier extends Notifier<ExportRequest?> {
+  @override
+  ExportRequest? build() => null;
+
+  void request(ExportRequest request) => state = request;
+
+  /// The pending request, which is cleared.
+  ExportRequest? take() {
+    final pending = state;
+    if (pending != null) state = null;
+    return pending;
+  }
+}
+
 /// One record of the selection checklist.
 typedef ExportRecordRef = ({String id, String displayName});
 
@@ -191,6 +233,11 @@ final exportPageProvider =
 /// disappears or cannot run, as 0.1.6's `loadPresets` fell back to the
 /// first. The domain's records are re-read on every build and the checked
 /// ids pruned to them.
+///
+/// A pending [ExportRequest] is taken on the build after the selectors are
+/// listed (Riverpod refuses a change to another provider in the synchronous
+/// part of a build): the page then starts in Record Selection on the
+/// request's domain with only its record checked.
 class ExportPageController extends AsyncNotifier<ExportPageState> {
   var _selectors = <ExportSelector>[];
   String? _selectedId;
@@ -230,6 +277,13 @@ class ExportPageController extends AsyncNotifier<ExportPageState> {
     } catch (error) {
       if (!ref.mounted) return _snapshot();
       _error = listErrorMessage(error, 'Failed to load export templates.');
+    }
+    if (ref.read(exportRequestProvider.notifier).take() case final request?) {
+      _recordsGeneration++;
+      _mode = ExportScopeMode.selection;
+      _domain = request.domain;
+      _checked = {request.id};
+      _preview = null;
     }
     await _reloadRecords(clear: false);
     return _snapshot();
