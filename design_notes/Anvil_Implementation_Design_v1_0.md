@@ -7,7 +7,7 @@ RPG Resource Management Tool
 | Field | Value |
 | :---- | :---- |
 | Version | 1.0 |
-| Status | **Superseded for the Flutter line** by `Anvil_Implementation_Design_v2_0.md` (ANVL-155, 2026-10-31). Still describes the Electron 0.1.x app, which is frozen at 0.1.6 and kept as the porting reference until cutover (ANVL-169). |
+| Status | **Superseded for the Flutter line** by `Anvil_Implementation_Design_v2_0.md` (ANVL-155, 2026-10-31). Still describes the Electron 0.1.x app, frozen at 0.1.6. Its source was removed from the repository at cutover (ANVL-169) and is at git tag `v0.1.6`. |
 | Date | April 2026 |
 | Based On | PRD v1.4 (the PRD is disregarded; the code base is the source of truth) |
 

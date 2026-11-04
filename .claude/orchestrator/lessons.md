@@ -25,7 +25,7 @@
 - anvil_core: `sample-0.1.6.anvil` is in rollback-journal mode (`delete`), not WAL, because the generator opened it without the WAL pragma; `ProjectDatabase.open` switches a copy to WAL, `openReadOnly` cannot. Real 0.1.6 files are WAL.
 - anvil_core: to corrupt a fixture copy for an integrity_check test, overwrite row data inside a populated page (the `stats` page), not unused space; the brief's "page 3 + 200" offset landed in free space and SQLite reported `ok`.
 - anvil_core: `Isolate.resolvePackageUriSync` does not work under `flutter_tester`; test support locates `test/fixtures/` from the working directory (package dir or repo root).
-- Electron tree: `better-sqlite3` is compiled for Electron's ABI; `npm rebuild better-sqlite3` before a Node/vitest run, `npm run rebuild` after. Both worked on 2026-11-01.
+- Electron tree: `better-sqlite3` is compiled for Electron's ABI; `npm rebuild better-sqlite3` before a Node/vitest run, `npm run rebuild` after. Both worked on 2026-11-01. (The Electron tree left the repo at ANVL-169; this applies only to a `v0.1.6` checkout used to re-run the fixture oracles.)
 - forge-ui: `flutter_test` runs as Android, so Material adds no `Scrollbar` and no desktop behaviour unless the test sets `debugDefaultTargetPlatformOverride` (and clears it before the body returns) or uses a platform variant.
 - forge-ui: the full-page gallery goldens (`gallery_*_{light,dark}.png`, 8 files) change on ANY gallery edit, including an app-bar icon; section goldens under `components/` change only for their section.
 

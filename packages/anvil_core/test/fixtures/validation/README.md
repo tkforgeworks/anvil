@@ -1,6 +1,6 @@
 # Validation oracle
 
-The expected output of the Electron 0.1.6 validation engine (`src/main/validation/engine.ts`),
+The expected output of the Electron 0.1.6 validation engine (`src/main/validation/engine.ts` at git tag `v0.1.6`),
 which `packages/anvil_core/lib/src/validation/` must reproduce exactly, order included:
 
 - `validation-issues-fixture.json`: `validateProject` on a copy of `../sample-0.1.6.anvil`.
@@ -24,18 +24,22 @@ JSON by hand.
 the mutated project to check that `validateRecord` returns each record's share of the project
 list.
 
-To regenerate, from the anvil checkout with `node_modules` installed (`better-sqlite3` must be
-built for Node, not Electron; the oracle mocks `app-logger`, which pulls in Electron):
+To regenerate, from a checkout of tag `v0.1.6` (the Electron source is no longer in this
+repository) with `npm ci` run there and `better-sqlite3` built for Node (the oracle mocks
+`app-logger`, which pulls in Electron). `$ANVIL` is this repository's checkout:
 
+    git worktree add ../anvil-0.1.6 v0.1.6 && cd ../anvil-0.1.6 && npm ci
     npm rebuild better-sqlite3            # Node ABI
     mkdir -p src/main/__spike__
-    cp packages/anvil_core/test/fixtures/validation/build-validation-oracle.test.ts src/main/__spike__/
-    FIXTURE_DIR=packages/anvil_core/test/fixtures/validation \
+    cp $ANVIL/packages/anvil_core/test/fixtures/validation/build-validation-oracle.test.ts src/main/__spike__/
+    FIXTURE_DIR=$ANVIL/packages/anvil_core/test/fixtures/validation \
+      VALIDATION_FIXTURES=$ANVIL/packages/anvil_core/test/fixtures/validation \
       npx vitest run src/main/__spike__/build-validation-oracle.test.ts
-    rm -rf src/main/__spike__ && npm run rebuild   # restore the Electron binary
+    rm -rf src/main/__spike__
 
 The oracle reads `sample-0.1.6.anvil` and `validation-mutations.sql` from
-`packages/anvil_core/test/fixtures/` under the working directory; set `VALIDATION_FIXTURES` to
-another `validation/` directory (for example a worktree's) to read them from there. It never
-writes to the fixture, only to copies in a temp directory. The oracle is regenerated until
-cutover (ANVL-169) and then frozen.
+`packages/anvil_core/test/fixtures/` under the working directory by default, which does not
+exist in a `v0.1.6` checkout, so `VALIDATION_FIXTURES` must point at a `validation/` directory
+(here, this repository's) as above. It never writes to the fixture, only to copies in a temp
+directory. Since cutover (ANVL-169) the oracle output is frozen; the steps above are the record
+of how it was made.

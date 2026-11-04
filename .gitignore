@@ -14,13 +14,6 @@ design_work/
 *.iml
 *.swp
 
-# --- Electron app (0.1.x, kept as the porting reference until ANVL-169) ---
-node_modules/
-.vite/
-out/
-dist/
-build/Release/
-
 # --- Flutter app (0.2.0) ---
 # FVM: the pinned SDK lives in .fvmrc; .fvm/ is the local symlink and cache
 .fvm/
@@ -29,7 +22,7 @@ build/Release/
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/
-# Flutter build output at the root and in workspace packages (also covers the old Electron build/Release/ above)
+# Flutter build output at the root and in workspace packages
 build/
 migrate_working_dir/
 **/doc/api/
