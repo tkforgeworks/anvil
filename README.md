@@ -8,6 +8,46 @@ Anvil is game-agnostic — it ships with sensible RPG defaults but allows full s
 
 ---
 
+## Install
+
+The install scripts (Anvil 0.2.0 and later) pick a release from GitHub, download the right file for your machine, check it against the sha256 digest GitHub publishes, and install it. Run the same command again to update. Without a version they never downgrade.
+
+**Linux** (x86_64): the deb with apt on Debian and Ubuntu, the rpm with dnf on Fedora, otherwise the AppImage for your user only (`~/.local/bin/anvil` plus a menu entry). It needs `curl` and `python3`, and asks for `sudo` once for the deb or rpm.
+
+```bash
+# newest release, release candidates included
+curl -fsSL https://raw.githubusercontent.com/tkforgeworks/anvil/main/scripts/install/install-anvil.sh | bash
+# newest stable release
+curl -fsSL https://raw.githubusercontent.com/tkforgeworks/anvil/main/scripts/install/install-anvil.sh | bash -s -- --stable
+# one version (may downgrade)
+curl -fsSL https://raw.githubusercontent.com/tkforgeworks/anvil/main/scripts/install/install-anvil.sh | bash -s -- v0.2.0
+```
+
+`--check` shows what would be installed and changes nothing, and `--appimage` installs the AppImage on a deb or rpm system too. `--help` lists every option.
+
+**Windows** (x64, Windows PowerShell 5.1 or PowerShell 7): runs the installer silently, for the current user unless you pass `-AllUsers` from an elevated PowerShell.
+
+```powershell
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/tkforgeworks/anvil/main/scripts/install/install-anvil.ps1))) -Stable
+```
+
+Leave out `-Stable` to get the newest release including release candidates, or pass `-Tag v0.2.0` for one version. `-Check`, `-InstallDir` and `-Help` are also available. Close Anvil first: the installer asks a running Anvil to close and does not reopen it.
+
+These URLs serve the scripts from `main`, so they work once 0.2.0 has shipped. Until then, run them from a checkout of `v0.2.0/main`: `bash scripts/install/install-anvil.sh`, or on Windows `powershell -ExecutionPolicy Bypass -File scripts\install\install-anvil.ps1`.
+
+**By hand.** Download the file for your platform from [Releases](https://github.com/tkforgeworks/anvil/releases):
+
+| Platform | File | Install |
+|---|---|---|
+| Windows | `anvil-<version>-windows-x64-setup.exe` | Run it (Windows SmartScreen warns because it is unsigned: More info → Run anyway). `…-windows-x64.zip` is the same app unpacked, with no installer. |
+| Debian, Ubuntu | `anvil-<version>-linux-amd64.deb` | `sudo apt install ./anvil-<version>-linux-amd64.deb` |
+| Fedora | `anvil-<version>-linux-x86_64.rpm` | `sudo dnf install ./anvil-<version>-linux-x86_64.rpm` |
+| Other Linux | `anvil-<version>-linux-x86_64.AppImage` | `chmod +x` it and run it |
+
+The 0.2.0 packages replace an installed 0.1.x. [`docs/upgrade-0.2.md`](docs/upgrade-0.2.md) covers what changes for 0.1.x users. The 0.1.x releases use different file names, and the scripts do not install them.
+
+---
+
 ## Flutter rewrite (0.2.0)
 
 The Flutter desktop app (Windows + Linux) lives alongside the Electron source while it is being ported. It opens the same `.anvil` SQLite project files. The architecture of the rewrite is `design_notes/Anvil_Implementation_Design_v2_0.md` (ANVL-155).
