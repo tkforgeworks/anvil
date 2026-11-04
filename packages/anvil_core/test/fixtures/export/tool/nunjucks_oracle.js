@@ -1,6 +1,6 @@
 // Renders tool/parity_cases.js with Nunjucks in Anvil 0.1.6's exact
-// environment (src/main/export/renderer.ts) and writes the results to
-// ../nunjucks-parity.json (test/fixtures/export/). Needs the Electron app's node_modules:
+// environment (src/main/export/renderer.ts at git tag v0.1.6) and writes the results to
+// ../nunjucks-parity.json (test/fixtures/export/). Needs Nunjucks 3.2.4 from a v0.1.6 checkout after npm ci:
 //   NUNJUCKS=/path/to/anvil/node_modules/nunjucks node nunjucks_oracle.js
 const path = require('path')
 const fs = require('fs')

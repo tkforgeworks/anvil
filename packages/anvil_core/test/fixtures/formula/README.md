@@ -1,7 +1,7 @@
 # Formula parity corpus
 
 `formula-corpus.json` is the expected behaviour of the Electron 0.1.6 formula engine
-(`src/main/formula/engine.ts`) for every case in `build-formula-corpus.test.ts`, a throwaway vitest
+(`src/main/formula/engine.ts` at git tag `v0.1.6`) for every case in `build-formula-corpus.test.ts`, a throwaway vitest
 oracle. `test/formula/parity_test.dart` runs each case through the Dart port and asserts the same
 `value`, `error`, `isSyntaxError`, `validateFormula` message (`validate`) and
 `extractVariableNames` list (`variables`).
@@ -11,12 +11,15 @@ negative zero, which are the strings `"NaN"`, `"Infinity"`, `"-Infinity"` and `"
 `repeat` instead of `formula` stands for `open × depth + core + close × depth` (the stack-overflow
 cases, which would otherwise be hundreds of kilobytes).
 
-To regenerate, from the anvil checkout with `node_modules` installed (the engine does not use
-better-sqlite3, so no rebuild is needed; the oracle mocks `app-logger`, which pulls in Electron):
+To regenerate, from a checkout of tag `v0.1.6` (the Electron source is no longer in this
+repository) with `npm ci` run there (the engine does not use better-sqlite3, so no rebuild is
+needed; the oracle mocks `app-logger`, which pulls in Electron). `$ANVIL` is this repository's
+checkout:
 
+    git worktree add ../anvil-0.1.6 v0.1.6 && cd ../anvil-0.1.6 && npm ci
     mkdir -p src/main/__spike__
-    cp packages/anvil_core/test/fixtures/formula/build-formula-corpus.test.ts src/main/__spike__/
-    FORMULA_CORPUS_DIR=packages/anvil_core/test/fixtures/formula \
+    cp $ANVIL/packages/anvil_core/test/fixtures/formula/build-formula-corpus.test.ts src/main/__spike__/
+    FORMULA_CORPUS_DIR=$ANVIL/packages/anvil_core/test/fixtures/formula \
       npx vitest run src/main/__spike__/build-formula-corpus.test.ts
     rm -rf src/main/__spike__
 
@@ -24,7 +27,7 @@ Add cases to the `CASES` list in the oracle, never by hand to the JSON. Cases wh
 result is not a number are rejected by the oracle: identifiers that name `Object.prototype`
 members (`constructor`, `toString`, `valueOf`, `hasOwnProperty`, `__proto__`, ...) resolve to
 those members in 0.1.6, as variables and as functions, and the Dart port deliberately treats them
-as unknown. The oracle is regenerated until cutover (ANVL-169) and then frozen.
+as unknown. Since cutover (ANVL-169) the corpus is frozen; the steps above are the record of how it was made.
 
 Nesting depth: 0.1.6 has no explicit limit. A formula fails when Node's stack overflows, after
 roughly a few thousand nesting levels, depending on the machine. The Dart engine instead stops at

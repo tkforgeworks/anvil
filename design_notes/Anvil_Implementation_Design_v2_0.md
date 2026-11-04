@@ -7,7 +7,7 @@
 | Version | 2.0 |
 | Status | Current |
 | Date | 2026-10-31 |
-| Supersedes | `Anvil_Implementation_Design_v1_0.md` (Electron). It stays the porting reference until cutover (ANVL-169). |
+| Supersedes | `Anvil_Implementation_Design_v1_0.md` (Electron). It was the porting reference until cutover (ANVL-169); the 0.1.6 source is at git tag `v0.1.6`. |
 | Ticket | ANVL-155 |
 | Jira epics | ANVL-146, ANVL-147, ANVL-148, ANVL-149, ANVL-150, ANVL-157 |
 
@@ -56,7 +56,7 @@ This document defines the architecture of the Flutter rewrite of Anvil, released
 | Repository | Same repo. The rewrite accumulates on `v0.2.0/main` (cut from `main` on 2026-10-31); topic branches PR into it. |
 | Project files | Same `.anvil` SQLite files. The schema and the seven migrations are kept, and a file created by any 0.1.x release opens unchanged (§5.7). |
 | Platforms | Windows and Linux only. |
-| Electron line | 0.1.6 (shipped 2026-10-11) is the final Electron release; no new Electron feature work. `src/`, `package.json` and the Electron tooling stay untouched as the porting reference until cutover (ANVL-169), then they are removed. |
+| Electron line | 0.1.6 (shipped 2026-10-11) is the final Electron release; no new Electron feature work. `src/`, `package.json` and the Electron tooling stayed untouched as the porting reference until cutover (ANVL-169), which removed them; the source is at git tag `v0.1.6`. |
 
 ### 2.1 Behavior changes from 0.1.6
 
