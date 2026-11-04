@@ -5,7 +5,7 @@ publish_to: 'none'
 # X.Y.Z[-rc.N]+BUILD. The release branch name (vX.Y.Z/main) is the source of
 # X.Y.Z; scripts/release/bump-version.{sh,ps1} (ANVL-167) rewrites this line.
 # The manifest holds the upcoming version, per the org convention.
-version: 0.2.0+1
+version: 0.2.0-rc.1+2
 
 environment:
   # Floor matches forge-ui (sdk ^3.13.2, Flutter >=3.47.2); the repo pins
