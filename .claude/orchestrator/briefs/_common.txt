@@ -1,0 +1,14 @@
+## Standing rules (all briefs)
+- Toolchain: Flutter 3.47.5 via fvm. From the worktree root: `fvm dart format --set-exit-if-changed .`,
+  `fvm flutter analyze`, `fvm flutter test test -j 2` (one suite at a time; other agents share the
+  machine). Run `fvm flutter pub get` first; `git checkout -- pubspec.lock` before reporting unless
+  the brief adds a dependency.
+- Rules: colours only from `context.colors` / `context.forge` / `context.anvil`; `go_router` only
+  under `lib/app/shell/` (navigate with `ref.read(routerProvider).go(...)`); widgets never
+  `ref.watch` `requireSessionProvider` or a repository provider; pickers never `DropdownMenu`;
+  `packages/anvil_core` never imports Flutter or Riverpod.
+- Read `/home/tkforgeworks/projects/anvil/.claude/orchestrator/lessons.md` first (1400x800 test
+  window with the 220 px sidebar taken, Ahem font widths and `ensureVisible`, `pump(Duration)` for
+  Riverpod refreshes, override `clockProvider` in harnesses).
+- Verify every name this brief cites against the source and report differences.
+- Do not commit, push, branch, open PRs or touch Jira. Never edit `.claude/CLAUDE.md`.
